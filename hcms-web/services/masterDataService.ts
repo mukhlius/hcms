@@ -402,7 +402,73 @@ export const importExportService = {
     );
     return res.data;
   },
+  downloadExport: async (entity: string, customFilename?: string) => {
+    const response = await apiClient.get(`/admin/master-data/export/${entity}`, {
+      responseType: 'blob',
+    });
+
+    let filename = customFilename || `export_${entity}_${new Date().toISOString().slice(0, 10)}.csv`;
+    const disposition = response.headers['content-disposition'];
+    if (disposition && disposition.includes('filename=')) {
+      const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+      if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['"]/g, '');
+      }
+    }
+
+    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    return true;
+  },
+  downloadTemplate: async (entity: string) => {
+    const response = await apiClient.get(`/admin/master-data/import/template/${entity}`, {
+      responseType: 'blob',
+    });
+
+    let filename = `template_impor_${entity}.csv`;
+    const disposition = response.headers['content-disposition'];
+    if (disposition && disposition.includes('filename=')) {
+      const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+      if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['"]/g, '');
+      }
+    }
+
+    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    return true;
+  },
+  getHistory: async () => {
+    const res = await apiClient.get<ApiResponse<Array<{
+      id: number;
+      action: 'IMPORT' | 'EXPORT';
+      module: string;
+      actor: string;
+      username: string;
+      filename: string;
+      imported_count: number | null;
+      ip_address: string;
+      created_at: string;
+      time_ago: string;
+    }>>>('/admin/master-data/import-export/history');
+    return res.data;
+  },
   getExportUrl: (entity: string) => {
-    return `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/v1/admin/master-data/export/${entity}`;
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1').replace(/\/+$/, '');
+    return `${baseUrl}/admin/master-data/export/${entity}`;
   },
 };

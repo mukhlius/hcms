@@ -112,7 +112,9 @@ Route::prefix('v1')->group(function () {
                 Route::post('/import/upload', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'uploadAndInspect']);
                 Route::post('/import/validate', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'validateImport']);
                 Route::post('/import/execute', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'executeImport']);
+                Route::get('/import/template/{entity}', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'downloadTemplate']);
                 Route::get('/export/{entity}', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'export']);
+                Route::get('/import-export/history', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'history']);
                 Route::get('/overview-counts', [\App\Http\Controllers\Api\V1\MasterData\CompanyController::class, 'overviewCounts']);
 
                 // Companies
