@@ -252,14 +252,16 @@ export const canAccessWorkspace = (workspaceId: WorkspaceId, user: User | null):
   const isSuperAdmin = user.roles?.some((r) => getRoleName(r) === 'SUPER_ADMIN') || user.data_scope === 'GLOBAL';
   if (isSuperAdmin) return true;
 
-  // 3. Admin: Dapat diakses jika user memiliki peran admin atau izin administratif
+  // 3. Admin Console: Hanya dapat diakses oleh peran administrator atau izin eksplisit 'admin.access'
   if (workspaceId === 'admin') {
     const isAdminRole = user.roles?.some((r) => {
       const roleName = getRoleName(r);
-      return roleName ? ['ADMIN', 'HR_ADMIN', 'SYSTEM_ADMIN', 'SUPER_ADMIN', 'HC_ADMIN'].includes(roleName.toUpperCase()) : false;
+      return roleName ? ['ADMIN', 'HR_ADMIN', 'SYSTEM_ADMIN', 'SUPER_ADMIN', 'HC_ADMIN', 'HC_MANAGER', 'HC_OFFICER'].includes(roleName.toUpperCase()) : false;
     });
     if (isAdminRole) return true;
-    if (user.permissions?.some((p) => p.includes('.view') || p.includes('.manage'))) return true;
+
+    if (user.permissions?.includes('admin.access')) return true;
+
     return false;
   }
 

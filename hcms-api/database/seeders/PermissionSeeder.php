@@ -97,6 +97,7 @@ class PermissionSeeder extends Seeder
                 // 13. Pengaturan Sistem (Settings)
                 ['name' => 'settings.view', 'display_name' => 'Lihat Pengaturan Sistem', 'group' => 'settings', 'description' => 'Melihat parameter konfigurasi sistem HCMS'],
                 ['name' => 'settings.update', 'display_name' => 'Ubah Pengaturan Sistem', 'group' => 'settings', 'description' => 'Menyimpan konfigurasi branding, timezone, dan preferensi'],
+                ['name' => 'admin.access', 'display_name' => 'Akses Administrator Console', 'group' => 'settings', 'description' => 'Izin wewenang untuk membuka dan mengakses Administrator Console'],
 
                 // 14. Alur Kerja (Workflow)
                 ['name' => 'workflow.view', 'display_name' => 'Lihat Definisi Workflow', 'group' => 'workflow', 'description' => 'Melihat diagram tahapan alur persetujuan'],
@@ -163,6 +164,7 @@ class PermissionSeeder extends Seeder
             $hcManager = Role::whereIn('name', ['HC_MANAGER', 'hc_manager'])->first();
             if ($hcManager) {
                 $hcManagerPermissions = Permission::whereIn('name', [
+                    'admin.access',
                     'users.view', 'users.create', 'users.update', 'users.approve', 'users.export',
                     'employees.view', 'employees.create', 'employees.update', 'employees.approve', 'employees.export',
                     'organization.view', 'organizations.view', 'position.view', 'master-data.view',
@@ -178,6 +180,7 @@ class PermissionSeeder extends Seeder
             $hcOfficer = Role::whereIn('name', ['HC_OFFICER', 'hc_officer'])->first();
             if ($hcOfficer) {
                 $hcOfficerPermissions = Permission::whereIn('name', [
+                    'admin.access',
                     'users.view', 'users.create', 'users.update',
                     'employees.view', 'employees.create', 'employees.update',
                     'organization.view', 'organizations.view', 'position.view', 'master-data.view',
@@ -192,7 +195,6 @@ class PermissionSeeder extends Seeder
             $manager = Role::whereIn('name', ['MANAGER', 'manager'])->first();
             if ($manager) {
                 $managerPermissions = Permission::whereIn('name', [
-                    'users.view', 'employees.view', 'organization.view', 'organizations.view', 'position.view',
                     'company-documents.view', 'company-documents.download',
                     'workflow.view', 'workflow.execute',
                     'approvals.view', 'approvals.execute',
@@ -206,7 +208,6 @@ class PermissionSeeder extends Seeder
             $supervisor = Role::whereIn('name', ['SUPERVISOR', 'supervisor'])->first();
             if ($supervisor) {
                 $supervisorPermissions = Permission::whereIn('name', [
-                    'users.view', 'employees.view',
                     'company-documents.view', 'company-documents.download',
                     'workflow.view', 'workflow.execute',
                     'approvals.view', 'approvals.execute',
@@ -220,9 +221,7 @@ class PermissionSeeder extends Seeder
             $employee = Role::whereIn('name', ['EMPLOYEE', 'employee'])->first();
             if ($employee) {
                 $employeePermissions = Permission::whereIn('name', [
-                    'users.view', 'employees.view',
                     'company-documents.view', 'company-documents.download',
-                    'workflow.view',
                     'ess.view', 'ess.attendance', 'ess.leave', 'ess.overtime', 'ess.claims', 'ess.payslip', 'ess.documents'
                 ])->pluck('id')->toArray();
                 $employee->permissions()->sync($employeePermissions);
