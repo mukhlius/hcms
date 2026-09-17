@@ -196,7 +196,12 @@ class AuthController extends BaseApiController
                 'status' => $user->status,
                 'force_password_change' => $user->force_password_change,
                 'data_scope' => $user->getDataScope(),
-                'roles' => $user->roles->pluck('name'),
+                'roles' => $user->roles->map(fn($r) => [
+                    'id' => $r->id,
+                    'name' => $r->name,
+                    'display_name' => $r->display_name,
+                    'data_scope' => $r->data_scope,
+                ]),
                 'permissions' => $user->getAllPermissions(),
             ]
         ], 'Autentikasi berhasil.');
@@ -218,7 +223,12 @@ class AuthController extends BaseApiController
             'company' => $user->company?->name,
             'site' => $user->site?->name,
             'department' => $user->department?->name,
-            'roles' => $user->roles->pluck('name'),
+            'roles' => $user->roles->map(fn($r) => [
+                'id' => $r->id,
+                'name' => $r->name,
+                'display_name' => $r->display_name,
+                'data_scope' => $r->data_scope,
+            ]),
             'permissions' => $user->getAllPermissions(),
         ]);
     }

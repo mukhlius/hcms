@@ -35,7 +35,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const { user } = get();
     if (!user) return false;
     // Super admin override
-    if (user.roles?.some(r => r.name === 'SUPER_ADMIN') || user.data_scope === 'GLOBAL') {
+    if (user.roles?.some(r => (typeof r === 'string' ? r : r?.name) === 'SUPER_ADMIN') || user.data_scope === 'GLOBAL') {
       return true;
     }
     return Boolean(user.permissions?.includes(permission));
@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   hasRole: (roleName: string) => {
     const { user } = get();
     if (!user) return false;
-    return Boolean(user.roles?.some(r => r.name === roleName));
+    return Boolean(user.roles?.some(r => (typeof r === 'string' ? r : r?.name) === roleName));
   },
 
   initFromStorage: () => {

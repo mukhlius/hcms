@@ -202,18 +202,28 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
 };
 
 /**
+ * Helper aman untuk mengekstrak nama role (baik jika berupa string maupun objek)
+ */
+const getRoleName = (r: any): string => {
+  if (!r) return '';
+  if (typeof r === 'string') return r.trim();
+  return (r.name || '').trim();
+};
+
+/**
  * Mendeteksi apakah user memiliki bawahan langsung (Manager, Supervisor, Foreman, Lead, Dept Head)
  */
 export const hasSubordinates = (user: User | null): boolean => {
   if (!user) return false;
   // Super admin dan Global Scope dianggap memiliki wewenang atasan
-  if (user.roles?.some((r) => r.name === 'SUPER_ADMIN') || user.data_scope === 'GLOBAL') return true;
+  if (user.roles?.some((r) => getRoleName(r) === 'SUPER_ADMIN') || user.data_scope === 'GLOBAL') return true;
   // Jika data_scope bukan SELF, berarti membawahi subordinate/department/site/company
   if (user.data_scope && user.data_scope !== 'SELF') return true;
 
-  const isManagerRole = user.roles?.some((r) => 
-    ['MANAGER', 'SUPERVISOR', 'LEAD', 'FOREMAN', 'SUPERINTENDENT', 'DIRECTOR', 'DEPT_HEAD'].includes(r.name.toUpperCase())
-  );
+  const isManagerRole = user.roles?.some((r) => {
+    const roleName = getRoleName(r);
+    return roleName ? ['MANAGER', 'SUPERVISOR', 'LEAD', 'FOREMAN', 'SUPERINTENDENT', 'DIRECTOR', 'DEPT_HEAD', 'HC_MANAGER'].includes(roleName.toUpperCase()) : false;
+  });
   if (isManagerRole) return true;
 
   if (user.permissions?.some((p) => p.startsWith('approvals.') || p.startsWith('team.') || p.startsWith('mss.'))) return true;
@@ -239,14 +249,15 @@ export const canAccessWorkspace = (workspaceId: WorkspaceId, user: User | null):
   if (workspaceId === 'ess') return true;
 
   // 2. Super admin memiliki akses ke Admin Console
-  const isSuperAdmin = user.roles?.some((r) => r.name === 'SUPER_ADMIN') || user.data_scope === 'GLOBAL';
+  const isSuperAdmin = user.roles?.some((r) => getRoleName(r) === 'SUPER_ADMIN') || user.data_scope === 'GLOBAL';
   if (isSuperAdmin) return true;
 
   // 3. Admin: Dapat diakses jika user memiliki peran admin atau izin administratif
   if (workspaceId === 'admin') {
-    const isAdminRole = user.roles?.some((r) =>
-      ['ADMIN', 'HR_ADMIN', 'SYSTEM_ADMIN'].includes(r.name.toUpperCase())
-    );
+    const isAdminRole = user.roles?.some((r) => {
+      const roleName = getRoleName(r);
+      return roleName ? ['ADMIN', 'HR_ADMIN', 'SYSTEM_ADMIN', 'SUPER_ADMIN', 'HC_ADMIN'].includes(roleName.toUpperCase()) : false;
+    });
     if (isAdminRole) return true;
     if (user.permissions?.some((p) => p.includes('.view') || p.includes('.manage'))) return true;
     return false;
