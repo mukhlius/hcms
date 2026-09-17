@@ -11,7 +11,11 @@ import {
   Lock, 
   User, 
   ArrowRight,
-  AlertCircle 
+  AlertCircle,
+  Shield,
+  Users,
+  CheckCircle2,
+  Key
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
@@ -255,41 +259,101 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Akun Uji Coba Cepat */}
-          <div className="rounded-lg border border-slate-100 bg-slate-50/80 p-3.5 text-xs text-slate-500 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-slate-700">Akun Pengujian Pra-Konfigurasi:</span>
-              <span className="text-[10px] text-slate-400">Password: Password@123</span>
+          {/* Akun Uji Coba Cepat (Multi-Role Demo Hub) */}
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 text-xs text-slate-600 space-y-3 shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
+              <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
+                <Key className="h-3.5 w-3.5 text-blue-600" />
+                <span>Pilih Akun Demo (1-Klik Isi):</span>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded bg-slate-200/60 px-1.5 py-0.5 font-mono text-[10px] text-slate-600">
+                Password@123
+              </span>
             </div>
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              <button
-                type="button"
-                onClick={() => { setUsername('admin'); setPassword('Password@123'); }}
-                className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
-              >
-                Super Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => { setUsername('hc_admin'); setPassword('Password@123'); }}
-                className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
-              >
-                HC Admin Corp
-              </button>
-              <button
-                type="button"
-                onClick={() => { setUsername('hc_sgt'); setPassword('Password@123'); }}
-                className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
-              >
-                HC Sangatta
-              </button>
-              <button
-                type="button"
-                onClick={() => { setUsername('employee_demo'); setPassword('Password@123'); }}
-                className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
-              >
-                Karyawan ESS
-              </button>
+
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                {
+                  username: 'admin',
+                  label: 'Super Admin',
+                  scope: 'Global System',
+                  badge: 'Admin Console',
+                  badgeStyle: 'bg-purple-100 text-purple-800 border-purple-200',
+                  icon: <ShieldCheck className="h-3.5 w-3.5 text-purple-600" />,
+                },
+                {
+                  username: 'hc_admin',
+                  label: 'HC Admin Corp',
+                  scope: 'Company Scope',
+                  badge: 'Admin Console',
+                  badgeStyle: 'bg-blue-100 text-blue-800 border-blue-200',
+                  icon: <Shield className="h-3.5 w-3.5 text-blue-600" />,
+                },
+                {
+                  username: 'hc_sgt',
+                  label: 'HC Site Sangatta',
+                  scope: 'Site Management',
+                  badge: 'Admin & ESS',
+                  badgeStyle: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+                  icon: <HardHat className="h-3.5 w-3.5 text-cyan-600" />,
+                },
+                {
+                  username: 'mgr_ops',
+                  label: 'Operations Mgr',
+                  scope: 'Dept & Approvals',
+                  badge: 'MSS & ESS',
+                  badgeStyle: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                  icon: <Users className="h-3.5 w-3.5 text-emerald-600" />,
+                },
+                {
+                  username: 'spv_ops',
+                  label: 'Pit Supervisor',
+                  scope: 'Shift Crew & Roster',
+                  badge: 'MSS & ESS',
+                  badgeStyle: 'bg-amber-100 text-amber-800 border-amber-200',
+                  icon: <User className="h-3.5 w-3.5 text-amber-600" />,
+                },
+                {
+                  username: 'employee_demo',
+                  label: 'Mining Employee',
+                  scope: 'Mandiri Operasional',
+                  badge: 'ESS Only',
+                  badgeStyle: 'bg-slate-200 text-slate-800 border-slate-300',
+                  icon: <User className="h-3.5 w-3.5 text-slate-600" />,
+                },
+              ].map((acc) => {
+                const isSelected = username === acc.username;
+                return (
+                  <button
+                    key={acc.username}
+                    type="button"
+                    onClick={() => {
+                      setUsername(acc.username);
+                      setPassword('Password@123');
+                      setErrorMessage(null);
+                    }}
+                    className={`flex flex-col text-left p-2.5 rounded-lg border transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-blue-500 bg-white ring-2 ring-blue-500/20 shadow-xs'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80 shadow-2xs'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1 w-full">
+                      <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-[11px] truncate">
+                        {acc.icon}
+                        <span className="truncate">{acc.label}</span>
+                      </div>
+                      <span className={`px-1 py-0.2 rounded border text-[8px] font-semibold shrink-0 uppercase tracking-tight ${acc.badgeStyle}`}>
+                        {acc.badge}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 mt-1">
+                      <span className="font-mono text-slate-600">@{acc.username}</span>
+                      <span className="text-[9px] text-slate-400 truncate max-w-[70px]">{acc.scope}</span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

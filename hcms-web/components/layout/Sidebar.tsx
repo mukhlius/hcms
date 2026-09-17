@@ -56,35 +56,36 @@ export const Sidebar: React.FC = () => {
   const navigation: NavItem[] = activeWorkspace.navigation;
 
   const renderNavContent = () => (
-    <div className="flex h-full flex-col justify-between">
-      <div>
-        {/* Header Brand */}
-        <div className="flex h-16 items-center justify-between px-4 border-b border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900">
-          <Link href={activeWorkspace.basePath} className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center">
-              {appIcon ? (
-                <img src={appIcon} alt="App Logo" className="h-full w-full object-contain" />
-              ) : (
-                <HardHat className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-              )}
-            </div>
-            {!sidebarCollapsed && (
-              <div className="overflow-hidden whitespace-nowrap">
-                <span className="block text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">{appName}</span>
-                <span className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{companyName}</span>
-              </div>
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Header Brand (Fixed) */}
+      <div className="flex h-16 shrink-0 items-center justify-between px-4 border-b border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <Link href={activeWorkspace.basePath} className="flex items-center gap-2.5 overflow-hidden">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center">
+            {appIcon ? (
+              <img src={appIcon} alt="App Logo" className="h-full w-full object-contain" />
+            ) : (
+              <HardHat className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             )}
-          </Link>
-          <button
-            type="button"
-            onClick={toggleSidebar}
-            className="hidden lg:flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600 dark:border-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
-            aria-label="Toggle ciutkan sidebar"
-          >
-            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </button>
-        </div>
+          </div>
+          {!sidebarCollapsed && (
+            <div className="overflow-hidden whitespace-nowrap">
+              <span className="block text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">{appName}</span>
+              <span className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{companyName}</span>
+            </div>
+          )}
+        </Link>
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="hidden lg:flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600 dark:border-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
+          aria-label="Toggle ciutkan sidebar"
+        >
+          {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
+      </div>
 
+      {/* Area Navigasi Scrollable */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
         {/* Badge Ruang Kerja Aktif */}
         {!sidebarCollapsed && (
           <div className="px-3 pt-3 pb-1">
@@ -237,7 +238,7 @@ export const Sidebar: React.FC = () => {
 
       {/* Info Cakupan Akses Pengguna */}
       {!sidebarCollapsed && user && (
-        <div className="p-3 m-3 rounded-lg bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500 dark:bg-slate-900/80 dark:border-slate-800 dark:text-slate-400">
+        <div className="shrink-0 mt-auto p-3 m-3 rounded-lg bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500 dark:bg-slate-900/80 dark:border-slate-800 dark:text-slate-400">
           <div className="flex items-center justify-between mb-1">
             <span className="font-semibold text-slate-700 dark:text-slate-300">Cakupan Akses</span>
             <span className="rounded px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400 font-bold uppercase text-[10px]">

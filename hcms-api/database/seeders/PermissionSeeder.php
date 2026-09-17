@@ -226,6 +226,31 @@ class PermissionSeeder extends Seeder
                 ])->pluck('id')->toArray();
                 $employee->permissions()->sync($employeePermissions);
             }
+
+            // 9. Pastikan Akun Demo Lengkap
+            $defaultPassword = \Illuminate\Support\Facades\Hash::make('Password@123');
+            $mgrRole = Role::whereIn('name', ['MANAGER', 'manager'])->first();
+            $mgr = \App\Models\User::firstOrCreate(
+                ['username' => 'mgr_ops'],
+                [
+                    'uuid' => (string) \Illuminate\Support\Str::uuid(),
+                    'name' => 'Hendra Wijaya (Operations Manager)',
+                    'email' => 'mgr.ops@cmn.mining.local',
+                    'password' => $defaultPassword,
+                    'status' => 'ACTIVE',
+                    'company_id' => \App\Models\OrganizationCompany::first()?->id,
+                    'site_id' => \App\Models\OrganizationSite::first()?->id,
+                    'department_id' => \App\Models\OrganizationDepartment::first()?->id,
+                    'force_password_change' => false,
+                ]
+            );
+            if ($mgrRole && !$mgr->roles->contains($mgrRole->id)) {
+                $mgr->roles()->attach($mgrRole->id);
+            }
+
+            // Pastikan password akun demo standar
+            \App\Models\User::whereIn('username', ['admin', 'hc_admin', 'hc_sgt', 'spv_ops', 'mgr_ops', 'employee_demo'])
+                ->update(['status' => 'ACTIVE', 'password' => $defaultPassword, 'locked_until' => null, 'failed_login_attempts' => 0]);
         });
     }
 }
