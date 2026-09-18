@@ -252,6 +252,11 @@ class CompanyController extends BaseApiController
             'plafond_pengobatan' => BenefitPlafond::where('benefit_type', 'PENGOBATAN')->where('status', 'ACTIVE')->count(),
             'plafond_kacamata' => BenefitPlafond::where('benefit_type', 'KACAMATA')->where('status', 'ACTIVE')->count(),
             'plafond_persalinan' => BenefitPlafond::where('benefit_type', 'PERSALINAN')->where('status', 'ACTIVE')->count(),
+            'tunjangan_lapangan' => BenefitPlafond::where('benefit_type', 'TUNJANGAN_LAPANGAN')->where('status', 'ACTIVE')->count(),
+            'uang_perdin' => BenefitPlafond::where('benefit_type', 'UANG_PERDIN')->where('status', 'ACTIVE')->count(),
+            'bantuan_lumpsum' => BenefitPlafond::where('benefit_type', 'BANTUAN_LUMPSUM')->where('status', 'ACTIVE')->count(),
+            'bantuan_komunikasi' => BenefitPlafond::where('benefit_type', 'BANTUAN_KOMUNIKASI')->where('status', 'ACTIVE')->count(),
+            'bantuan_perumahan' => BenefitPlafond::where('benefit_type', 'BANTUAN_PERUMAHAN')->where('status', 'ACTIVE')->count(),
         ];
 
         return $this->successResponse($counts, 'Ringkasan hitungan master data berhasil diambil.');

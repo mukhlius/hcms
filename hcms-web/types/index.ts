@@ -382,16 +382,18 @@ export interface EmploymentTypeItem {
 
 export interface BenefitPlafondItem {
   id: number;
-  benefit_type: 'PENGOBATAN' | 'KACAMATA' | 'PERSALINAN';
+  benefit_type: 'PENGOBATAN' | 'KACAMATA' | 'PERSALINAN' | 'TUNJANGAN_LAPANGAN' | 'UANG_PERDIN' | 'BANTUAN_LUMPSUM' | 'BANTUAN_KOMUNIKASI' | 'BANTUAN_PERUMAHAN';
   salary_grade_id?: number | null;
   grade_id?: number | null;
   lens_type?: string | null;
   frame_amount?: number | null;
   lens_amount?: number | null;
+  category_name?: string | null;
+  zone_name?: string | null;
   marital_category: 'Menikah' | 'Tidak Menikah' | 'SEMUA';
   marital_status_id?: number | null;
   amount: number;
-  period_type: 'TAHUNAN' | 'PER_KASUS' | '2_TAHUNAN' | 'SEUMUR_HIDUP';
+  period_type: 'HARIAN' | 'BULANAN' | 'TAHUNAN' | 'PER_KASUS' | '2_TAHUNAN' | 'SEUMUR_HIDUP';
   description?: string | null;
   status: 'ACTIVE' | 'INACTIVE';
   salary_grade?: SalaryGradeItem | null;

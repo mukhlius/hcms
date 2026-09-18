@@ -139,7 +139,7 @@ function OrganizationReferencesContent() {
       const fetchDepts = ['section'].includes(activeTab) && departmentsList.length === 0;
       const fetchUnits = ['position'].includes(activeTab) && allUnits.length === 0;
 
-      if (fetchSites) promises.push(siteService.getSites());
+      if (fetchSites) promises.push(siteService.getSites({ per_page: 100 }));
       if (fetchCompanies) promises.push(companyService.getCompanies({ per_page: 50 }));
       if (fetchDepts) promises.push(departmentService.getDepartments({ per_page: 100 }));
       if (fetchUnits) promises.push(organizationUnitService.getUnits({ per_page: 100 }));
@@ -365,7 +365,7 @@ function OrganizationReferencesContent() {
       />
 
       {/* 2. Tab Menu: Modern Navigation Tabs with Animated Sliding Underline */}
-      <div className="border border-slate-200/90 bg-white rounded-xl px-2 pt-1 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div className="border border-slate-200/90 bg-white rounded-xl p-1.5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}

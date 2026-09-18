@@ -32,8 +32,13 @@ import {
   HeartPulse,
   Glasses,
   Baby,
+  HardHat,
+  PlaneTakeoff,
+  Coins,
+  Smartphone,
   Compass,
-  Users
+  Users,
+  Home
 } from 'lucide-react';
 import { importExportService } from '@/services/masterDataService';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -66,7 +71,25 @@ export const FIELD_DEFINITIONS: Record<string, { label: string; required?: boole
   tax_identifier: { label: 'NPWP Perusahaan (tax_identifier)', required: false, aliases: ['npwp', 'tax_identifier', 'nomor npwp', 'tax id'] },
   address: { label: 'Alamat Lengkap (address)', required: false, aliases: ['alamat', 'address', 'alamat lengkap', 'lokasi'] },
   company_code: { label: 'Kode Perusahaan Induk (company_code)', required: false, aliases: ['perusahaan', 'company_code', 'perusahaan induk', 'kode perusahaan', 'perusahaan_induk'] },
-  site_code: { label: 'Kode Site Operasional (site_code)', required: false, aliases: ['site', 'site_code', 'kode site', 'site tambang', 'site operasional', 'site tambang/fasilitas'] },
+  site_code: { 
+    label: 'Site Tambang / Fasilitas (site_code)', 
+    required: false, 
+    aliases: [
+      'site', 
+      'site_code', 
+      'kode site', 
+      'site tambang', 
+      'site operasional', 
+      'site tambang/fasilitas', 
+      'site tambang / fasilitas', 
+      'site tambang / fasilitas *',
+      'site fasilitas',
+      'nama site',
+      'site name',
+      'lokasi site',
+      'kode site operasional'
+    ] 
+  },
 
   // Departemen & Seksi & Posisi
   department_code: { label: 'Kode Departemen (department_code)', required: false, aliases: ['departemen', 'department_code', 'kode departemen', 'departemen induk'] },
@@ -96,6 +119,8 @@ export const FIELD_DEFINITIONS: Record<string, { label: string; required?: boole
   lens_type: { label: 'Kriteria / Tipe Lensa (lens_type)', required: true, aliases: ['kriteria lensa', 'lens_type', 'tipe lensa', 'lensa', 'kriteria / jenis lensa'] },
   frame_amount: { label: 'Bantuan Biaya Frame (frame_amount)', required: true, aliases: ['bantuan frame', 'frame_amount', 'frame'] },
   lens_amount: { label: 'Bantuan Biaya Lensa (lens_amount)', required: true, aliases: ['bantuan lensa', 'lens_amount', 'lensa'] },
+  category_name: { label: 'Kategori / Jenis Bantuan (category_name)', required: false, aliases: ['kategori penempatan', 'jenis bantuan lumpsum', 'kategori komunikasi', 'komponen perdin', 'kategori_name', 'kategori', 'jenis bantuan', 'komponen'] },
+  zone_name: { label: 'Zona / Wilayah Perdin (zone_name)', required: false, aliases: ['zona / wilayah', 'zona', 'wilayah', 'zone_name', 'zona wilayah'] },
 
   // Shift & User
   start_time: { label: 'Jam Masuk (start_time)', required: false, aliases: ['jam masuk', 'start_time', 'mulai'] },
@@ -236,6 +261,51 @@ const ENTITY_CATALOG: EntityMeta[] = [
     iconBg: 'bg-amber-50 dark:bg-amber-950/50',
     columns: ['salary_grade_code', 'marital_category', 'amount', 'period_type', 'description', 'status'],
   },
+  {
+    id: 'tunjangan-lapangan',
+    name: 'Tunjangan Lapangan',
+    category: 'Benefit & Plafon',
+    description: 'Tunjangan penempatan kerja lapangan (pit tambang, hauling road, processing plant).',
+    icon: <HardHat className="h-5 w-5 text-amber-600" />,
+    iconBg: 'bg-amber-50 dark:bg-amber-950/50',
+    columns: ['salary_grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
+  },
+  {
+    id: 'uang-perdin',
+    name: 'Uang Perdin',
+    category: 'Benefit & Plafon',
+    description: 'Tarif uang saku, makan, dan transport dinas per zona wilayah & golongan.',
+    icon: <PlaneTakeoff className="h-5 w-5 text-blue-600" />,
+    iconBg: 'bg-blue-50 dark:bg-blue-950/50',
+    columns: ['salary_grade_code', 'zone_name', 'category_name', 'amount', 'period_type', 'description', 'status'],
+  },
+  {
+    id: 'bantuan-lumpsum',
+    name: 'Bantuan Lumpsum',
+    category: 'Benefit & Plafon',
+    description: 'Bantuan biaya relokasi site tambang, duka cita, dan bantuan darurat bencana.',
+    icon: <Coins className="h-5 w-5 text-teal-600" />,
+    iconBg: 'bg-teal-50 dark:bg-teal-950/50',
+    columns: ['salary_grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
+  },
+  {
+    id: 'bantuan-komunikasi',
+    name: 'Bantuan Komunikasi',
+    category: 'Benefit & Plafon',
+    description: 'Bantuan pulsa on-call, paket data komunikasi lapangan, dan voucher kuota.',
+    icon: <Smartphone className="h-5 w-5 text-indigo-600" />,
+    iconBg: 'bg-indigo-50 dark:bg-indigo-950/50',
+    columns: ['salary_grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
+  },
+  {
+    id: 'bantuan-perumahan',
+    name: 'Bantuan Perumahan',
+    category: 'Benefit & Plafon',
+    description: 'Bantuan sewa perumahan dinas, tunjangan tempat tinggal mandiri, dan mess site tambang.',
+    icon: <Home className="h-5 w-5 text-orange-600" />,
+    iconBg: 'bg-orange-50 dark:bg-orange-950/50',
+    columns: ['salary_grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
+  },
 
   // 3. OPERASIONAL & AKUN
   {
@@ -355,9 +425,16 @@ export default function ImportExportCenterPage() {
       const aliases = def ? [col, ...def.aliases] : [col];
 
       const found = csvHeaders.find(h => {
-        const cleanH = h.toLowerCase().replace(/[^a-z0-9_]/g, ' ').trim();
+        const rawH = h.trim().toLowerCase();
+        // Exact raw check first
+        if (aliases.some(a => a.trim().toLowerCase() === rawH)) {
+          return true;
+        }
+
+        // Normalized check (collapsing symbols, slashes, extra spaces)
+        const cleanH = rawH.replace(/[^a-z0-9_]+/g, ' ').trim();
         return aliases.some(alias => {
-          const cleanAlias = alias.toLowerCase().replace(/[^a-z0-9_]/g, ' ').trim();
+          const cleanAlias = alias.toLowerCase().replace(/[^a-z0-9_]+/g, ' ').trim();
           return cleanH === cleanAlias || cleanH.includes(cleanAlias) || cleanAlias.includes(cleanH);
         });
       });

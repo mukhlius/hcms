@@ -34,6 +34,11 @@ export const companyService = {
       plafond_pengobatan?: number;
       plafond_kacamata?: number;
       plafond_persalinan?: number;
+      tunjangan_lapangan?: number;
+      uang_perdin?: number;
+      bantuan_lumpsum?: number;
+      bantuan_komunikasi?: number;
+      bantuan_perumahan?: number;
     }>>('/admin/master-data/overview-counts', { params });
     return res.data;
   },
@@ -68,7 +73,7 @@ export const companyService = {
 };
 
 export const siteService = {
-  getSites: async (params?: { company_id?: number; site_type?: string; search?: string; status?: string }) => {
+  getSites: async (params?: { company_id?: number; site_type?: string; search?: string; status?: string; per_page?: number }) => {
     const res = await apiClient.get<ApiResponse<{ data: MasterSite[]; total: number }>>('/admin/master-data/sites', { params });
     return res.data;
   },

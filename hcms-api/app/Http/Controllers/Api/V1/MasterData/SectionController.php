@@ -15,7 +15,7 @@ class SectionController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $query = OrganizationSection::with([
-            'department:id,code,name',
+            'department:id,code,name,site_id',
             'company:id,code,name',
             'site:id,code,name',
             'leader:id,name,email',
@@ -82,7 +82,7 @@ class SectionController extends BaseApiController
         });
 
         return $this->createdResponse(
-            $section->load(['department:id,code,name', 'company:id,code,name', 'site:id,code,name', 'leader:id,name']),
+            $section->load(['department:id,code,name,site_id', 'company:id,code,name', 'site:id,code,name', 'leader:id,name']),
             'Seksi (section) berhasil ditambahkan.'
         );
     }
@@ -90,7 +90,7 @@ class SectionController extends BaseApiController
     public function show(OrganizationSection $section): JsonResponse
     {
         $section->load([
-            'department:id,code,name',
+            'department:id,code,name,site_id',
             'company:id,code,name',
             'site:id,code,name',
             'leader:id,name,email',
@@ -138,7 +138,7 @@ class SectionController extends BaseApiController
         });
 
         return $this->successResponse(
-            $section->fresh(['department:id,code,name', 'company:id,code,name', 'site:id,code,name', 'leader:id,name']),
+            $section->fresh(['department:id,code,name,site_id', 'company:id,code,name', 'site:id,code,name', 'leader:id,name']),
             'Seksi berhasil diperbarui.'
         );
     }

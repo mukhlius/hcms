@@ -34,6 +34,20 @@ class BenefitPlafondController extends BaseApiController
             $query->where('lens_type', $request->query('lens_type'));
         }
 
+        if ($request->filled('category_name')) {
+            $catName = $request->query('category_name');
+            if ($catName !== 'ALL') {
+                $query->where('category_name', $catName);
+            }
+        }
+
+        if ($request->filled('zone_name')) {
+            $zn = $request->query('zone_name');
+            if ($zn !== 'ALL') {
+                $query->where('zone_name', $zn);
+            }
+        }
+
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
         }
@@ -47,7 +61,9 @@ class BenefitPlafondController extends BaseApiController
                        ->orWhere('pangkat', 'like', "%{$s}%");
                 })->orWhere('description', 'like', "%{$s}%")
                   ->orWhere('marital_category', 'like', "%{$s}%")
-                  ->orWhere('lens_type', 'like', "%{$s}%");
+                  ->orWhere('lens_type', 'like', "%{$s}%")
+                  ->orWhere('category_name', 'like', "%{$s}%")
+                  ->orWhere('zone_name', 'like', "%{$s}%");
             });
         }
 
@@ -55,6 +71,8 @@ class BenefitPlafondController extends BaseApiController
         $query->leftJoin('salary_grades', 'benefit_plafonds.salary_grade_id', '=', 'salary_grades.id')
               ->select('benefit_plafonds.*')
               ->orderByRaw('COALESCE(salary_grades.code, benefit_plafonds.lens_type, "") ASC')
+              ->orderBy('benefit_plafonds.category_name', 'asc')
+              ->orderBy('benefit_plafonds.zone_name', 'asc')
               ->orderBy('benefit_plafonds.marital_category', 'asc')
               ->orderBy('benefit_plafonds.id', 'asc');
 
@@ -77,10 +95,13 @@ class BenefitPlafondController extends BaseApiController
 
         $benefitType = strtoupper($request->input('benefit_type', ''));
         $isKacamata = $benefitType === 'KACAMATA';
+        $isMedical = in_array($benefitType, ['PENGOBATAN', 'PERSALINAN']);
 
         $rules = [
-            'benefit_type' => ['required', 'string', 'in:PENGOBATAN,KACAMATA,PERSALINAN'],
-            'period_type' => ['required', 'string', 'in:TAHUNAN,PER_KASUS,2_TAHUNAN,SEUMUR_HIDUP'],
+            'benefit_type' => ['required', 'string', 'in:PENGOBATAN,KACAMATA,PERSALINAN,TUNJANGAN_LAPANGAN,UANG_PERDIN,BANTUAN_LUMPSUM,BANTUAN_KOMUNIKASI,BANTUAN_PERUMAHAN'],
+            'period_type' => ['required', 'string', 'in:HARIAN,BULANAN,TAHUNAN,PER_KASUS,2_TAHUNAN,SEUMUR_HIDUP'],
+            'category_name' => ['nullable', 'string', 'max:100'],
+            'zone_name' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
         ];
@@ -95,7 +116,7 @@ class BenefitPlafondController extends BaseApiController
             $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
         } else {
             $rules['salary_grade_id'] = ['required', 'exists:salary_grades,id'];
-            $rules['marital_category'] = ['required', 'string', 'in:Menikah,Tidak Menikah,SEMUA'];
+            $rules['marital_category'] = [$isMedical ? 'required' : 'nullable', 'string', 'in:Menikah,Tidak Menikah,SEMUA'];
             $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
             $rules['amount'] = ['required', 'numeric', 'min:0'];
             $rules['lens_type'] = ['nullable', 'string'];
@@ -108,6 +129,8 @@ class BenefitPlafondController extends BaseApiController
         if ($isKacamata) {
             $validated['marital_category'] = $validated['marital_category'] ?? 'SEMUA';
             $validated['amount'] = (float)($validated['frame_amount'] ?? 0) + (float)($validated['lens_amount'] ?? 0);
+        } else {
+            $validated['marital_category'] = $validated['marital_category'] ?? 'SEMUA';
         }
 
         $item = BenefitPlafond::create($validated);
@@ -115,7 +138,7 @@ class BenefitPlafondController extends BaseApiController
 
         AuditService::log('CREATE', 'BENEFIT_PLAFOND', BenefitPlafond::class, (string)$item->id, newValues: $item->toArray());
 
-        return $this->createdResponse($item, 'Plafon manfaat berhasil ditambahkan.');
+        return $this->successResponse($item, 'Plafon manfaat berhasil ditambahkan.', 201);
     }
 
     public function show(BenefitPlafond $benefitPlafond): JsonResponse
@@ -132,10 +155,13 @@ class BenefitPlafondController extends BaseApiController
 
         $benefitType = strtoupper($request->input('benefit_type', $benefitPlafond->benefit_type));
         $isKacamata = $benefitType === 'KACAMATA';
+        $isMedical = in_array($benefitType, ['PENGOBATAN', 'PERSALINAN']);
 
         $rules = [
-            'benefit_type' => ['sometimes', 'required', 'string', 'in:PENGOBATAN,KACAMATA,PERSALINAN'],
-            'period_type' => ['sometimes', 'required', 'string', 'in:TAHUNAN,PER_KASUS,2_TAHUNAN,SEUMUR_HIDUP'],
+            'benefit_type' => ['sometimes', 'required', 'string', 'in:PENGOBATAN,KACAMATA,PERSALINAN,TUNJANGAN_LAPANGAN,UANG_PERDIN,BANTUAN_LUMPSUM,BANTUAN_KOMUNIKASI,BANTUAN_PERUMAHAN'],
+            'period_type' => ['sometimes', 'required', 'string', 'in:HARIAN,BULANAN,TAHUNAN,PER_KASUS,2_TAHUNAN,SEUMUR_HIDUP'],
+            'category_name' => ['nullable', 'string', 'max:100'],
+            'zone_name' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
         ];
@@ -150,7 +176,7 @@ class BenefitPlafondController extends BaseApiController
             $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
         } else {
             $rules['salary_grade_id'] = ['sometimes', 'required', 'exists:salary_grades,id'];
-            $rules['marital_category'] = ['sometimes', 'required', 'string', 'in:Menikah,Tidak Menikah,SEMUA'];
+            $rules['marital_category'] = ['nullable', 'string', 'in:Menikah,Tidak Menikah,SEMUA'];
             $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
             $rules['amount'] = ['sometimes', 'required', 'numeric', 'min:0'];
             $rules['lens_type'] = ['nullable', 'string'];

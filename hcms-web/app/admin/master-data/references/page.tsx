@@ -589,7 +589,7 @@ function ReferencesContent() {
       />
 
       {/* 2. Tab Menu: Modern Navigation Tabs with Animated Sliding Underline */}
-      <div className="border border-slate-200/90 bg-white rounded-xl px-2 pt-1 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div className="border border-slate-200/90 bg-white rounded-xl p-1.5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <Tabs
           tabs={categories}
           activeTab={selectedCategory}

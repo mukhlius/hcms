@@ -212,17 +212,27 @@ class MasterImportService
                 if ($modelClass === \App\Models\OrganizationDepartment::class) {
                     if (empty($item['company_id'])) {
                         if (!empty($item['company_code'])) {
-                            $item['company_id'] = \App\Models\OrganizationCompany::where('code', $item['company_code'])->value('id') ?? $defaultCompanyId;
+                            $rawComp = trim((string)$item['company_code']);
+                            $item['company_id'] = \App\Models\OrganizationCompany::where('code', $rawComp)
+                                ->orWhere('name', $rawComp)
+                                ->orWhereRaw('LOWER(code) = ?', [strtolower($rawComp)])
+                                ->value('id') ?? $defaultCompanyId;
                             unset($item['company_code']);
                         } else {
                             $item['company_id'] = $defaultCompanyId;
                         }
                     }
 
-                    if (!empty($item['site_code'])) {
-                        $item['site_id'] = \App\Models\OrganizationSite::where('code', $item['site_code'])->value('id');
-                        unset($item['site_code']);
+                    $siteIdentifier = $item['site_code'] ?? ($item['site_id'] ?? ($item['site'] ?? null));
+                    $resolvedSiteId = $this->resolveSiteId($siteIdentifier, $item['company_id'] ?? null);
+                    unset($item['site_code'], $item['site']);
+
+                    if (!$resolvedSiteId) {
+                        $resolvedSiteId = \App\Models\OrganizationSite::where('company_id', $item['company_id'] ?? $defaultCompanyId)->value('id')
+                            ?? \App\Models\OrganizationSite::value('id');
                     }
+
+                    $item['site_id'] = $resolvedSiteId;
 
                     if (empty($item['status'])) {
                         $item['status'] = 'ACTIVE';
@@ -240,7 +250,11 @@ class MasterImportService
                 // 4. Pre-process for OrganizationSection
                 if ($modelClass === \App\Models\OrganizationSection::class) {
                     if (!empty($item['department_code'])) {
-                        $item['department_id'] = \App\Models\OrganizationDepartment::where('code', $item['department_code'])->value('id');
+                        $rawDept = trim((string)$item['department_code']);
+                        $item['department_id'] = \App\Models\OrganizationDepartment::where('code', $rawDept)
+                            ->orWhere('name', $rawDept)
+                            ->orWhereRaw('LOWER(code) = ?', [strtolower($rawDept)])
+                            ->value('id');
                         unset($item['department_code']);
                     }
 
@@ -250,7 +264,11 @@ class MasterImportService
 
                     if (empty($item['company_id'])) {
                         if (!empty($item['company_code'])) {
-                            $item['company_id'] = \App\Models\OrganizationCompany::where('code', $item['company_code'])->value('id') ?? $defaultCompanyId;
+                            $rawComp = trim((string)$item['company_code']);
+                            $item['company_id'] = \App\Models\OrganizationCompany::where('code', $rawComp)
+                                ->orWhere('name', $rawComp)
+                                ->orWhereRaw('LOWER(code) = ?', [strtolower($rawComp)])
+                                ->value('id') ?? $defaultCompanyId;
                             unset($item['company_code']);
                         } elseif (!empty($item['department_id'])) {
                             $item['company_id'] = \App\Models\OrganizationDepartment::where('id', $item['department_id'])->value('company_id') ?? $defaultCompanyId;
@@ -259,10 +277,23 @@ class MasterImportService
                         }
                     }
 
-                    if (!empty($item['site_code'])) {
-                        $item['site_id'] = \App\Models\OrganizationSite::where('code', $item['site_code'])->value('id');
-                        unset($item['site_code']);
+                    // Resilient Site Resolution
+                    $siteIdentifier = $item['site_code'] ?? ($item['site_id'] ?? ($item['site'] ?? null));
+                    $resolvedSiteId = $this->resolveSiteId($siteIdentifier, $item['company_id'] ?? null);
+                    unset($item['site_code'], $item['site']);
+
+                    // Fallback 1: Follow department's site if department is assigned to a site
+                    if (!$resolvedSiteId && !empty($item['department_id'])) {
+                        $resolvedSiteId = \App\Models\OrganizationDepartment::where('id', $item['department_id'])->value('site_id');
                     }
+
+                    // Fallback 2: Company site or system default site
+                    if (!$resolvedSiteId) {
+                        $resolvedSiteId = \App\Models\OrganizationSite::where('company_id', $item['company_id'] ?? $defaultCompanyId)->value('id')
+                            ?? \App\Models\OrganizationSite::value('id');
+                    }
+
+                    $item['site_id'] = $resolvedSiteId;
 
                     if (empty($item['status'])) {
                         $item['status'] = 'ACTIVE';
@@ -278,20 +309,36 @@ class MasterImportService
 
                 // 5. Pre-process for Position
                 if ($modelClass === \App\Models\Position::class) {
-                    if (!empty($item['site_code'])) {
-                        $item['site_id'] = \App\Models\OrganizationSite::where('code', $item['site_code'])->value('id');
-                        unset($item['site_code']);
-                    }
+                    $siteIdentifier = $item['site_code'] ?? ($item['site_id'] ?? ($item['site'] ?? null));
+                    $resolvedSiteId = $this->resolveSiteId($siteIdentifier);
+                    unset($item['site_code'], $item['site']);
 
                     if (!empty($item['department_code'])) {
-                        $item['department_id'] = \App\Models\OrganizationDepartment::where('code', $item['department_code'])->value('id');
+                        $rawDept = trim((string)$item['department_code']);
+                        $item['department_id'] = \App\Models\OrganizationDepartment::where('code', $rawDept)
+                            ->orWhere('name', $rawDept)
+                            ->value('id');
                         unset($item['department_code']);
                     }
 
                     if (!empty($item['section_code'])) {
-                        $item['section_id'] = \App\Models\OrganizationSection::where('code', $item['section_code'])->value('id');
+                        $rawSec = trim((string)$item['section_code']);
+                        $item['section_id'] = \App\Models\OrganizationSection::where('code', $rawSec)
+                            ->orWhere('name', $rawSec)
+                            ->value('id');
                         unset($item['section_code']);
                     }
+
+                    if (!$resolvedSiteId && !empty($item['section_id'])) {
+                        $resolvedSiteId = \App\Models\OrganizationSection::where('id', $item['section_id'])->value('site_id');
+                    }
+                    if (!$resolvedSiteId && !empty($item['department_id'])) {
+                        $resolvedSiteId = \App\Models\OrganizationDepartment::where('id', $item['department_id'])->value('site_id');
+                    }
+                    if (!$resolvedSiteId) {
+                        $resolvedSiteId = \App\Models\OrganizationSite::value('id');
+                    }
+                    $item['site_id'] = $resolvedSiteId;
 
                     if (!empty($item['grade_code'])) {
                         $item['grade_id'] = \App\Models\Grade::where('code', $item['grade_code'])->value('id');
@@ -412,12 +459,17 @@ class MasterImportService
                     continue;
                 }
 
-                // 10. BenefitPlafond (Plafon Pengobatan, Kacamata, Persalinan)
+                // 10. BenefitPlafond (Plafon Pengobatan, Kacamata, Persalinan, Tunjangan Lapangan, Uang Perdin, Lumpsum, Komunikasi)
                 if ($modelClass === \App\Models\BenefitPlafond::class) {
                     $benefitType = match ($moduleName) {
                         'PLAFON-PENGOBATAN' => 'PENGOBATAN',
                         'PLAFON-KACAMATA' => 'KACAMATA',
                         'PLAFON-PERSALINAN' => 'PERSALINAN',
+                        'TUNJANGAN-LAPANGAN' => 'TUNJANGAN_LAPANGAN',
+                        'UANG-PERDIN' => 'UANG_PERDIN',
+                        'BANTUAN-LUMPSUM' => 'BANTUAN_LUMPSUM',
+                        'BANTUAN-KOMUNIKASI' => 'BANTUAN_KOMUNIKASI',
+                        'BANTUAN-PERUMAHAN' => 'BANTUAN_PERUMAHAN',
                         default => 'PENGOBATAN',
                     };
 
@@ -441,6 +493,44 @@ class MasterImportService
                                 'amount' => $amount,
                                 'marital_category' => 'SEMUA',
                                 'period_type' => $item['period_type'] ?? '2_TAHUNAN',
+                                'description' => $item['description'] ?? null,
+                                'status' => $item['status'] ?? 'ACTIVE',
+                            ]
+                        );
+                    } elseif (in_array($benefitType, ['TUNJANGAN_LAPANGAN', 'UANG_PERDIN', 'BANTUAN_LUMPSUM', 'BANTUAN_KOMUNIKASI', 'BANTUAN_PERUMAHAN'])) {
+                        $salaryGradeId = null;
+                        if (!empty($item['salary_grade_code'])) {
+                            $salaryGradeId = \App\Models\SalaryGrade::where('code', $item['salary_grade_code'])->value('id');
+                        }
+                        if (!$salaryGradeId && !empty($item['salary_grade_id'])) {
+                            $salaryGradeId = $item['salary_grade_id'];
+                        }
+
+                        $categoryName = $item['category_name'] ?? null;
+                        $zoneName = $item['zone_name'] ?? null;
+                        $amount = (float)($item['amount'] ?? 0);
+                        $defaultPeriod = match ($benefitType) {
+                            'UANG_PERDIN' => 'HARIAN',
+                            'BANTUAN_LUMPSUM' => 'PER_KASUS',
+                            default => 'BULANAN',
+                        };
+                        $periodType = $item['period_type'] ?? $defaultPeriod;
+
+                        \App\Models\BenefitPlafond::updateOrCreate(
+                            [
+                                'benefit_type' => $benefitType,
+                                'salary_grade_id' => $salaryGradeId,
+                                'category_name' => $categoryName,
+                                'zone_name' => $zoneName,
+                            ],
+                            [
+                                'benefit_type' => $benefitType,
+                                'salary_grade_id' => $salaryGradeId,
+                                'category_name' => $categoryName,
+                                'zone_name' => $zoneName,
+                                'amount' => $amount,
+                                'marital_category' => 'SEMUA',
+                                'period_type' => $periodType,
                                 'description' => $item['description'] ?? null,
                                 'status' => $item['status'] ?? 'ACTIVE',
                             ]
@@ -540,5 +630,54 @@ class MasterImportService
                 'imported_count' => $importedCount,
             ];
         });
+    }
+
+    /**
+     * Resilient site resolver by code, name, short_name, or ID.
+     */
+    protected function resolveSiteId(mixed $siteIdentifier, ?int $companyId = null): ?int
+    {
+        if (empty($siteIdentifier)) {
+            return null;
+        }
+
+        $raw = trim((string)$siteIdentifier);
+        if (empty($raw)) {
+            return null;
+        }
+
+        // 1. Exact match by code
+        $site = \App\Models\OrganizationSite::where('code', $raw)->first();
+        if ($site) return $site->id;
+
+        // 2. Case-insensitive match by code
+        $site = \App\Models\OrganizationSite::whereRaw('LOWER(code) = ?', [strtolower($raw)])->first();
+        if ($site) return $site->id;
+
+        // 3. Exact match by name or short_name
+        $site = \App\Models\OrganizationSite::where('name', $raw)
+            ->orWhere('short_name', $raw)
+            ->first();
+        if ($site) return $site->id;
+
+        // 4. Case-insensitive match by name or short_name
+        $site = \App\Models\OrganizationSite::whereRaw('LOWER(name) = ?', [strtolower($raw)])
+            ->orWhereRaw('LOWER(short_name) = ?', [strtolower($raw)])
+            ->first();
+        if ($site) return $site->id;
+
+        // 5. Partial / contains match
+        $site = \App\Models\OrganizationSite::where('name', 'like', "%{$raw}%")
+            ->orWhere('code', 'like', "%{$raw}%")
+            ->first();
+        if ($site) return $site->id;
+
+        // 6. Numeric ID check
+        if (is_numeric($raw)) {
+            $site = \App\Models\OrganizationSite::find((int)$raw);
+            if ($site) return $site->id;
+        }
+
+        return null;
     }
 }

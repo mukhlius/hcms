@@ -17,7 +17,13 @@ import {
   Download
 } from 'lucide-react';
 import { MasterSection, MasterDepartment, MasterCompany, MasterSite } from '@/types';
-import { sectionService, importExportService } from '@/services/masterDataService';
+import { 
+  sectionService, 
+  companyService, 
+  siteService, 
+  departmentService, 
+  importExportService 
+} from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -56,6 +62,45 @@ export const SectionTab: React.FC<SectionTabProps> = ({
   const [sections, setSections] = useState<MasterSection[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
+
+  // Fallback internal states to guarantee options are never empty
+  const [internalCompanies, setInternalCompanies] = useState<MasterCompany[]>(companies || []);
+  const [internalSites, setInternalSites] = useState<MasterSite[]>(sites || []);
+  const [internalDepartments, setInternalDepartments] = useState<MasterDepartment[]>(departments || []);
+
+  useEffect(() => {
+    if (companies && companies.length > 0) {
+      setInternalCompanies(companies);
+    } else {
+      companyService.getCompanies({ per_page: 50 }).then((res) => {
+        if (res.success && res.data) setInternalCompanies(res.data.data || []);
+      }).catch(console.error);
+    }
+  }, [companies]);
+
+  useEffect(() => {
+    if (sites && sites.length > 0) {
+      setInternalSites(sites);
+    } else {
+      siteService.getSites({ per_page: 100 }).then((res) => {
+        if (res.success && res.data) setInternalSites(res.data.data || []);
+      }).catch(console.error);
+    }
+  }, [sites]);
+
+  useEffect(() => {
+    if (departments && departments.length > 0) {
+      setInternalDepartments(departments);
+    } else {
+      departmentService.getDepartments({ per_page: 100 }).then((res) => {
+        if (res.success && res.data) setInternalDepartments(res.data.data || []);
+      }).catch(console.error);
+    }
+  }, [departments]);
+
+  const activeCompanies = internalCompanies.length > 0 ? internalCompanies : companies;
+  const activeSites = internalSites.length > 0 ? internalSites : sites;
+  const activeDepts = internalDepartments.length > 0 ? internalDepartments : departments;
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -115,11 +160,21 @@ export const SectionTab: React.FC<SectionTabProps> = ({
 
   const handleOpenCreate = () => {
     setModalMode('create');
+    const initialCompanyId = selectedCompanyId || (activeCompanies[0]?.id ? String(activeCompanies[0].id) : '');
+    const filteredSites = initialCompanyId
+      ? activeSites.filter((s) => !s.company_id || String(s.company_id) === initialCompanyId)
+      : activeSites;
+    const initialSiteId = selectedSiteId || (filteredSites[0]?.id ? String(filteredSites[0].id) : (activeSites[0]?.id ? String(activeSites[0].id) : ''));
+    const filteredDepts = initialCompanyId
+      ? activeDepts.filter((d) => !d.company_id || String(d.company_id) === initialCompanyId)
+      : activeDepts;
+    const initialDeptId = selectedDepartmentId || (filteredDepts[0]?.id ? String(filteredDepts[0].id) : (activeDepts[0]?.id ? String(activeDepts[0].id) : ''));
+
     setFormData({
       id: 0,
-      company_id: selectedCompanyId || (companies[0]?.id ? String(companies[0].id) : ''),
-      site_id: selectedSiteId || '',
-      department_id: selectedDepartmentId || (departments[0]?.id ? String(departments[0].id) : ''),
+      company_id: initialCompanyId,
+      site_id: initialSiteId,
+      department_id: initialDeptId,
       code: '',
       name: '',
       description: '',
@@ -136,10 +191,14 @@ export const SectionTab: React.FC<SectionTabProps> = ({
 
   const handleOpenEdit = (sec: MasterSection) => {
     setModalMode('edit');
+    const resolvedSiteId = sec.site_id
+      ? String(sec.site_id)
+      : (sec.department?.site_id ? String(sec.department.site_id) : (activeSites[0]?.id ? String(activeSites[0].id) : ''));
+
     setFormData({
       id: sec.id,
-      company_id: String(sec.company_id || companies[0]?.id || ''),
-      site_id: sec.site_id ? String(sec.site_id) : '',
+      company_id: String(sec.company_id || activeCompanies[0]?.id || ''),
+      site_id: resolvedSiteId,
       department_id: String(sec.department_id || ''),
       code: sec.code,
       name: sec.name,
@@ -147,6 +206,19 @@ export const SectionTab: React.FC<SectionTabProps> = ({
       status: sec.status,
     });
     setIsModalOpen(true);
+  };
+
+  const handleDepartmentChange = (newDeptId: string) => {
+    const targetDept = activeDepts.find((d) => String(d.id) === newDeptId);
+    let newSiteId = formData.site_id;
+    if (targetDept?.site_id && (!newSiteId || newSiteId === '')) {
+      newSiteId = String(targetDept.site_id);
+    }
+    setFormData((prev) => ({
+      ...prev,
+      department_id: newDeptId,
+      site_id: newSiteId,
+    }));
   };
 
   const handleToggleStatus = async (sec: MasterSection) => {
@@ -218,12 +290,12 @@ export const SectionTab: React.FC<SectionTabProps> = ({
   };
 
   const availableDepts = formData.company_id
-    ? departments.filter((d) => String(d.company_id) === formData.company_id)
-    : departments;
+    ? activeDepts.filter((d) => !d.company_id || String(d.company_id) === formData.company_id)
+    : activeDepts;
 
   const availableSites = formData.company_id
-    ? sites.filter((s) => String(s.company_id) === formData.company_id)
-    : sites;
+    ? activeSites.filter((s) => !s.company_id || String(s.company_id) === formData.company_id)
+    : activeSites;
 
   return (
     <div className="space-y-4">
@@ -411,35 +483,48 @@ export const SectionTab: React.FC<SectionTabProps> = ({
         title={modalMode === 'create' ? 'Tambah Seksi Kerja Baru' : 'Ubah Data Seksi Kerja'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          {/* Row 1: Perusahaan Induk & Site Tambang */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Select
               label="Perusahaan Induk *"
               value={formData.company_id}
-              onChange={(e) => setFormData({ ...formData, company_id: e.target.value, site_id: '', department_id: '' })}
-              options={companies.map((c) => ({ value: String(c.id), label: `${c.code} - ${c.name}` }))}
+              onChange={(e) => {
+                const newCompId = e.target.value;
+                const compSites = activeSites.filter((s) => !s.company_id || String(s.company_id) === newCompId);
+                const compDepts = activeDepts.filter((d) => !d.company_id || String(d.company_id) === newCompId);
+                setFormData({
+                  ...formData,
+                  company_id: newCompId,
+                  site_id: compSites[0]?.id ? String(compSites[0].id) : '',
+                  department_id: compDepts[0]?.id ? String(compDepts[0].id) : '',
+                });
+              }}
+              options={activeCompanies.map((c) => ({ value: String(c.id), label: `${c.code} - ${c.name}` }))}
               required
             />
             <Select
-              label="Departemen Induk *"
-              value={formData.department_id}
-              onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
+              label="Site Tambang / Fasilitas *"
+              value={formData.site_id}
+              onChange={(e) => setFormData({ ...formData, site_id: e.target.value })}
               options={[
-                { value: '', label: '-- Pilih Departemen --' },
-                ...availableDepts.map((d) => ({ value: String(d.id), label: `${d.code} - ${d.name}` })),
+                { value: '', label: '-- Pilih Site Tambang --' },
+                ...availableSites.map((s) => ({ value: String(s.id), label: `${s.code} - ${s.name}` })),
               ]}
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Row 2: Departemen Induk & Status */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Select
-              label="Site Tambang / Fasilitas"
-              value={formData.site_id}
-              onChange={(e) => setFormData({ ...formData, site_id: e.target.value })}
+              label="Departemen Induk *"
+              value={formData.department_id}
+              onChange={(e) => handleDepartmentChange(e.target.value)}
               options={[
-                { value: '', label: 'Mengikuti Site Departemen' },
-                ...availableSites.map((s) => ({ value: String(s.id), label: `${s.code} - ${s.name}` })),
+                { value: '', label: '-- Pilih Departemen --' },
+                ...availableDepts.map((d) => ({ value: String(d.id), label: `${d.code} - ${d.name}` })),
               ]}
+              required
             />
             <Select
               label="Status"

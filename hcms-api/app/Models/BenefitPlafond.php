@@ -18,6 +18,8 @@ class BenefitPlafond extends Model
         'frame_amount',
         'lens_amount',
         'amount',
+        'category_name',
+        'zone_name',
         'marital_category',
         'marital_status_id',
         'period_type',

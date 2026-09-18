@@ -121,6 +121,108 @@ class BenefitPlafondSeeder extends Seeder
                     ['amount' => $persalinan[$code]['M'], 'period_type' => 'PER_KASUS', 'description' => 'Plafon biaya persalinan normal maupun caesar per kehamilan/kelahiran', 'status' => 'ACTIVE']
                 );
             }
+
+            // 3. Tunjangan Lapangan
+            $tunjanganRate = match ($code) {
+                'GOL-8A', 'GOL-7A' => 3500000,
+                'GOL-6A', 'GOL-5A' => 2800000,
+                'GOL-4A', 'GOL-3B' => 2200000,
+                'GOL-3A', 'GOL-2B' => 1800000,
+                default => 1500000,
+            };
+            BenefitPlafond::updateOrCreate(
+                ['benefit_type' => 'TUNJANGAN_LAPANGAN', 'salary_grade_id' => $sg->id, 'category_name' => 'Pit Tambang & Operasional Front'],
+                [
+                    'amount' => $tunjanganRate,
+                    'period_type' => 'BULANAN',
+                    'description' => 'Tunjangan penempatan kerja lapangan pit tambang aktif dan jalan hauling batubara',
+                    'status' => 'ACTIVE',
+                ]
+            );
+
+            // 4. Uang Perdin (Perjalanan Dinas)
+            $perdinLuarKota = match ($code) {
+                'GOL-8A', 'GOL-7A' => 600000,
+                'GOL-6A', 'GOL-5A' => 450000,
+                'GOL-4A', 'GOL-3B' => 350000,
+                default => 250000,
+            };
+            BenefitPlafond::updateOrCreate(
+                ['benefit_type' => 'UANG_PERDIN', 'salary_grade_id' => $sg->id, 'zone_name' => 'Luar Kota / Antar Provinsi', 'category_name' => 'Uang Saku Harian'],
+                [
+                    'amount' => $perdinLuarKota,
+                    'period_type' => 'HARIAN',
+                    'description' => 'Uang saku perjalanan dinas luar wilayah penugasan resmi perusahaan',
+                    'status' => 'ACTIVE',
+                ]
+            );
+            BenefitPlafond::updateOrCreate(
+                ['benefit_type' => 'UANG_PERDIN', 'salary_grade_id' => $sg->id, 'zone_name' => 'Antar Site Tambang', 'category_name' => 'Uang Saku Harian'],
+                [
+                    'amount' => (int)($perdinLuarKota * 0.7),
+                    'period_type' => 'HARIAN',
+                    'description' => 'Uang saku dinas lintas project site tambang internal perusahaan',
+                    'status' => 'ACTIVE',
+                ]
+            );
+
+            // 5. Bantuan Lumpsum
+            $lumpsumRelokasi = match ($code) {
+                'GOL-8A', 'GOL-7A' => 8000000,
+                'GOL-6A', 'GOL-5A' => 6000000,
+                'GOL-4A', 'GOL-3B' => 4500000,
+                default => 3000000,
+            };
+            BenefitPlafond::updateOrCreate(
+                ['benefit_type' => 'BANTUAN_LUMPSUM', 'salary_grade_id' => $sg->id, 'category_name' => 'Relokasi Site Tambang'],
+                [
+                    'amount' => $lumpsumRelokasi,
+                    'period_type' => 'PER_KASUS',
+                    'description' => 'Bantuan biaya relokasi dan akomodasi pindah tugas pertama/mutasi ke site tambang baru',
+                    'status' => 'ACTIVE',
+                ]
+            );
+
+            // 6. Bantuan Komunikasi
+            $komunikasiRate = match ($code) {
+                'GOL-8A', 'GOL-7A' => 750000,
+                'GOL-6A', 'GOL-5A' => 500000,
+                'GOL-4A', 'GOL-3B' => 350000,
+                default => 200000,
+            };
+            BenefitPlafond::updateOrCreate(
+                ['benefit_type' => 'BANTUAN_KOMUNIKASI', 'salary_grade_id' => $sg->id, 'category_name' => 'Paket Data & Komunikasi Lapangan'],
+                [
+                    'amount' => $komunikasiRate,
+                    'period_type' => 'BULANAN',
+                    'description' => 'Bantuan voucher paket data dan koordinasi operasional tim lapangan/manajemen',
+                    'status' => 'ACTIVE',
+                ]
+            );
+
+            // 7. Bantuan Perumahan
+            $housingRate = $sg->housing_allowance > 0 ? (int)$sg->housing_allowance : match ($code) {
+                'GOL-8A' => 15000000,
+                'GOL-7A' => 10000000,
+                'GOL-6A' => 7500000,
+                'GOL-5A' => 5000000,
+                'GOL-4A' => 3500000,
+                'GOL-3B' => 2500000,
+                'GOL-3A' => 2000000,
+                'GOL-2B' => 1500000,
+                'GOL-2A' => 1250000,
+                'GOL-1B' => 1000000,
+                default => 750000,
+            };
+            BenefitPlafond::updateOrCreate(
+                ['benefit_type' => 'BANTUAN_PERUMAHAN', 'salary_grade_id' => $sg->id, 'category_name' => 'Tunjangan Perumahan Mandiri'],
+                [
+                    'amount' => $housingRate,
+                    'period_type' => 'BULANAN',
+                    'description' => 'Bantuan sewa tempat tinggal atau tunjangan perumahan mandiri di luar fasilitas mess perusahaan',
+                    'status' => 'ACTIVE',
+                ]
+            );
         }
     }
 }
