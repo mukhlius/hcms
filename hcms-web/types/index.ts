@@ -383,8 +383,11 @@ export interface EmploymentTypeItem {
 export interface BenefitPlafondItem {
   id: number;
   benefit_type: 'PENGOBATAN' | 'KACAMATA' | 'PERSALINAN';
-  salary_grade_id: number;
-  grade_id?: number;
+  salary_grade_id?: number | null;
+  grade_id?: number | null;
+  lens_type?: string | null;
+  frame_amount?: number | null;
+  lens_amount?: number | null;
   marital_category: 'Menikah' | 'Tidak Menikah' | 'SEMUA';
   marital_status_id?: number | null;
   amount: number;

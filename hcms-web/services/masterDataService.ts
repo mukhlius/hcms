@@ -461,6 +461,7 @@ export const benefitPlafondService = {
     benefit_type?: 'PENGOBATAN' | 'KACAMATA' | 'PERSALINAN' | string;
     salary_grade_id?: number | string;
     grade_id?: number | string;
+    lens_type?: string;
     marital_category?: string;
     status?: string;
     search?: string;

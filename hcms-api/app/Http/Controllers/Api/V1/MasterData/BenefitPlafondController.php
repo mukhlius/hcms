@@ -30,6 +30,10 @@ class BenefitPlafondController extends BaseApiController
             }
         }
 
+        if ($request->filled('lens_type')) {
+            $query->where('lens_type', $request->query('lens_type'));
+        }
+
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
         }
@@ -42,15 +46,17 @@ class BenefitPlafondController extends BaseApiController
                        ->orWhere('code', 'like', "%{$s}%")
                        ->orWhere('pangkat', 'like', "%{$s}%");
                 })->orWhere('description', 'like', "%{$s}%")
-                  ->orWhere('marital_category', 'like', "%{$s}%");
+                  ->orWhere('marital_category', 'like', "%{$s}%")
+                  ->orWhere('lens_type', 'like', "%{$s}%");
             });
         }
 
-        // Join with salary_grades to order by code hierarchy
-        $query->join('salary_grades', 'benefit_plafonds.salary_grade_id', '=', 'salary_grades.id')
+        // Left join with salary_grades so Kacamata records (which do not depend on grade) are not excluded
+        $query->leftJoin('salary_grades', 'benefit_plafonds.salary_grade_id', '=', 'salary_grades.id')
               ->select('benefit_plafonds.*')
-              ->orderBy('salary_grades.code', 'asc')
-              ->orderBy('benefit_plafonds.marital_category', 'asc');
+              ->orderByRaw('COALESCE(salary_grades.code, benefit_plafonds.lens_type, "") ASC')
+              ->orderBy('benefit_plafonds.marital_category', 'asc')
+              ->orderBy('benefit_plafonds.id', 'asc');
 
         if ($request->has('per_page')) {
             $perPage = (int)$request->query('per_page', 15);
@@ -69,16 +75,40 @@ class BenefitPlafondController extends BaseApiController
             $request->merge(['salary_grade_id' => $request->input('grade_id')]);
         }
 
-        $validated = $request->validate([
+        $benefitType = strtoupper($request->input('benefit_type', ''));
+        $isKacamata = $benefitType === 'KACAMATA';
+
+        $rules = [
             'benefit_type' => ['required', 'string', 'in:PENGOBATAN,KACAMATA,PERSALINAN'],
-            'salary_grade_id' => ['required', 'exists:salary_grades,id'],
-            'marital_category' => ['required', 'string', 'in:Menikah,Tidak Menikah,SEMUA'],
-            'marital_status_id' => ['nullable', 'exists:standard_references,id'],
-            'amount' => ['required', 'numeric', 'min:0'],
             'period_type' => ['required', 'string', 'in:TAHUNAN,PER_KASUS,2_TAHUNAN,SEUMUR_HIDUP'],
             'description' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
-        ]);
+        ];
+
+        if ($isKacamata) {
+            $rules['lens_type'] = ['required', 'string', 'max:100'];
+            $rules['frame_amount'] = ['required', 'numeric', 'min:0'];
+            $rules['lens_amount'] = ['required', 'numeric', 'min:0'];
+            $rules['amount'] = ['nullable', 'numeric', 'min:0'];
+            $rules['salary_grade_id'] = ['nullable', 'exists:salary_grades,id'];
+            $rules['marital_category'] = ['nullable', 'string'];
+            $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
+        } else {
+            $rules['salary_grade_id'] = ['required', 'exists:salary_grades,id'];
+            $rules['marital_category'] = ['required', 'string', 'in:Menikah,Tidak Menikah,SEMUA'];
+            $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
+            $rules['amount'] = ['required', 'numeric', 'min:0'];
+            $rules['lens_type'] = ['nullable', 'string'];
+            $rules['frame_amount'] = ['nullable', 'numeric'];
+            $rules['lens_amount'] = ['nullable', 'numeric'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if ($isKacamata) {
+            $validated['marital_category'] = $validated['marital_category'] ?? 'SEMUA';
+            $validated['amount'] = (float)($validated['frame_amount'] ?? 0) + (float)($validated['lens_amount'] ?? 0);
+        }
 
         $item = BenefitPlafond::create($validated);
         $item->load(['salaryGrade', 'maritalStatus']);
@@ -100,16 +130,41 @@ class BenefitPlafondController extends BaseApiController
             $request->merge(['salary_grade_id' => $request->input('grade_id')]);
         }
 
-        $validated = $request->validate([
+        $benefitType = strtoupper($request->input('benefit_type', $benefitPlafond->benefit_type));
+        $isKacamata = $benefitType === 'KACAMATA';
+
+        $rules = [
             'benefit_type' => ['sometimes', 'required', 'string', 'in:PENGOBATAN,KACAMATA,PERSALINAN'],
-            'salary_grade_id' => ['sometimes', 'required', 'exists:salary_grades,id'],
-            'marital_category' => ['sometimes', 'required', 'string', 'in:Menikah,Tidak Menikah,SEMUA'],
-            'marital_status_id' => ['nullable', 'exists:standard_references,id'],
-            'amount' => ['sometimes', 'required', 'numeric', 'min:0'],
             'period_type' => ['sometimes', 'required', 'string', 'in:TAHUNAN,PER_KASUS,2_TAHUNAN,SEUMUR_HIDUP'],
             'description' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
-        ]);
+        ];
+
+        if ($isKacamata) {
+            $rules['lens_type'] = ['sometimes', 'required', 'string', 'max:100'];
+            $rules['frame_amount'] = ['sometimes', 'required', 'numeric', 'min:0'];
+            $rules['lens_amount'] = ['sometimes', 'required', 'numeric', 'min:0'];
+            $rules['amount'] = ['nullable', 'numeric', 'min:0'];
+            $rules['salary_grade_id'] = ['nullable', 'exists:salary_grades,id'];
+            $rules['marital_category'] = ['nullable', 'string'];
+            $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
+        } else {
+            $rules['salary_grade_id'] = ['sometimes', 'required', 'exists:salary_grades,id'];
+            $rules['marital_category'] = ['sometimes', 'required', 'string', 'in:Menikah,Tidak Menikah,SEMUA'];
+            $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
+            $rules['amount'] = ['sometimes', 'required', 'numeric', 'min:0'];
+            $rules['lens_type'] = ['nullable', 'string'];
+            $rules['frame_amount'] = ['nullable', 'numeric'];
+            $rules['lens_amount'] = ['nullable', 'numeric'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if ($isKacamata) {
+            $frame = array_key_exists('frame_amount', $validated) ? (float)$validated['frame_amount'] : (float)$benefitPlafond->frame_amount;
+            $lens = array_key_exists('lens_amount', $validated) ? (float)$validated['lens_amount'] : (float)$benefitPlafond->lens_amount;
+            $validated['amount'] = $frame + $lens;
+        }
 
         $oldValues = $benefitPlafond->toArray();
         $benefitPlafond->update($validated);

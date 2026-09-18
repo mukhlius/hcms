@@ -14,15 +14,20 @@ class BenefitPlafond extends Model
     protected $fillable = [
         'benefit_type',
         'salary_grade_id',
+        'lens_type',
+        'frame_amount',
+        'lens_amount',
+        'amount',
         'marital_category',
         'marital_status_id',
-        'amount',
         'period_type',
         'description',
         'status',
     ];
 
     protected $casts = [
+        'frame_amount' => 'decimal:2',
+        'lens_amount' => 'decimal:2',
         'amount' => 'decimal:2',
     ];
 

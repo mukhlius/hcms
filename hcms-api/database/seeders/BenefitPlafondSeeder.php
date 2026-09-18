@@ -27,19 +27,63 @@ class BenefitPlafondSeeder extends Seeder
             'GOL-1A' => ['M' => 10000000,  'TM' => 5000000],
         ];
 
-        $kacamata = [
-            'GOL-8A' => ['M' => 6000000, 'TM' => 3000000],
-            'GOL-7A' => ['M' => 5000000, 'TM' => 2500000],
-            'GOL-6A' => ['M' => 4000000, 'TM' => 2000000],
-            'GOL-5A' => ['M' => 3000000, 'TM' => 1500000],
-            'GOL-4A' => ['M' => 2500000, 'TM' => 1250000],
-            'GOL-3B' => ['M' => 2200000, 'TM' => 1100000],
-            'GOL-3A' => ['M' => 2000000, 'TM' => 1000000],
-            'GOL-2B' => ['M' => 1800000, 'TM' => 900000],
-            'GOL-2A' => ['M' => 1500000, 'TM' => 800000],
-            'GOL-1B' => ['M' => 1300000, 'TM' => 700000],
-            'GOL-1A' => ['M' => 1200000, 'TM' => 600000],
+        // Clear previous Kacamata records to replace with criteria-based ones
+        BenefitPlafond::where('benefit_type', 'KACAMATA')->delete();
+
+        $kacamataCriteria = [
+            [
+                'lens_type' => 'Monofokus',
+                'frame_amount' => 600000,
+                'lens_amount' => 400000,
+                'description' => 'Lensa fokus tunggal (plus/minus) untuk rabun dekat atau jauh',
+            ],
+            [
+                'lens_type' => 'Monofokus Silindris',
+                'frame_amount' => 600000,
+                'lens_amount' => 600000,
+                'description' => 'Lensa fokus tunggal disertai koreksi silinder (astigmatisme)',
+            ],
+            [
+                'lens_type' => 'Bifokus',
+                'frame_amount' => 800000,
+                'lens_amount' => 700000,
+                'description' => 'Lensa dua titik fokus (baca & jauh) dengan garis batas',
+            ],
+            [
+                'lens_type' => 'Bifokus Silindris',
+                'frame_amount' => 800000,
+                'lens_amount' => 950000,
+                'description' => 'Lensa dua titik fokus disertai koreksi silinder',
+            ],
+            [
+                'lens_type' => 'Progresif',
+                'frame_amount' => 1000000,
+                'lens_amount' => 1200000,
+                'description' => 'Lensa multividang tanpa garis pembatas untuk jarak dekat, menengah & jauh',
+            ],
+            [
+                'lens_type' => 'Progresif Silindris',
+                'frame_amount' => 1000000,
+                'lens_amount' => 1500000,
+                'description' => 'Lensa progresif premium tanpa garis pembatas disertai koreksi silinder',
+            ],
         ];
+
+        foreach ($kacamataCriteria as $k) {
+            $totalAmount = $k['frame_amount'] + $k['lens_amount'];
+            BenefitPlafond::create([
+                'benefit_type' => 'KACAMATA',
+                'salary_grade_id' => null,
+                'lens_type' => $k['lens_type'],
+                'frame_amount' => $k['frame_amount'],
+                'lens_amount' => $k['lens_amount'],
+                'amount' => $totalAmount,
+                'marital_category' => 'SEMUA',
+                'period_type' => '2_TAHUNAN',
+                'description' => $k['description'],
+                'status' => 'ACTIVE',
+            ]);
+        }
 
         $persalinan = [
             'GOL-8A' => ['M' => 35000000, 'TM' => 0],
@@ -70,19 +114,7 @@ class BenefitPlafondSeeder extends Seeder
                 );
             }
 
-            // 2. Kacamata
-            if (isset($kacamata[$code])) {
-                BenefitPlafond::updateOrCreate(
-                    ['benefit_type' => 'KACAMATA', 'salary_grade_id' => $sg->id, 'marital_category' => 'Menikah'],
-                    ['amount' => $kacamata[$code]['M'], 'period_type' => '2_TAHUNAN', 'description' => 'Plafon lensa & frame per 2 tahun (Karyawan + Pasangan)', 'status' => 'ACTIVE']
-                );
-                BenefitPlafond::updateOrCreate(
-                    ['benefit_type' => 'KACAMATA', 'salary_grade_id' => $sg->id, 'marital_category' => 'Tidak Menikah'],
-                    ['amount' => $kacamata[$code]['TM'], 'period_type' => '2_TAHUNAN', 'description' => 'Plafon lensa & frame per 2 tahun (Karyawan)', 'status' => 'ACTIVE']
-                );
-            }
-
-            // 3. Persalinan
+            // 2. Persalinan
             if (isset($persalinan[$code])) {
                 BenefitPlafond::updateOrCreate(
                     ['benefit_type' => 'PERSALINAN', 'salary_grade_id' => $sg->id, 'marital_category' => 'Menikah'],
