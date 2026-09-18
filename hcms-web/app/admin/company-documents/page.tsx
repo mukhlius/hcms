@@ -442,7 +442,7 @@ export default function AdminCompanyDocumentsPage() {
       />
 
       {/* 1. Category Tabs with Live Counter Badges */}
-      <div className="border border-slate-200/90 bg-white rounded-xl px-2 pt-1 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div className="border border-slate-200/90 bg-white rounded-xl p-1.5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <Tabs
           tabs={[
             { id: '', label: 'Semua Dokumen', icon: <BookOpen className="h-4 w-4 shrink-0" />, count: counts.ALL },

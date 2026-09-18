@@ -6,11 +6,15 @@ import {
   HeadcountSummary,
   MasterCompany,
   MasterSite,
+  MasterDepartment,
+  MasterSection,
   OrganizationUnitNode,
   PositionItem,
   ReferenceItem,
   ShiftItem,
   WorkScheduleItem,
+  EmploymentTypeItem,
+  BenefitPlafondItem,
 } from '@/types';
 
 export const companyService = {
@@ -25,6 +29,16 @@ export const companyService = {
       salary_grades: number;
       poh: number;
       work_area: number;
+      employment_types?: number;
+      marital_statuses?: number;
+      plafond_pengobatan?: number;
+      plafond_kacamata?: number;
+      plafond_persalinan?: number;
+      tunjangan_lapangan?: number;
+      uang_perdin?: number;
+      bantuan_lumpsum?: number;
+      bantuan_komunikasi?: number;
+      bantuan_perumahan?: number;
     }>>('/admin/master-data/overview-counts', { params });
     return res.data;
   },
@@ -59,7 +73,7 @@ export const companyService = {
 };
 
 export const siteService = {
-  getSites: async (params?: { company_id?: number; site_type?: string; search?: string; status?: string }) => {
+  getSites: async (params?: { company_id?: number; site_type?: string; search?: string; status?: string; per_page?: number }) => {
     const res = await apiClient.get<ApiResponse<{ data: MasterSite[]; total: number }>>('/admin/master-data/sites', { params });
     return res.data;
   },
@@ -85,6 +99,68 @@ export const siteService = {
   },
   deleteSite: async (id: number) => {
     const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/sites/${id}`);
+    return res.data;
+  },
+};
+
+export const departmentService = {
+  getDepartments: async (params?: { company_id?: number; site_id?: number; search?: string; status?: string; per_page?: number; page?: number }) => {
+    const res = await apiClient.get<ApiResponse<{ data: MasterDepartment[]; total: number }>>('/admin/master-data/departments', { params });
+    return res.data;
+  },
+  getDepartment: async (id: number) => {
+    const res = await apiClient.get<ApiResponse<{ department: MasterDepartment; audit_trail: any[] }>>(`/admin/master-data/departments/${id}`);
+    return res.data;
+  },
+  createDepartment: async (payload: Partial<MasterDepartment>) => {
+    const res = await apiClient.post<ApiResponse<MasterDepartment>>('/admin/master-data/departments', payload);
+    return res.data;
+  },
+  updateDepartment: async (id: number, payload: Partial<MasterDepartment>) => {
+    const res = await apiClient.put<ApiResponse<MasterDepartment>>(`/admin/master-data/departments/${id}`, payload);
+    return res.data;
+  },
+  activateDepartment: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<MasterDepartment>>(`/admin/master-data/departments/${id}/activate`);
+    return res.data;
+  },
+  deactivateDepartment: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<MasterDepartment>>(`/admin/master-data/departments/${id}/deactivate`);
+    return res.data;
+  },
+  deleteDepartment: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/departments/${id}`);
+    return res.data;
+  },
+};
+
+export const sectionService = {
+  getSections: async (params?: { department_id?: number; company_id?: number; site_id?: number; search?: string; status?: string; per_page?: number; page?: number }) => {
+    const res = await apiClient.get<ApiResponse<{ data: MasterSection[]; total: number }>>('/admin/master-data/sections', { params });
+    return res.data;
+  },
+  getSection: async (id: number) => {
+    const res = await apiClient.get<ApiResponse<{ section: MasterSection; audit_trail: any[] }>>(`/admin/master-data/sections/${id}`);
+    return res.data;
+  },
+  createSection: async (payload: Partial<MasterSection>) => {
+    const res = await apiClient.post<ApiResponse<MasterSection>>('/admin/master-data/sections', payload);
+    return res.data;
+  },
+  updateSection: async (id: number, payload: Partial<MasterSection>) => {
+    const res = await apiClient.put<ApiResponse<MasterSection>>(`/admin/master-data/sections/${id}`, payload);
+    return res.data;
+  },
+  activateSection: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<MasterSection>>(`/admin/master-data/sections/${id}/activate`);
+    return res.data;
+  },
+  deactivateSection: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<MasterSection>>(`/admin/master-data/sections/${id}/deactivate`);
+    return res.data;
+  },
+  deleteSection: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/sections/${id}`);
     return res.data;
   },
 };
@@ -129,7 +205,7 @@ export const organizationUnitService = {
 };
 
 export const positionService = {
-  getPositions: async (params?: { company_id?: number; site_id?: number; organization_unit_id?: number; grade_id?: number; is_frozen?: boolean; search?: string; status?: string; per_page?: number }) => {
+  getPositions: async (params?: { company_id?: number; site_id?: number; department_id?: number; section_id?: number; organization_unit_id?: number; grade_id?: number; is_frozen?: boolean; search?: string; status?: string; per_page?: number }) => {
     const res = await apiClient.get<ApiResponse<{ data: PositionItem[]; total: number }>>('/admin/master-data/positions', { params });
     return res.data;
   },
@@ -184,7 +260,7 @@ export const jobGradeService = {
     const res = await apiClient.post<ApiResponse<any>>('/admin/master-data/jobs', payload);
     return res.data;
   },
-  getGrades: async (params?: { search?: string; pangkat?: string }) => {
+  getGrades: async (params?: { search?: string; pangkat?: string; status?: string }) => {
     const res = await apiClient.get<ApiResponse<GradeItem[]>>('/admin/master-data/grades', { params });
     return res.data;
   },
@@ -354,6 +430,77 @@ export const referenceDataService = {
   },
 };
 
+export const employmentTypeService = {
+  getEmploymentTypes: async (params?: { search?: string; status?: string; per_page?: number }) => {
+    const res = await apiClient.get<ApiResponse<EmploymentTypeItem[]>>('/admin/master-data/employment-types', { params });
+    return res.data;
+  },
+  getEmploymentType: async (id: number) => {
+    const res = await apiClient.get<ApiResponse<EmploymentTypeItem>>(`/admin/master-data/employment-types/${id}`);
+    return res.data;
+  },
+  createEmploymentType: async (payload: Partial<EmploymentTypeItem>) => {
+    const res = await apiClient.post<ApiResponse<EmploymentTypeItem>>('/admin/master-data/employment-types', payload);
+    return res.data;
+  },
+  updateEmploymentType: async (id: number, payload: Partial<EmploymentTypeItem>) => {
+    const res = await apiClient.put<ApiResponse<EmploymentTypeItem>>(`/admin/master-data/employment-types/${id}`, payload);
+    return res.data;
+  },
+  deleteEmploymentType: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/employment-types/${id}`);
+    return res.data;
+  },
+  activateEmploymentType: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<EmploymentTypeItem>>(`/admin/master-data/employment-types/${id}/activate`);
+    return res.data;
+  },
+  deactivateEmploymentType: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<EmploymentTypeItem>>(`/admin/master-data/employment-types/${id}/deactivate`);
+    return res.data;
+  },
+};
+
+export const benefitPlafondService = {
+  getBenefitPlafonds: async (params?: {
+    benefit_type?: 'PENGOBATAN' | 'KACAMATA' | 'PERSALINAN' | string;
+    salary_grade_id?: number | string;
+    grade_id?: number | string;
+    lens_type?: string;
+    marital_category?: string;
+    status?: string;
+    search?: string;
+    per_page?: number;
+  }) => {
+    const res = await apiClient.get<ApiResponse<BenefitPlafondItem[]>>('/admin/master-data/benefit-plafonds', { params });
+    return res.data;
+  },
+  getBenefitPlafond: async (id: number) => {
+    const res = await apiClient.get<ApiResponse<BenefitPlafondItem>>(`/admin/master-data/benefit-plafonds/${id}`);
+    return res.data;
+  },
+  createBenefitPlafond: async (payload: Partial<BenefitPlafondItem>) => {
+    const res = await apiClient.post<ApiResponse<BenefitPlafondItem>>('/admin/master-data/benefit-plafonds', payload);
+    return res.data;
+  },
+  updateBenefitPlafond: async (id: number, payload: Partial<BenefitPlafondItem>) => {
+    const res = await apiClient.put<ApiResponse<BenefitPlafondItem>>(`/admin/master-data/benefit-plafonds/${id}`, payload);
+    return res.data;
+  },
+  deleteBenefitPlafond: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/benefit-plafonds/${id}`);
+    return res.data;
+  },
+  activateBenefitPlafond: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<BenefitPlafondItem>>(`/admin/master-data/benefit-plafonds/${id}/activate`);
+    return res.data;
+  },
+  deactivateBenefitPlafond: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<BenefitPlafondItem>>(`/admin/master-data/benefit-plafonds/${id}/deactivate`);
+    return res.data;
+  },
+};
+
 export const customMasterService = {
   getCategories: async () => {
     const res = await apiClient.get<ApiResponse<any[]>>('/admin/master-data/custom');
@@ -402,7 +549,77 @@ export const importExportService = {
     );
     return res.data;
   },
+  downloadExport: async (entity: string, customFilename?: string) => {
+    const response = await apiClient.get(`/admin/master-data/export/${entity}`, {
+      responseType: 'blob',
+    });
+
+    let filename = customFilename || `export_${entity}_${new Date().toISOString().slice(0, 10)}.csv`;
+    const disposition = response.headers['content-disposition'];
+    if (disposition && disposition.includes('filename=')) {
+      const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+      if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['"]/g, '');
+      }
+    }
+
+    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    return true;
+  },
+  downloadTemplate: async (entity: string) => {
+    const response = await apiClient.get(`/admin/master-data/import/template/${entity}`, {
+      responseType: 'blob',
+    });
+
+    let filename = `template_impor_${entity}.csv`;
+    const disposition = response.headers['content-disposition'];
+    if (disposition && disposition.includes('filename=')) {
+      const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+      if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['"]/g, '');
+      }
+    }
+
+    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    return true;
+  },
+  getHistory: async () => {
+    const res = await apiClient.get<ApiResponse<Array<{
+      id: number;
+      action: 'IMPORT' | 'EXPORT';
+      module: string;
+      actor: string;
+      username: string;
+      filename: string;
+      imported_count: number | null;
+      ip_address: string;
+      created_at: string;
+      time_ago: string;
+    }>>>('/admin/master-data/import-export/history');
+    return res.data;
+  },
   getExportUrl: (entity: string) => {
-    return `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/v1/admin/master-data/export/${entity}`;
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1').replace(/\/+$/, '');
+    let token = '';
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('token') || localStorage.getItem('auth_token') || sessionStorage.getItem('token') || '';
+    }
+    return `${baseUrl}/admin/master-data/export/${entity}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
   },
 };

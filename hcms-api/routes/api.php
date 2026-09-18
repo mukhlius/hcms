@@ -112,7 +112,9 @@ Route::prefix('v1')->group(function () {
                 Route::post('/import/upload', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'uploadAndInspect']);
                 Route::post('/import/validate', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'validateImport']);
                 Route::post('/import/execute', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'executeImport']);
+                Route::get('/import/template/{entity}', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'downloadTemplate']);
                 Route::get('/export/{entity}', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'export']);
+                Route::get('/import-export/history', [\App\Http\Controllers\Api\V1\MasterData\ImportExportController::class, 'history']);
                 Route::get('/overview-counts', [\App\Http\Controllers\Api\V1\MasterData\CompanyController::class, 'overviewCounts']);
 
                 // Companies
@@ -135,6 +137,28 @@ Route::prefix('v1')->group(function () {
                     Route::delete('/{site}', [\App\Http\Controllers\Api\V1\MasterData\SiteController::class, 'destroy']);
                     Route::patch('/{site}/activate', [\App\Http\Controllers\Api\V1\MasterData\SiteController::class, 'activate']);
                     Route::patch('/{site}/deactivate', [\App\Http\Controllers\Api\V1\MasterData\SiteController::class, 'deactivate']);
+                });
+
+                // Departments
+                Route::prefix('departments')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'index']);
+                    Route::post('/', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'store']);
+                    Route::get('/{department}', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'show']);
+                    Route::put('/{department}', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'update']);
+                    Route::delete('/{department}', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'destroy']);
+                    Route::patch('/{department}/activate', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'activate']);
+                    Route::patch('/{department}/deactivate', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'deactivate']);
+                });
+
+                // Sections
+                Route::prefix('sections')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'index']);
+                    Route::post('/', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'store']);
+                    Route::get('/{section}', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'show']);
+                    Route::put('/{section}', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'update']);
+                    Route::delete('/{section}', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'destroy']);
+                    Route::patch('/{section}/activate', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'activate']);
+                    Route::patch('/{section}/deactivate', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'deactivate']);
                 });
 
                 // Organization Units & Visual Tree
@@ -182,8 +206,15 @@ Route::prefix('v1')->group(function () {
                 Route::post('/cost-centers', [\App\Http\Controllers\Api\V1\MasterData\JobAndGradeController::class, 'storeCostCenter']);
 
                 // Employment Masters
-                Route::get('/employment-types', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'employmentTypes']);
-                Route::post('/employment-types', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'storeEmploymentType']);
+                Route::prefix('employment-types')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'employmentTypes']);
+                    Route::post('/', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'storeEmploymentType']);
+                    Route::get('/{employmentType}', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'showEmploymentType']);
+                    Route::put('/{employmentType}', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'updateEmploymentType']);
+                    Route::delete('/{employmentType}', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'destroyEmploymentType']);
+                    Route::patch('/{employmentType}/activate', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'activateEmploymentType']);
+                    Route::patch('/{employmentType}/deactivate', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'deactivateEmploymentType']);
+                });
                 Route::get('/employment-statuses', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'employmentStatuses']);
                 Route::post('/employment-statuses', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'storeEmploymentStatus']);
                 Route::get('/worker-categories', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'workerCategories']);
@@ -193,6 +224,17 @@ Route::prefix('v1')->group(function () {
                 Route::post('/employee-sub-groups', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'storeEmployeeSubGroup']);
                 Route::get('/contract-types', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'contractTypes']);
                 Route::post('/contract-types', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'storeContractType']);
+
+                // Benefit Plafonds (Pengobatan, Kacamata, Persalinan)
+                Route::prefix('benefit-plafonds')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'index']);
+                    Route::post('/', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'store']);
+                    Route::get('/{benefitPlafond}', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'show']);
+                    Route::put('/{benefitPlafond}', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'update']);
+                    Route::delete('/{benefitPlafond}', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'destroy']);
+                    Route::patch('/{benefitPlafond}/activate', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'activate']);
+                    Route::patch('/{benefitPlafond}/deactivate', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'deactivate']);
+                });
 
                 // Time & Schedules
                 Route::get('/shifts', [\App\Http\Controllers\Api\V1\MasterData\ScheduleMasterController::class, 'shifts']);

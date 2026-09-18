@@ -93,12 +93,12 @@ export const Tabs: React.FC<TabsProps> = ({
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.85, x: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 top-0 bottom-0 z-20 flex items-center pr-5 pl-0.5 bg-gradient-to-r from-white via-white/95 to-transparent pointer-events-none"
+            className="absolute left-0 top-0 bottom-0 z-20 flex items-center pr-6 pl-0.5 bg-gradient-to-r from-white via-white/95 to-transparent dark:from-slate-900 dark:via-slate-900/95 dark:to-transparent pointer-events-none"
           >
             <button
               type="button"
               onClick={() => handleScroll('left')}
-              className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200/90 bg-white text-slate-600 shadow-xs hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all cursor-pointer active:scale-95"
+              className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/90 bg-white text-slate-600 shadow-xs hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-blue-400 transition-all cursor-pointer active:scale-95"
               aria-label="Geser tab ke kiri"
               title="Geser tab ke kiri"
             >
@@ -116,12 +116,12 @@ export const Tabs: React.FC<TabsProps> = ({
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.85, x: 4 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-0 bottom-0 z-20 flex items-center pl-5 pr-0.5 bg-gradient-to-l from-white via-white/95 to-transparent pointer-events-none"
+            className="absolute right-0 top-0 bottom-0 z-20 flex items-center pl-6 pr-0.5 bg-gradient-to-l from-white via-white/95 to-transparent dark:from-slate-900 dark:via-slate-900/95 dark:to-transparent pointer-events-none"
           >
             <button
               type="button"
               onClick={() => handleScroll('right')}
-              className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200/90 bg-white text-slate-600 shadow-xs hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all cursor-pointer active:scale-95"
+              className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/90 bg-white text-slate-600 shadow-xs hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-blue-400 transition-all cursor-pointer active:scale-95"
               aria-label="Geser tab ke kanan"
               title="Geser tab ke kanan"
             >
@@ -135,7 +135,7 @@ export const Tabs: React.FC<TabsProps> = ({
       <nav
         ref={navRef}
         onScroll={checkScroll}
-        className="-mb-px flex space-x-1 sm:space-x-2 overflow-x-auto scrollbar-none scroll-smooth"
+        className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto scrollbar-none scroll-smooth py-1 px-0.5"
         aria-label="Tabs"
       >
         {tabs.map((tab) => {
@@ -147,33 +147,35 @@ export const Tabs: React.FC<TabsProps> = ({
               type="button"
               onClick={() => onChange(tab.id)}
               className={cn(
-                'group relative inline-flex items-center gap-2 font-medium transition-colors whitespace-nowrap cursor-pointer rounded-t-lg select-none',
-                size === 'sm' ? 'px-3 py-2 text-xs' : 'px-3.5 py-2.5 sm:py-3 text-xs sm:text-sm',
+                'group relative inline-flex items-center justify-center gap-2 font-medium transition-all whitespace-nowrap cursor-pointer rounded-lg select-none',
+                size === 'sm'
+                  ? 'px-3 py-1.5 text-xs h-8'
+                  : 'px-3.5 py-2 text-xs sm:text-sm h-9 sm:h-9.5',
                 isActive
-                  ? 'text-[var(--primary-color,#2563eb)] font-bold'
-                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/60'
+                  ? 'text-[var(--primary-color,#2563eb)] font-semibold bg-blue-50/70 dark:bg-blue-950/40 dark:text-blue-400'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/90 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/70'
               )}
             >
               {tab.icon && (
                 <span
                   className={cn(
-                    'transition-colors shrink-0',
-                    isActive ? 'text-[var(--primary-color,#2563eb)]' : 'text-slate-400 group-hover:text-slate-600'
+                    'transition-colors shrink-0 flex items-center justify-center',
+                    isActive ? 'text-[var(--primary-color,#2563eb)] dark:text-blue-400' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                   )}
                 >
                   {tab.icon}
                 </span>
               )}
-              <span>{tab.label}</span>
+              <span className="leading-none">{tab.label}</span>
               {typeof tab.count === 'number' && (
                 <span
                   className={cn(
-                    'rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-semibold transition-colors',
+                    'rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-semibold transition-colors leading-none',
                     tab.badgeColor
                       ? tab.badgeColor
                       : isActive
-                      ? 'bg-[var(--primary-light,#eff6ff)] text-[var(--primary-color,#2563eb)] ring-1 ring-[var(--primary-border,#bfdbfe)]'
-                      : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200/70'
+                      ? 'bg-[var(--primary-light,#eff6ff)] text-[var(--primary-color,#2563eb)] ring-1 ring-[var(--primary-border,#bfdbfe)] dark:bg-blue-900/60 dark:text-blue-300 dark:ring-blue-800'
+                      : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200/70 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-slate-700'
                   )}
                 >
                   {tab.count}
@@ -184,7 +186,7 @@ export const Tabs: React.FC<TabsProps> = ({
               {isActive && (
                 <motion.div
                   layoutId={activeIndicatorId}
-                  className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--primary-color,#2563eb)] rounded-full shadow-[0_1px_6px_var(--primary-ring,rgba(37,99,235,0.45))]"
+                  className="absolute bottom-0.5 left-2.5 right-2.5 h-[2px] bg-[var(--primary-color,#2563eb)] rounded-full shadow-[0_1px_6px_var(--primary-ring,rgba(37,99,235,0.45))] dark:bg-blue-500"
                   transition={{
                     type: 'spring',
                     stiffness: 450,

@@ -16,6 +16,10 @@ class CorrelationIdMiddleware
         $requestId = $request->header('X-Request-ID') ?: (string) Str::uuid();
         RequestContext::setRequestId($requestId);
 
+        if (!$request->bearerToken() && ($token = $request->query('token') ?? $request->query('auth_token'))) {
+            $request->headers->set('Authorization', 'Bearer ' . $token);
+        }
+
         $response = $next($request);
 
         $response->headers->set('X-Request-ID', $requestId);

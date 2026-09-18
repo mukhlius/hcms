@@ -467,11 +467,11 @@ class Phase2MasterDataSeeder extends Seeder
                 ['category' => 'EDUCATION', 'code' => 'S2', 'name' => 'Magister / Strata 2 (S2)'],
                 ['category' => 'EDUCATION', 'code' => 'S3', 'name' => 'Doktoral (S3)'],
 
-                ['category' => 'MARITAL_STATUS', 'code' => 'TK0', 'name' => 'Belum Menikah (TK/0)'],
-                ['category' => 'MARITAL_STATUS', 'code' => 'K0', 'name' => 'Menikah Tanpa Tanggungan (K/0)'],
-                ['category' => 'MARITAL_STATUS', 'code' => 'K1', 'name' => 'Menikah 1 Tanggungan (K/1)'],
-                ['category' => 'MARITAL_STATUS', 'code' => 'K2', 'name' => 'Menikah 2 Tanggungan (K/2)'],
-                ['category' => 'MARITAL_STATUS', 'code' => 'K3', 'name' => 'Menikah 3+ Tanggungan (K/3)'],
+                ['category' => 'MARITAL_STATUS', 'code' => 'TK0', 'name' => 'Belum Menikah (TK/0)', 'metadata' => json_encode(['category' => 'Tidak Menikah'])],
+                ['category' => 'MARITAL_STATUS', 'code' => 'K0', 'name' => 'Menikah Tanpa Tanggungan (K/0)', 'metadata' => json_encode(['category' => 'Menikah'])],
+                ['category' => 'MARITAL_STATUS', 'code' => 'K1', 'name' => 'Menikah 1 Tanggungan (K/1)', 'metadata' => json_encode(['category' => 'Menikah'])],
+                ['category' => 'MARITAL_STATUS', 'code' => 'K2', 'name' => 'Menikah 2 Tanggungan (K/2)', 'metadata' => json_encode(['category' => 'Menikah'])],
+                ['category' => 'MARITAL_STATUS', 'code' => 'K3', 'name' => 'Menikah 3+ Tanggungan (K/3)', 'metadata' => json_encode(['category' => 'Menikah'])],
 
                 ['category' => 'BLOOD_TYPE', 'code' => 'A', 'name' => 'Golongan Darah A'],
                 ['category' => 'BLOOD_TYPE', 'code' => 'B', 'name' => 'Golongan Darah B'],

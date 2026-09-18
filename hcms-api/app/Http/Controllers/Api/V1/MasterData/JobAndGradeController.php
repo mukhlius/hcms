@@ -78,6 +78,9 @@ class JobAndGradeController extends BaseApiController
         if ($request->filled('pangkat')) {
             $query->where('pangkat', $request->query('pangkat'));
         }
+        if ($request->filled('status')) {
+            $query->where('status', $request->query('status'));
+        }
         if ($request->filled('search')) {
             $s = $request->query('search');
             $query->where(function ($q) use ($s) {
@@ -111,6 +114,8 @@ class JobAndGradeController extends BaseApiController
         } else {
             $validated['pangkat'] = 'Staff';
         }
+
+        $validated['status'] = $validated['status'] ?? 'ACTIVE';
 
         $item = Grade::create($validated);
         AuditService::log('CREATE', 'GRADE', Grade::class, (string)$item->id, newValues: $item->toArray());

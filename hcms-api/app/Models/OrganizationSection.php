@@ -8,23 +8,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class OrganizationDepartment extends Model
+class OrganizationSection extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'company_id',
         'site_id',
+        'department_id',
         'code',
         'name',
         'description',
         'leader_user_id',
         'status',
-        'is_active',
-    ];
-
-    protected $casts = [
-        'is_active' => 'boolean',
     ];
 
     public function company(): BelongsTo
@@ -37,9 +33,9 @@ class OrganizationDepartment extends Model
         return $this->belongsTo(OrganizationSite::class, 'site_id');
     }
 
-    public function sections(): HasMany
+    public function department(): BelongsTo
     {
-        return $this->hasMany(OrganizationSection::class, 'department_id');
+        return $this->belongsTo(OrganizationDepartment::class, 'department_id');
     }
 
     public function leader(): BelongsTo
@@ -49,7 +45,7 @@ class OrganizationDepartment extends Model
 
     public function users(): HasMany
     {
-        return $this->hasMany(User::class, 'department_id');
+        return $this->hasMany(User::class, 'section_id');
     }
 
     public function scopeActive($query)

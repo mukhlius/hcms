@@ -22,6 +22,7 @@ import {
   CalendarRange,
   Award,
   UserCheck2,
+  HeartHandshake,
   User as UserIcon
 } from 'lucide-react';
 import { User } from '@/types';
@@ -177,6 +178,7 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
         children: [
           { label: 'Referensi Organisasi', href: '/admin/organization/references', icon: <Layers className="h-4 w-4" />, permission: 'organizations.view' },
           { label: 'Referensi Standar', href: '/admin/master-data/references', icon: <Database className="h-4 w-4" />, permission: 'organizations.view' },
+          { label: 'Referensi Benefit', href: '/admin/master-data/benefits', icon: <HeartHandshake className="h-4 w-4" />, permission: 'organizations.view' },
           { label: 'Dokumen Perusahaan', href: '/admin/company-documents', icon: <FileText className="h-4 w-4" />, permission: 'organizations.view' },
           { label: 'Impor & Ekspor Data', href: '/admin/master-data/import-export', icon: <UploadCloud className="h-4 w-4" />, permission: 'organizations.view' },
         ],

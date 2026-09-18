@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { ChevronDown } from 'lucide-react';
 import { Button } from './Button';
 
 export interface TablePaginationProps {
@@ -41,19 +42,22 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
           <span className="font-semibold text-slate-700">{totalItems}</span> {itemLabel}
         </span>
 
-        <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
+        <div className="flex items-center gap-2 border-l border-slate-200 pl-4 dark:border-slate-800">
           <span className="text-slate-500">Tampilkan:</span>
-          <select
-            value={perPage}
-            onChange={(e) => onPerPageChange(Number(e.target.value))}
-            className="h-7 rounded border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-          >
-            {perPageOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt} baris
-              </option>
-            ))}
-          </select>
+          <div className="relative flex items-center group">
+            <select
+              value={perPage}
+              onChange={(e) => onPerPageChange(Number(e.target.value))}
+              className="h-7.5 appearance-none rounded-md border border-slate-200 bg-white pl-2.5 pr-6 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50/50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-2xs transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
+            >
+              {perPageOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt} baris
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+          </div>
         </div>
       </div>
 
