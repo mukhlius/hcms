@@ -10,12 +10,10 @@ import {
   CheckCircle2,
   UserX,
   Power,
-  ShieldCheck,
-  CreditCard,
-  Info
+  CreditCard
 } from 'lucide-react';
-import { BenefitPlafondItem, GradeItem } from '@/types';
-import { benefitPlafondService, jobGradeService } from '@/services/masterDataService';
+import { BenefitPlafondItem, SalaryGradeItem } from '@/types';
+import { benefitPlafondService, salaryGradeService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -52,10 +50,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   createTrigger,
 }) => {
   const [items, setItems] = useState<BenefitPlafondItem[]>([]);
-  const [grades, setGrades] = useState<GradeItem[]>([]);
+  const [salaryGrades, setSalaryGrades] = useState<SalaryGradeItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
-  const [filterGrade, setFilterGrade] = useState<string>('ALL');
+  const [filterGolongan, setFilterGolongan] = useState<string>('ALL');
   const [filterCategory, setFilterCategory] = useState<'ALL' | 'Menikah' | 'Tidak Menikah'>('ALL');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
 
@@ -64,10 +62,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [submitting, setSubmitting] = useState(false);
 
-  // Form Data
+  // Form Data (Golongan based)
   const [formData, setFormData] = useState({
     id: 0,
-    grade_id: 0,
+    salary_grade_id: 0,
     marital_category: 'Menikah' as 'Menikah' | 'Tidak Menikah' | 'SEMUA',
     amount: '',
     period_type: defaultPeriod,
@@ -78,16 +76,16 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [plafondRes, gradeRes] = await Promise.all([
+      const [plafondRes, salaryGradeRes] = await Promise.all([
         benefitPlafondService.getBenefitPlafonds({ benefit_type: benefitType }),
-        jobGradeService.getGrades(),
+        salaryGradeService.getSalaryGrades(),
       ]);
 
       if (plafondRes.success && plafondRes.data) {
         setItems(plafondRes.data);
       }
-      if (gradeRes.success && gradeRes.data) {
-        setGrades(gradeRes.data);
+      if (salaryGradeRes.success && salaryGradeRes.data) {
+        setSalaryGrades(salaryGradeRes.data);
       }
     } catch (err) {
       console.error(`Failed to load ${title} data:`, err);
@@ -105,7 +103,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     setModalMode('create');
     setFormData({
       id: 0,
-      grade_id: grades.length > 0 ? grades[0].id : 0,
+      salary_grade_id: salaryGrades.length > 0 ? salaryGrades[0].id : 0,
       marital_category: 'Menikah',
       amount: '',
       period_type: defaultPeriod,
@@ -125,7 +123,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     setModalMode('edit');
     setFormData({
       id: item.id,
-      grade_id: item.grade_id,
+      salary_grade_id: item.salary_grade_id || item.salary_grade?.id || item.grade_id || 0,
       marital_category: item.marital_category,
       amount: String(item.amount || ''),
       period_type: (item.period_type as any) || defaultPeriod,
@@ -138,8 +136,8 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.grade_id || formData.grade_id === 0) {
-      toast.warning('Pilih Grade / Level terlebih dahulu.', 'Form Belum Lengkap');
+    if (!formData.salary_grade_id || formData.salary_grade_id === 0) {
+      toast.warning('Pilih Golongan terlebih dahulu.', 'Form Belum Lengkap');
       return;
     }
     if (formData.amount === '' || isNaN(parseFloat(formData.amount))) {
@@ -151,7 +149,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
       setSubmitting(true);
       const payload = {
         benefit_type: benefitType,
-        grade_id: Number(formData.grade_id),
+        salary_grade_id: Number(formData.salary_grade_id),
         marital_category: formData.marital_category,
         amount: parseFloat(formData.amount),
         period_type: formData.period_type,
@@ -191,10 +189,11 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const handleToggleStatus = async (item: BenefitPlafondItem) => {
     const isActivating = item.status !== 'ACTIVE';
     const actionText = isActivating ? 'mengaktifkan' : 'menonaktifkan';
+    const golName = item.salary_grade?.name || item.salary_grade?.code || item.grade?.name || `ID ${item.salary_grade_id}`;
 
     const confirmed = await confirmDialog({
       title: `${isActivating ? 'Aktifkan' : 'Nonaktifkan'} ${title}`,
-      message: `Apakah Anda yakin ingin ${actionText} plafon untuk Grade "${item.grade?.name || item.grade_id}" (${item.marital_category})?`,
+      message: `Apakah Anda yakin ingin ${actionText} plafon untuk Golongan "${golName}" (${item.marital_category})?`,
       confirmText: isActivating ? 'Ya, Aktifkan' : 'Ya, Nonaktifkan',
       cancelText: 'Batal',
       variant: isActivating ? 'primary' : 'warning',
@@ -218,9 +217,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   };
 
   const handleDelete = async (item: BenefitPlafondItem) => {
+    const golName = item.salary_grade?.name || item.salary_grade?.code || item.grade?.name || `ID ${item.salary_grade_id}`;
     const confirmed = await confirmDialog({
       title: `Hapus ${title}`,
-      message: `Apakah Anda yakin ingin menghapus data plafon untuk Grade "${item.grade?.name || item.grade_id}" (${item.marital_category}) senilai ${formatRupiah(item.amount)}?`,
+      message: `Apakah Anda yakin ingin menghapus data plafon untuk Golongan "${golName}" (${item.marital_category}) senilai ${formatRupiah(item.amount)}?`,
       confirmText: 'Ya, Hapus Plafon',
       cancelText: 'Batal',
       variant: 'danger',
@@ -244,25 +244,27 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       const q = search.toLowerCase();
-      const gradeName = (item.grade?.name || '').toLowerCase();
-      const gradeCode = (item.grade?.code || '').toLowerCase();
+      const gol = item.salary_grade || (item.grade as any);
+      const golName = (gol?.name || '').toLowerCase();
+      const golCode = (gol?.code || '').toLowerCase();
       const desc = (item.description || '').toLowerCase();
       const marital = (item.marital_category || '').toLowerCase();
 
       const matchSearch =
         !search ||
-        gradeName.includes(q) ||
-        gradeCode.includes(q) ||
+        golName.includes(q) ||
+        golCode.includes(q) ||
         desc.includes(q) ||
         marital.includes(q);
 
-      const matchGrade = filterGrade === 'ALL' || String(item.grade_id) === filterGrade;
+      const targetId = item.salary_grade_id || item.grade_id;
+      const matchGolongan = filterGolongan === 'ALL' || String(targetId) === filterGolongan;
       const matchCategory = filterCategory === 'ALL' || item.marital_category === filterCategory;
       const matchStatus = filterStatus === 'ALL' || item.status === filterStatus;
 
-      return matchSearch && matchGrade && matchCategory && matchStatus;
+      return matchSearch && matchGolongan && matchCategory && matchStatus;
     });
-  }, [items, search, filterGrade, filterCategory, filterStatus]);
+  }, [items, search, filterGolongan, filterCategory, filterStatus]);
 
   const {
     sortField,
@@ -307,16 +309,16 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
               />
             </div>
 
-            {/* Filter Grade / Level */}
+            {/* Filter Golongan */}
             <select
-              value={filterGrade}
-              onChange={(e) => setFilterGrade(e.target.value)}
+              value={filterGolongan}
+              onChange={(e) => setFilterGolongan(e.target.value)}
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
-              <option value="ALL">Semua Grade / Level</option>
-              {grades.map((g) => (
+              <option value="ALL">Semua Golongan</option>
+              {salaryGrades.map((g) => (
                 <option key={g.id} value={String(g.id)}>
-                  {g.code} - {g.name} (Lvl {g.level})
+                  {g.code} - {g.name}
                 </option>
               ))}
             </select>
@@ -371,9 +373,9 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
           <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
             <thead className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
               <tr>
-                {/* 1. Grade / Level */}
+                {/* 1. Golongan */}
                 <th className="py-3.5 pl-4 pr-3">
-                  <SortableHeader label="Grade / Level" field="grade_id" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                  <SortableHeader label="Golongan" field="salary_grade_id" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
 
                 {/* 2. Kategori Pernikahan */}
@@ -407,7 +409,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td className="py-3.5 pl-4 pr-3"><Skeleton className="h-5 w-32" /></td>
+                    <td className="py-3.5 pl-4 pr-3"><Skeleton className="h-5 w-40" /></td>
                     <td className="px-3 py-3.5"><Skeleton className="h-5 w-24" /></td>
                     <td className="px-3 py-3.5 text-right"><Skeleton className="ml-auto h-5 w-28" /></td>
                     <td className="px-3 py-3.5 text-center"><Skeleton className="mx-auto h-5 w-20" /></td>
@@ -426,118 +428,121 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                       Belum ada data {title.toLowerCase()} ditemukan
                     </p>
                     <p className="text-xs text-slate-400 dark:text-slate-500">
-                      {search ? 'Coba ubah kata kunci atau filter Anda' : `Klik tombol Tambah ${title} untuk menentukan nominal plafon per Grade`}
+                      {search ? 'Coba ubah kata kunci atau filter Anda' : `Klik tombol Tambah ${title} untuk menentukan nominal plafon per Golongan`}
                     </p>
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="group transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/30"
-                  >
-                    {/* Grade / Level */}
-                    <td className="py-3.5 pl-4 pr-3">
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-1.5">
-                          <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 font-mono text-xs font-bold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
-                            {item.grade?.code || `GRD-${item.grade_id}`}
-                          </span>
-                          {item.grade?.pangkat && (
-                            <span className="text-[11px] text-slate-400 font-normal">
-                              ({item.grade.pangkat})
+                paginatedData.map((item) => {
+                  const gol = item.salary_grade || (item.grade as any);
+                  return (
+                    <tr
+                      key={item.id}
+                      className="group transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/30"
+                    >
+                      {/* Golongan */}
+                      <td className="py-3.5 pl-4 pr-3">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 font-mono text-xs font-bold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
+                              {gol?.code || `GOL-${item.salary_grade_id}`}
                             </span>
-                          )}
+                            {gol?.pangkat && (
+                              <span className="text-[11px] text-slate-400 font-normal">
+                                ({gol.pangkat})
+                              </span>
+                            )}
+                          </div>
+                          <span className="mt-0.5 text-xs font-medium text-slate-800 dark:text-slate-200">
+                            {gol?.name || 'Golongan'}
+                          </span>
                         </div>
-                        <span className="mt-0.5 text-xs font-medium text-slate-800 dark:text-slate-200">
-                          {item.grade?.name || 'Grade'} (Level {item.grade?.level || '-'})
+                      </td>
+
+                      {/* Kategori Pernikahan */}
+                      <td className="px-3 py-3.5">
+                        {item.marital_category === 'Menikah' ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Menikah (Keluarga)
+                          </span>
+                        ) : item.marital_category === 'Tidak Menikah' ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-semibold text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800">
+                            <UserX className="h-3 w-3" />
+                            Tidak Menikah (Lajang)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800">
+                            Semua Kategori
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Nominal Plafon */}
+                      <td className="px-3 py-3.5 text-right font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
+                        {formatRupiah(item.amount)}
+                      </td>
+
+                      {/* Periode */}
+                      <td className="px-3 py-3.5 text-center">
+                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                          {getPeriodLabel(item.period_type)}
                         </span>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Kategori Pernikahan */}
-                    <td className="px-3 py-3.5">
-                      {item.marital_category === 'Menikah' ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Menikah (Keluarga)
-                        </span>
-                      ) : item.marital_category === 'Tidak Menikah' ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-semibold text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800">
-                          <UserX className="h-3 w-3" />
-                          Tidak Menikah (Lajang)
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800">
-                          Semua Kategori
-                        </span>
-                      )}
-                    </td>
+                      {/* Deskripsi */}
+                      <td className="px-3 py-3.5 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate">
+                        {item.description || '-'}
+                      </td>
 
-                    {/* Nominal Plafon */}
-                    <td className="px-3 py-3.5 text-right font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
-                      {formatRupiah(item.amount)}
-                    </td>
+                      {/* Status */}
+                      <td className="px-3 py-3.5 text-center">
+                        {item.status === 'ACTIVE' ? (
+                          <Badge variant="success">Aktif</Badge>
+                        ) : (
+                          <Badge variant="secondary">Nonaktif</Badge>
+                        )}
+                      </td>
 
-                    {/* Periode */}
-                    <td className="px-3 py-3.5 text-center">
-                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                        {getPeriodLabel(item.period_type)}
-                      </span>
-                    </td>
-
-                    {/* Deskripsi */}
-                    <td className="px-3 py-3.5 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate">
-                      {item.description || '-'}
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-3 py-3.5 text-center">
-                      {item.status === 'ACTIVE' ? (
-                        <Badge variant="success">Aktif</Badge>
-                      ) : (
-                        <Badge variant="secondary">Nonaktif</Badge>
-                      )}
-                    </td>
-
-                    {/* Aksi */}
-                    <td className="px-3 py-3.5 pr-4 text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-90 group-hover:opacity-100">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
-                          title={`Ubah ${title}`}
-                          onClick={() => handleOpenEdit(item)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={`h-8 w-8 p-0 ${
-                            item.status === 'ACTIVE'
-                              ? 'text-amber-500 hover:text-amber-700 dark:text-amber-400'
-                              : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
-                          }`}
-                          title={item.status === 'ACTIVE' ? 'Nonaktifkan' : 'Aktifkan'}
-                          onClick={() => handleToggleStatus(item)}
-                        >
-                          <Power className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-rose-500 hover:text-rose-700 dark:text-rose-400"
-                          title={`Hapus ${title}`}
-                          onClick={() => handleDelete(item)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      {/* Aksi */}
+                      <td className="px-3 py-3.5 pr-4 text-right">
+                        <div className="flex items-center justify-end gap-1 opacity-90 group-hover:opacity-100">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
+                            title={`Ubah ${title}`}
+                            onClick={() => handleOpenEdit(item)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`h-8 w-8 p-0 ${
+                              item.status === 'ACTIVE'
+                                ? 'text-amber-500 hover:text-amber-700 dark:text-amber-400'
+                                : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
+                            }`}
+                            title={item.status === 'ACTIVE' ? 'Nonaktifkan' : 'Aktifkan'}
+                            onClick={() => handleToggleStatus(item)}
+                          >
+                            <Power className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-rose-500 hover:text-rose-700 dark:text-rose-400"
+                            title={`Hapus ${title}`}
+                            onClick={() => handleDelete(item)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -562,21 +567,21 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         title={modalMode === 'create' ? `Tambah ${title}` : `Ubah ${title}`}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 1. Grade / Level */}
+          {/* 1. Golongan */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-              Grade / Level Jabatan <span className="text-rose-500">*</span>
+              Golongan <span className="text-rose-500">*</span>
             </label>
             <select
-              value={formData.grade_id}
-              onChange={(e) => setFormData({ ...formData, grade_id: Number(e.target.value) })}
+              value={formData.salary_grade_id}
+              onChange={(e) => setFormData({ ...formData, salary_grade_id: Number(e.target.value) })}
               required
               className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
-              <option value="0" disabled>-- Pilih Grade / Level --</option>
-              {grades.map((g) => (
+              <option value="0" disabled>-- Pilih Golongan --</option>
+              {salaryGrades.map((g) => (
                 <option key={g.id} value={g.id}>
-                  {g.code} - {g.name} (Level {g.level}{g.pangkat ? ` - ${g.pangkat}` : ''})
+                  {g.code} - {g.name}{g.pangkat ? ` (${g.pangkat})` : ''}
                 </option>
               ))}
             </select>

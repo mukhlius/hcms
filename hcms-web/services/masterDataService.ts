@@ -459,6 +459,7 @@ export const employmentTypeService = {
 export const benefitPlafondService = {
   getBenefitPlafonds: async (params?: {
     benefit_type?: 'PENGOBATAN' | 'KACAMATA' | 'PERSALINAN' | string;
+    salary_grade_id?: number | string;
     grade_id?: number | string;
     marital_category?: string;
     status?: string;

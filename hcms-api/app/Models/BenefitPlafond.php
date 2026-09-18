@@ -13,7 +13,7 @@ class BenefitPlafond extends Model
 
     protected $fillable = [
         'benefit_type',
-        'grade_id',
+        'salary_grade_id',
         'marital_category',
         'marital_status_id',
         'amount',
@@ -26,9 +26,9 @@ class BenefitPlafond extends Model
         'amount' => 'decimal:2',
     ];
 
-    public function grade(): BelongsTo
+    public function salaryGrade(): BelongsTo
     {
-        return $this->belongsTo(Grade::class, 'grade_id');
+        return $this->belongsTo(SalaryGrade::class, 'salary_grade_id');
     }
 
     public function maritalStatus(): BelongsTo

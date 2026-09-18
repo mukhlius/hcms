@@ -12,14 +12,15 @@ class BenefitPlafondController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
-        $query = BenefitPlafond::with(['grade', 'maritalStatus']);
+        $query = BenefitPlafond::with(['salaryGrade', 'maritalStatus']);
 
         if ($request->filled('benefit_type')) {
             $query->where('benefit_type', strtoupper($request->query('benefit_type')));
         }
 
-        if ($request->filled('grade_id')) {
-            $query->where('grade_id', $request->query('grade_id'));
+        $salaryGradeId = $request->query('salary_grade_id') ?? $request->query('grade_id');
+        if (!empty($salaryGradeId)) {
+            $query->where('salary_grade_id', $salaryGradeId);
         }
 
         if ($request->filled('marital_category')) {
@@ -36,7 +37,7 @@ class BenefitPlafondController extends BaseApiController
         if ($request->filled('search')) {
             $s = $request->query('search');
             $query->where(function ($q) use ($s) {
-                $q->whereHas('grade', function ($gq) use ($s) {
+                $q->whereHas('salaryGrade', function ($gq) use ($s) {
                     $gq->where('name', 'like', "%{$s}%")
                        ->orWhere('code', 'like', "%{$s}%")
                        ->orWhere('pangkat', 'like', "%{$s}%");
@@ -45,10 +46,10 @@ class BenefitPlafondController extends BaseApiController
             });
         }
 
-        // Join with grades to order by level hierarchy (level 1 highest, or custom)
-        $query->join('grades', 'benefit_plafonds.grade_id', '=', 'grades.id')
+        // Join with salary_grades to order by code hierarchy
+        $query->join('salary_grades', 'benefit_plafonds.salary_grade_id', '=', 'salary_grades.id')
               ->select('benefit_plafonds.*')
-              ->orderBy('grades.level', 'asc')
+              ->orderBy('salary_grades.code', 'asc')
               ->orderBy('benefit_plafonds.marital_category', 'asc');
 
         if ($request->has('per_page')) {
@@ -63,9 +64,14 @@ class BenefitPlafondController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        // Support both salary_grade_id and grade_id from client
+        if (!$request->has('salary_grade_id') && $request->has('grade_id')) {
+            $request->merge(['salary_grade_id' => $request->input('grade_id')]);
+        }
+
         $validated = $request->validate([
             'benefit_type' => ['required', 'string', 'in:PENGOBATAN,KACAMATA,PERSALINAN'],
-            'grade_id' => ['required', 'exists:grades,id'],
+            'salary_grade_id' => ['required', 'exists:salary_grades,id'],
             'marital_category' => ['required', 'string', 'in:Menikah,Tidak Menikah,SEMUA'],
             'marital_status_id' => ['nullable', 'exists:standard_references,id'],
             'amount' => ['required', 'numeric', 'min:0'],
@@ -75,7 +81,7 @@ class BenefitPlafondController extends BaseApiController
         ]);
 
         $item = BenefitPlafond::create($validated);
-        $item->load(['grade', 'maritalStatus']);
+        $item->load(['salaryGrade', 'maritalStatus']);
 
         AuditService::log('CREATE', 'BENEFIT_PLAFOND', BenefitPlafond::class, (string)$item->id, newValues: $item->toArray());
 
@@ -84,15 +90,19 @@ class BenefitPlafondController extends BaseApiController
 
     public function show(BenefitPlafond $benefitPlafond): JsonResponse
     {
-        $benefitPlafond->load(['grade', 'maritalStatus']);
+        $benefitPlafond->load(['salaryGrade', 'maritalStatus']);
         return $this->successResponse($benefitPlafond, 'Detail plafon manfaat berhasil diambil.');
     }
 
     public function update(Request $request, BenefitPlafond $benefitPlafond): JsonResponse
     {
+        if (!$request->has('salary_grade_id') && $request->has('grade_id')) {
+            $request->merge(['salary_grade_id' => $request->input('grade_id')]);
+        }
+
         $validated = $request->validate([
             'benefit_type' => ['sometimes', 'required', 'string', 'in:PENGOBATAN,KACAMATA,PERSALINAN'],
-            'grade_id' => ['sometimes', 'required', 'exists:grades,id'],
+            'salary_grade_id' => ['sometimes', 'required', 'exists:salary_grades,id'],
             'marital_category' => ['sometimes', 'required', 'string', 'in:Menikah,Tidak Menikah,SEMUA'],
             'marital_status_id' => ['nullable', 'exists:standard_references,id'],
             'amount' => ['sometimes', 'required', 'numeric', 'min:0'],
@@ -103,7 +113,7 @@ class BenefitPlafondController extends BaseApiController
 
         $oldValues = $benefitPlafond->toArray();
         $benefitPlafond->update($validated);
-        $benefitPlafond->load(['grade', 'maritalStatus']);
+        $benefitPlafond->load(['salaryGrade', 'maritalStatus']);
 
         AuditService::log('UPDATE', 'BENEFIT_PLAFOND', BenefitPlafond::class, (string)$benefitPlafond->id, oldValues: $oldValues, newValues: $benefitPlafond->fresh()->toArray());
 
