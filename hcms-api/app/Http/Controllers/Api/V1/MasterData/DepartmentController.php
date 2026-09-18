@@ -41,7 +41,7 @@ class DepartmentController extends BaseApiController
             });
         }
 
-        $perPage = min((int)$request->query('per_page', 20), 100);
+        $perPage = min((int)$request->query('per_page', 20), 500);
         $departments = $query->orderBy('name')->paginate($perPage);
 
         return $this->successResponse($departments, 'Daftar departemen berhasil diambil.');

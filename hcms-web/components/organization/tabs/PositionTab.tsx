@@ -116,7 +116,7 @@ export const PositionTab: React.FC<PositionTabProps> = ({
       }
 
       // Also fetch un-filtered positions for "Reports To" dropdown list
-      const allPos = await positionService.getPositions({ per_page: 200 });
+      const allPos = await positionService.getPositions({ per_page: 500 });
       if (allPos.success && allPos.data) {
         setAllPositionsForReportsTo(allPos.data.data || []);
       }
@@ -149,12 +149,28 @@ export const PositionTab: React.FC<PositionTabProps> = ({
 
   const handleOpenCreate = () => {
     setModalMode('create');
+    const initialSiteId = selectedSiteId || (sites[0]?.id ? String(sites[0].id) : '');
+    const matchingDepts = initialSiteId
+      ? departments.filter((d) => !d.site_id || String(d.site_id) === initialSiteId)
+      : departments;
+    const initialDeptId =
+      selectedDepartmentId && matchingDepts.some((d) => String(d.id) === selectedDepartmentId)
+        ? selectedDepartmentId
+        : '';
+    const matchingSections = initialDeptId
+      ? sections.filter((s) => String(s.department_id) === initialDeptId)
+      : [];
+    const initialSectionId =
+      selectedSectionId && matchingSections.some((s) => String(s.id) === selectedSectionId)
+        ? selectedSectionId
+        : '';
+
     setFormData({
       id: 0,
-      site_id: selectedSiteId || (sites[0]?.id ? String(sites[0].id) : ''),
-      department_id: selectedDepartmentId || (departments[0]?.id ? String(departments[0].id) : ''),
-      section_id: selectedSectionId || '',
-      grade_id: grades[0]?.id ? String(grades[0].id) : '',
+      site_id: initialSiteId,
+      department_id: initialDeptId,
+      section_id: initialSectionId,
+      grade_id: '',
       code: '',
       title: '',
       reports_to_position_id: '',
@@ -271,10 +287,80 @@ export const PositionTab: React.FC<PositionTabProps> = ({
     }
   };
 
-  // Cascading Section options based on selected Department
+  // 1. Cascading Department options based on selected Site
+  const filteredDepartments = formData.site_id
+    ? departments.filter((d) => !d.site_id || String(d.site_id) === formData.site_id)
+    : [];
+
+  // 2. Cascading Section options based on selected Department
   const filteredSections = formData.department_id
     ? sections.filter((s) => String(s.department_id) === formData.department_id)
-    : sections;
+    : [];
+
+  // 3. Filtered Reports To (Atasan Langsung) options based on Grade/Level, Section, Department
+  const currentGrade = grades.find((g) => String(g.id) === formData.grade_id);
+  const currentLevel = currentGrade?.level;
+
+  const filteredReportsToPositions = React.useMemo(() => {
+    if (!formData.grade_id || !currentLevel) {
+      return [];
+    }
+
+    // Level 1 is top management (e.g. Project Manager) -> no supervisor above
+    if (currentLevel <= 1) {
+      return [];
+    }
+
+    return allPositionsForReportsTo.filter((p) => {
+      // Exclude self
+      if (formData.id && p.id === formData.id) return false;
+
+      // Must have a grade with a level strictly higher in hierarchy (numeric level is smaller)
+      const targetLevel = p.grade?.level;
+      if (!targetLevel || targetLevel >= currentLevel) return false;
+
+      // Department condition:
+      // Must be same department OR top management / project leadership (targetLevel <= 2, e.g. PM / DPM)
+      const isSameDept = formData.department_id
+        ? p.department_id === parseInt(formData.department_id)
+        : true;
+      const isTopLeadership = targetLevel <= 2;
+
+      if (!isSameDept && !isTopLeadership) return false;
+
+      // Section condition:
+      if (formData.section_id) {
+        // Position in the same section
+        const isSameSec = p.section_id === parseInt(formData.section_id);
+        // OR Department Head / leadership level in the same department (targetLevel < 4 or no section)
+        const isDeptLeader = isSameDept && (targetLevel < 4 || !p.section_id);
+
+        return isSameSec || isDeptLeader || isTopLeadership;
+      }
+
+      // If no section selected (directly under department):
+      return isSameDept || isTopLeadership;
+    });
+  }, [allPositionsForReportsTo, formData.id, formData.grade_id, currentLevel, formData.department_id, formData.section_id]);
+
+  // If editing and has existing reports_to not in filtered list, preserve it
+  const currentReportsToObj = formData.reports_to_position_id
+    ? allPositionsForReportsTo.find((p) => String(p.id) === formData.reports_to_position_id)
+    : null;
+
+  const reportsToOptions = [
+    { value: '', label: '-- Pucuk Pimpinan / Tidak Ada Atasan Langsung --' },
+    ...(currentReportsToObj && !filteredReportsToPositions.some((p) => p.id === currentReportsToObj.id)
+      ? [{
+          value: String(currentReportsToObj.id),
+          label: `${currentReportsToObj.code} - ${currentReportsToObj.title} (Atasan Saat Ini)`,
+        }]
+      : []),
+    ...filteredReportsToPositions.map((p) => ({
+      value: String(p.id),
+      label: `${p.code} - ${p.title} (Level ${p.grade?.level || '-'} - ${p.grade?.code || ''}${p.section?.name ? ` | Seksi: ${p.section.name}` : ''})`,
+    })),
+  ];
 
   return (
     <div className="space-y-4">
@@ -524,12 +610,21 @@ export const PositionTab: React.FC<PositionTabProps> = ({
         title={modalMode === 'create' ? 'Tambah Data Position' : 'Ubah Data Position'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 1. Site & 2. Departemen */}
+          {/* 1. Site & 2. Departemen (Bertahap) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Select
               label="1. Site Tambang *"
               value={formData.site_id}
-              onChange={(e) => setFormData({ ...formData, site_id: e.target.value })}
+              onChange={(e) => {
+                const newSiteId = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  site_id: newSiteId,
+                  department_id: '',
+                  section_id: '',
+                  reports_to_position_id: '',
+                }));
+              }}
               options={[
                 { value: '', label: '-- Pilih Site Tambang --' },
                 ...sites.map((s) => ({ value: String(s.id), label: `${s.code} - ${s.name}` })),
@@ -539,33 +634,76 @@ export const PositionTab: React.FC<PositionTabProps> = ({
             <Select
               label="2. Departemen *"
               value={formData.department_id}
-              onChange={(e) => setFormData({ ...formData, department_id: e.target.value, section_id: '' })}
+              disabled={!formData.site_id}
+              onChange={(e) => {
+                const newDeptId = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  department_id: newDeptId,
+                  section_id: '',
+                  reports_to_position_id: '',
+                }));
+              }}
               options={[
-                { value: '', label: '-- Pilih Departemen --' },
-                ...departments.map((d) => ({ value: String(d.id), label: `${d.code} - ${d.name}` })),
+                {
+                  value: '',
+                  label: !formData.site_id
+                    ? '-- Pilih Site Terlebih Dahulu --'
+                    : '-- Pilih Departemen --',
+                },
+                ...filteredDepartments.map((d) => ({
+                  value: String(d.id),
+                  label: `${d.code} - ${d.name}`,
+                })),
               ]}
               required
             />
           </div>
 
-          {/* 3. Section & 4. Level */}
+          {/* 3. Section & 4. Level (Bertahap) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Select
               label="3. Section (Seksi)"
               value={formData.section_id}
-              onChange={(e) => setFormData({ ...formData, section_id: e.target.value })}
+              disabled={!formData.department_id}
+              onChange={(e) => {
+                const newSecId = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  section_id: newSecId,
+                  reports_to_position_id: '',
+                }));
+              }}
               options={[
-                { value: '', label: '-- Tanpa Seksi (Langsung di bawah Dept) --' },
-                ...filteredSections.map((s) => ({ value: String(s.id), label: `${s.code} - ${s.name}` })),
+                {
+                  value: '',
+                  label: !formData.department_id
+                    ? '-- Pilih Departemen Terlebih Dahulu --'
+                    : '-- Tanpa Seksi (Langsung di bawah Dept) --',
+                },
+                ...filteredSections.map((s) => ({
+                  value: String(s.id),
+                  label: `${s.code} - ${s.name}`,
+                })),
               ]}
             />
             <Select
               label="4. Level / Grade *"
               value={formData.grade_id}
-              onChange={(e) => setFormData({ ...formData, grade_id: e.target.value })}
+              onChange={(e) => {
+                const newGradeId = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  grade_id: newGradeId,
+                  reports_to_position_id: '',
+                }));
+              }}
               options={[
                 { value: '', label: '-- Pilih Level / Grade --' },
-                ...grades.map((g) => ({ value: String(g.id), label: `${g.code} - ${g.name}` })),
+                ...grades.map((g) => ({
+                  value: String(g.id),
+                  label: `${g.code} (Level ${g.level}) - ${g.name}`,
+                })),
               ]}
               required
             />
@@ -590,17 +728,17 @@ export const PositionTab: React.FC<PositionTabProps> = ({
             />
           </div>
 
-          {/* 7. Atasan Langsung */}
+          {/* 7. Atasan Langsung (Difilter sesuai Level & Struktur) */}
           <Select
             label="7. Atasan Langsung (Reports To)"
             value={formData.reports_to_position_id}
-            onChange={(e) => setFormData({ ...formData, reports_to_position_id: e.target.value })}
-            options={[
-              { value: '', label: '-- Pucuk Pimpinan / Tidak Ada Atasan Langsung --' },
-              ...allPositionsForReportsTo
-                .filter((p) => p.id !== formData.id)
-                .map((p) => ({ value: String(p.id), label: `${p.code} - ${p.title}` })),
-            ]}
+            disabled={!formData.grade_id}
+            onChange={(e) => setFormData((prev) => ({ ...prev, reports_to_position_id: e.target.value }))}
+            options={
+              !formData.grade_id
+                ? [{ value: '', label: '-- Pilih Level / Grade Terlebih Dahulu --' }]
+                : reportsToOptions
+            }
           />
 
           {/* 8. MPP & 9. Status */}
