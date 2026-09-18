@@ -12,9 +12,6 @@ import {
   Compass,
   ShieldCheck,
   FileSignature,
-  Stethoscope,
-  Glasses,
-  Baby,
   Plus
 } from 'lucide-react';
 import { MasterCompany, MasterSite, MasterDepartment, OrganizationUnitNode } from '@/types';
@@ -36,11 +33,10 @@ import { GradeTab } from '@/components/organization/tabs/GradeTab';
 import { PohTab } from '@/components/organization/tabs/PohTab';
 import { WorkAreaTab } from '@/components/organization/tabs/WorkAreaTab';
 import { HubunganKerjaTab } from '@/components/organization/tabs/HubunganKerjaTab';
-import { BenefitPlafondTab } from '@/components/organization/tabs/BenefitPlafondTab';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Tabs } from '@/components/ui/Tabs';
 
-type OrgTabType = 'company' | 'site' | 'department' | 'section' | 'position' | 'level' | 'grade' | 'hubungan_kerja' | 'plafon_pengobatan' | 'plafon_kacamata' | 'plafon_persalinan' | 'poh' | 'work_area';
+type OrgTabType = 'company' | 'site' | 'department' | 'section' | 'position' | 'level' | 'grade' | 'hubungan_kerja' | 'poh' | 'work_area';
 
 function OrganizationReferencesContent() {
   const searchParams = useSearchParams();
@@ -307,27 +303,6 @@ function OrganizationReferencesContent() {
       badgeColor: 'bg-rose-100 text-rose-800',
     },
     {
-      id: 'plafon_pengobatan' as OrgTabType,
-      label: 'Plafon Pengobatan',
-      icon: <Stethoscope className="h-4 w-4 shrink-0" />,
-      count: counts.plafond_pengobatan,
-      badgeColor: 'bg-emerald-100 text-emerald-800',
-    },
-    {
-      id: 'plafon_kacamata' as OrgTabType,
-      label: 'Plafon Kacamata',
-      icon: <Glasses className="h-4 w-4 shrink-0" />,
-      count: counts.plafond_kacamata,
-      badgeColor: 'bg-violet-100 text-violet-800',
-    },
-    {
-      id: 'plafon_persalinan' as OrgTabType,
-      label: 'Plafon Persalinan',
-      icon: <Baby className="h-4 w-4 shrink-0" />,
-      count: counts.plafond_persalinan,
-      badgeColor: 'bg-rose-100 text-rose-800',
-    },
-    {
       id: 'poh' as OrgTabType,
       label: 'POH',
       icon: <Compass className="h-4 w-4 shrink-0" />,
@@ -362,9 +337,6 @@ function OrganizationReferencesContent() {
       case 'level': return 'Tambah Level';
       case 'grade': return 'Tambah Grade';
       case 'hubungan_kerja': return 'Tambah Hubungan Kerja';
-      case 'plafon_pengobatan': return 'Tambah Plafon Pengobatan';
-      case 'plafon_kacamata': return 'Tambah Plafon Kacamata';
-      case 'plafon_persalinan': return 'Tambah Plafon Persalinan';
       case 'poh': return 'Tambah POH';
       case 'work_area': return 'Tambah Work Area';
       default: return 'Tambah Data';
@@ -477,42 +449,6 @@ function OrganizationReferencesContent() {
 
         {activeTab === 'hubungan_kerja' && (
           <HubunganKerjaTab key="hubungan-kerja-tab" onRefreshAll={loadCounts} createTrigger={createTriggers['hubungan_kerja'] || 0} />
-        )}
-
-        {activeTab === 'plafon_pengobatan' && (
-          <BenefitPlafondTab
-            key="plafon-pengobatan-tab"
-            benefitType="PENGOBATAN"
-            title="Plafon Pengobatan"
-            icon={<Stethoscope className="h-6 w-6" />}
-            defaultPeriod="TAHUNAN"
-            onRefreshAll={loadCounts}
-            createTrigger={createTriggers['plafon_pengobatan'] || 0}
-          />
-        )}
-
-        {activeTab === 'plafon_kacamata' && (
-          <BenefitPlafondTab
-            key="plafon-kacamata-tab"
-            benefitType="KACAMATA"
-            title="Plafon Kacamata"
-            icon={<Glasses className="h-6 w-6" />}
-            defaultPeriod="2_TAHUNAN"
-            onRefreshAll={loadCounts}
-            createTrigger={createTriggers['plafon_kacamata'] || 0}
-          />
-        )}
-
-        {activeTab === 'plafon_persalinan' && (
-          <BenefitPlafondTab
-            key="plafon-persalinan-tab"
-            benefitType="PERSALINAN"
-            title="Plafon Persalinan"
-            icon={<Baby className="h-6 w-6" />}
-            defaultPeriod="PER_KASUS"
-            onRefreshAll={loadCounts}
-            createTrigger={createTriggers['plafon_persalinan'] || 0}
-          />
         )}
 
         {activeTab === 'poh' && (

@@ -3,14 +3,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Search,
-  Plus,
+  Filter,
   RefreshCw,
   Edit,
   Trash2,
-  CheckCircle2,
-  UserX,
-  Power,
-  CreditCard
+  ShieldCheck,
+  RotateCcw,
+  X
 } from 'lucide-react';
 import { BenefitPlafondItem, SalaryGradeItem } from '@/types';
 import { benefitPlafondService, salaryGradeService } from '@/services/masterDataService';
@@ -38,7 +37,11 @@ const formatRupiah = (value: number | string | undefined | null): string => {
   if (value === undefined || value === null) return 'Rp 0';
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(num)) return 'Rp 0';
-  return 'Rp ' + num.toLocaleString('id-ID');
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(num);
 };
 
 export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
@@ -186,38 +189,8 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     }
   };
 
-  const handleToggleStatus = async (item: BenefitPlafondItem) => {
-    const isActivating = item.status !== 'ACTIVE';
-    const actionText = isActivating ? 'mengaktifkan' : 'menonaktifkan';
-    const golName = item.salary_grade?.name || item.salary_grade?.code || item.grade?.name || `ID ${item.salary_grade_id}`;
-
-    const confirmed = await confirmDialog({
-      title: `${isActivating ? 'Aktifkan' : 'Nonaktifkan'} ${title}`,
-      message: `Apakah Anda yakin ingin ${actionText} plafon untuk Golongan "${golName}" (${item.marital_category})?`,
-      confirmText: isActivating ? 'Ya, Aktifkan' : 'Ya, Nonaktifkan',
-      cancelText: 'Batal',
-      variant: isActivating ? 'primary' : 'warning',
-    });
-
-    if (!confirmed) return;
-
-    try {
-      const res = isActivating
-        ? await benefitPlafondService.activateBenefitPlafond(item.id)
-        : await benefitPlafondService.deactivateBenefitPlafond(item.id);
-
-      if (res.success) {
-        toast.success(`${title} berhasil di${isActivating ? 'aktifkan' : 'nonaktifkan'}.`, 'Status Diperbarui');
-        loadData();
-        onRefreshAll?.();
-      }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || `Gagal ${actionText} ${title}.`, 'Gagal');
-    }
-  };
-
   const handleDelete = async (item: BenefitPlafondItem) => {
-    const golName = item.salary_grade?.name || item.salary_grade?.code || item.grade?.name || `ID ${item.salary_grade_id}`;
+    const golName = item.salary_grade?.name || item.salary_grade?.code || `ID ${item.salary_grade_id}`;
     const confirmed = await confirmDialog({
       title: `Hapus ${title}`,
       message: `Apakah Anda yakin ingin menghapus data plafon untuk Golongan "${golName}" (${item.marital_category}) senilai ${formatRupiah(item.amount)}?`,
@@ -278,7 +251,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     totalItems,
     paginatedData,
   } = useClientTable<BenefitPlafondItem>(filteredItems, {
-    defaultSortField: 'amount',
+    defaultSortField: 'salary_grade.code',
     defaultPerPage: 10,
   });
 
@@ -286,7 +259,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     switch (period) {
       case 'TAHUNAN': return 'Per Tahun';
       case '2_TAHUNAN': return 'Per 2 Tahun';
-      case 'PER_KASUS': return 'Per Kasus / Kejadian';
+      case 'PER_KASUS': return 'Per Kasus';
       case 'SEUMUR_HIDUP': return 'Seumur Hidup';
       default: return period;
     }
@@ -294,142 +267,156 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* 1. Header Toolbar */}
+      {/* Action Toolbar */}
       <Card className="p-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center flex-wrap">
-            {/* Search Input */}
-            <div className="relative flex-1 min-w-[200px] max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-1 flex-wrap items-center gap-2.5">
+            {/* 1. Search Input */}
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
-                placeholder={`Cari ${title.toLowerCase()}...`}
+                placeholder={`Cari kode, nama golongan, atau ketentuan...`}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 text-sm"
+                className="pl-9 pr-8 h-9 text-xs"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Filter Golongan */}
-            <select
-              value={filterGolongan}
-              onChange={(e) => setFilterGolongan(e.target.value)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-            >
-              <option value="ALL">Semua Golongan</option>
-              {salaryGrades.map((g) => (
-                <option key={g.id} value={String(g.id)}>
-                  {g.code} - {g.name}
-                </option>
-              ))}
-            </select>
+            {/* 2. Filter Golongan */}
+            <div className="relative min-w-[180px]">
+              <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              <select
+                value={filterGolongan}
+                onChange={(e) => setFilterGolongan(e.target.value)}
+                className="w-full h-9 pl-8 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 font-medium dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+              >
+                <option value="ALL">Semua Golongan</option>
+                {salaryGrades.map((g) => (
+                  <option key={g.id} value={String(g.id)}>
+                    {g.code} - {g.name.replace(/^Golongan\s+[0-9A-Z]+\s*-\s*/i, '')}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            {/* Filter Kategori Pernikahan */}
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value as any)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-            >
-              <option value="ALL">Semua Kategori Marital</option>
-              <option value="Menikah">Menikah (Keluarga)</option>
-              <option value="Tidak Menikah">Tidak Menikah (Lajang)</option>
-            </select>
+            {/* 3. Filter Kategori Pernikahan */}
+            <div className="relative min-w-[160px]">
+              <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value as any)}
+                className="w-full h-9 pl-8 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 font-medium dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+              >
+                <option value="ALL">Semua Status Marital</option>
+                <option value="Menikah">Menikah (Keluarga)</option>
+                <option value="Tidak Menikah">Tidak Menikah (Lajang)</option>
+              </select>
+            </div>
 
-            {/* Filter Status */}
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as any)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-            >
-              <option value="ALL">Semua Status</option>
-              <option value="ACTIVE">Aktif</option>
-              <option value="INACTIVE">Nonaktif</option>
-            </select>
+            {/* 4. Filter Status */}
+            <div className="relative min-w-[130px]">
+              <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as any)}
+                className="w-full h-9 pl-8 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 font-medium dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+              >
+                <option value="ALL">Semua Status</option>
+                <option value="ACTIVE">Aktif</option>
+                <option value="INACTIVE">Nonaktif</option>
+              </select>
+            </div>
+
+            {/* 5. Tombol Reset Filter */}
+            {(search || filterGolongan !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearch('');
+                  setFilterGolongan('ALL');
+                  setFilterCategory('ALL');
+                  setFilterStatus('ALL');
+                }}
+                className="h-9 px-2.5 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                leftIcon={<RotateCcw className="h-3 w-3" />}
+              >
+                Reset
+              </Button>
+            )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
-              leftIcon={<RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
               onClick={loadData}
               isLoading={loading}
+              leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />}
             >
               Segarkan
-            </Button>
-            <Button
-              size="sm"
-              leftIcon={<Plus className="h-4 w-4" />}
-              onClick={handleOpenCreate}
-            >
-              Tambah {title}
             </Button>
           </div>
         </div>
       </Card>
 
-      {/* 2. Main Data Table */}
-      <Card className="overflow-hidden border-slate-200/80 shadow-xs dark:border-slate-800">
+      {/* Main Data Table */}
+      <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
-            <thead className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+          <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+            <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
-                {/* 1. Golongan */}
-                <th className="py-3.5 pl-4 pr-3">
-                  <SortableHeader label="Golongan" field="salary_grade_id" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                <th className="px-5 py-3.5">
+                  <SortableHeader label="Kode" field="salary_grade.code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-
-                {/* 2. Kategori Pernikahan */}
-                <th className="px-3 py-3.5">
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Nama Golongan" field="salary_grade.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                </th>
+                <th className="px-4 py-3.5">
                   <SortableHeader label="Kategori Pernikahan" field="marital_category" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-
-                {/* 3. Nominal Plafon */}
-                <th className="px-3 py-3.5 text-right">
+                <th className="px-4 py-3.5 text-right">
                   <SortableHeader label="Nominal Plafon" field="amount" align="right" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-
-                {/* 4. Periode Manfaat */}
-                <th className="px-3 py-3.5 text-center">
+                <th className="px-4 py-3.5 text-center">
                   <SortableHeader label="Periode" field="period_type" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-
-                {/* 5. Keterangan */}
-                <th className="px-3 py-3.5 font-semibold">Ketentuan / Cakupan</th>
-
-                {/* 6. Status */}
-                <th className="px-3 py-3.5 text-center">
+                <th className="px-4 py-3.5">Ketentuan / Cakupan</th>
+                <th className="px-4 py-3.5 text-center">
                   <SortableHeader label="Status" field="status" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-
-                {/* Aksi */}
-                <th className="px-3 py-3.5 pr-4 text-right font-semibold">Aksi</th>
+                <th className="px-5 py-3.5 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td className="py-3.5 pl-4 pr-3"><Skeleton className="h-5 w-40" /></td>
-                    <td className="px-3 py-3.5"><Skeleton className="h-5 w-24" /></td>
-                    <td className="px-3 py-3.5 text-right"><Skeleton className="ml-auto h-5 w-28" /></td>
-                    <td className="px-3 py-3.5 text-center"><Skeleton className="mx-auto h-5 w-20" /></td>
-                    <td className="px-3 py-3.5"><Skeleton className="h-5 w-36" /></td>
-                    <td className="px-3 py-3.5 text-center"><Skeleton className="mx-auto h-5 w-16" /></td>
-                    <td className="px-3 py-3.5 pr-4 text-right"><Skeleton className="ml-auto h-7 w-20" /></td>
+                    <td className="px-5 py-4"><Skeleton className="h-4 w-16" /></td>
+                    <td className="px-4 py-4"><Skeleton className="h-4 w-48" /></td>
+                    <td className="px-4 py-4"><Skeleton className="h-4 w-28" /></td>
+                    <td className="px-4 py-4 text-right"><Skeleton className="h-4 w-24 ml-auto" /></td>
+                    <td className="px-4 py-4 text-center"><Skeleton className="h-4 w-16 mx-auto" /></td>
+                    <td className="px-4 py-4"><Skeleton className="h-4 w-36" /></td>
+                    <td className="px-4 py-4 text-center"><Skeleton className="h-5 w-16 mx-auto rounded-full" /></td>
+                    <td className="px-5 py-4 text-right"><Skeleton className="h-6 w-14 ml-auto" /></td>
                   </tr>
                 ))
-              ) : paginatedData.length === 0 ? (
+              ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
-                      {icon}
-                    </div>
-                    <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-                      Belum ada data {title.toLowerCase()} ditemukan
-                    </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
-                      {search ? 'Coba ubah kata kunci atau filter Anda' : `Klik tombol Tambah ${title} untuk menentukan nominal plafon per Golongan`}
-                    </p>
+                  <td colSpan={8} className="px-5 py-12 text-center text-slate-400">
+                    <ShieldCheck className="h-10 w-10 mx-auto text-slate-300 mb-2" />
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">Tidak ada data {title.toLowerCase()} ditemukan</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Silakan tambahkan data plafon baru atau bersihkan filter pencarian.</p>
                   </td>
                 </tr>
               ) : (
@@ -438,105 +425,86 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                   return (
                     <tr
                       key={item.id}
-                      className="group transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/30"
+                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
                     >
-                      {/* Golongan */}
-                      <td className="py-3.5 pl-4 pr-3">
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-1.5">
-                            <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 font-mono text-xs font-bold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
-                              {gol?.code || `GOL-${item.salary_grade_id}`}
+                      {/* 1. Kode */}
+                      <td className="px-5 py-3.5 font-mono font-bold text-slate-800 dark:text-slate-200">
+                        <Badge variant="outline" className="font-mono bg-cyan-50 text-cyan-800 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800">
+                          {gol?.code || '-'}
+                        </Badge>
+                      </td>
+
+                      {/* 2. Nama Golongan */}
+                      <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <span>{gol?.name || '-'}</span>
+                          {gol?.pangkat && (
+                            <span className="text-[11px] text-slate-400 font-normal">
+                              ({gol.pangkat})
                             </span>
-                            {gol?.pangkat && (
-                              <span className="text-[11px] text-slate-400 font-normal">
-                                ({gol.pangkat})
-                              </span>
-                            )}
-                          </div>
-                          <span className="mt-0.5 text-xs font-medium text-slate-800 dark:text-slate-200">
-                            {gol?.name || 'Golongan'}
-                          </span>
+                          )}
                         </div>
                       </td>
 
-                      {/* Kategori Pernikahan */}
-                      <td className="px-3 py-3.5">
+                      {/* 3. Kategori Pernikahan */}
+                      <td className="px-4 py-3.5">
                         {item.marital_category === 'Menikah' ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
-                            <CheckCircle2 className="h-3 w-3" />
+                          <Badge variant="outline" className="bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 font-medium">
                             Menikah (Keluarga)
-                          </span>
+                          </Badge>
                         ) : item.marital_category === 'Tidak Menikah' ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-semibold text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800">
-                            <UserX className="h-3 w-3" />
+                          <Badge variant="outline" className="bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800 font-medium">
                             Tidak Menikah (Lajang)
-                          </span>
+                          </Badge>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800">
-                            Semua Kategori
-                          </span>
+                          <Badge variant="outline" className="bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800 font-medium">
+                            Semua
+                          </Badge>
                         )}
                       </td>
 
-                      {/* Nominal Plafon */}
-                      <td className="px-3 py-3.5 text-right font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
+                      {/* 4. Nominal Plafon */}
+                      <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
                         {formatRupiah(item.amount)}
                       </td>
 
-                      {/* Periode */}
-                      <td className="px-3 py-3.5 text-center">
-                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                          {getPeriodLabel(item.period_type)}
-                        </span>
+                      {/* 5. Periode */}
+                      <td className="px-4 py-3.5 text-center text-slate-700 dark:text-slate-300">
+                        {getPeriodLabel(item.period_type)}
                       </td>
 
-                      {/* Deskripsi */}
-                      <td className="px-3 py-3.5 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate">
+                      {/* 6. Ketentuan */}
+                      <td className="px-4 py-3.5 text-slate-500 dark:text-slate-400 max-w-xs truncate">
                         {item.description || '-'}
                       </td>
 
-                      {/* Status */}
-                      <td className="px-3 py-3.5 text-center">
-                        {item.status === 'ACTIVE' ? (
-                          <Badge variant="success">Aktif</Badge>
-                        ) : (
-                          <Badge variant="secondary">Nonaktif</Badge>
-                        )}
+                      {/* 7. Status */}
+                      <td className="px-4 py-3.5 text-center">
+                        <Badge variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}>
+                          {item.status === 'ACTIVE' ? 'AKTIF' : 'NON-AKTIF'}
+                        </Badge>
                       </td>
 
-                      {/* Aksi */}
-                      <td className="px-3 py-3.5 pr-4 text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-90 group-hover:opacity-100">
+                      {/* 8. Aksi */}
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
-                            title={`Ubah ${title}`}
                             onClick={() => handleOpenEdit(item)}
+                            className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-800"
+                            title={`Edit ${title}`}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className={`h-8 w-8 p-0 ${
-                              item.status === 'ACTIVE'
-                                ? 'text-amber-500 hover:text-amber-700 dark:text-amber-400'
-                                : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
-                            }`}
-                            title={item.status === 'ACTIVE' ? 'Nonaktifkan' : 'Aktifkan'}
-                            onClick={() => handleToggleStatus(item)}
-                          >
-                            <Power className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-rose-500 hover:text-rose-700 dark:text-rose-400"
-                            title={`Hapus ${title}`}
                             onClick={() => handleDelete(item)}
+                            className="h-8 w-8 p-0 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-slate-800"
+                            title={`Hapus ${title}`}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5 text-rose-500" />
                           </Button>
                         </div>
                       </td>
@@ -554,29 +522,29 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
           totalPages={totalPages}
           perPage={perPage}
           totalItems={totalItems}
-          itemLabel={title}
+          itemLabel={title.toLowerCase()}
           onPageChange={setCurrentPage}
           onPerPageChange={handlePerPageChange}
         />
       </Card>
 
-      {/* 3. Modal Form (Create / Edit) */}
+      {/* Create / Edit Modal strictly aligned with Organization Reference style */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={modalMode === 'create' ? `Tambah ${title}` : `Ubah ${title}`}
+        title={modalMode === 'create' ? `Tambah ${title}` : `Edit ${title}`}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* 1. Golongan */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-              Golongan <span className="text-rose-500">*</span>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              1. Golongan <span className="text-rose-500">*</span>
             </label>
             <select
               value={formData.salary_grade_id}
               onChange={(e) => setFormData({ ...formData, salary_grade_id: Number(e.target.value) })}
               required
-              className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="w-full h-9 px-3 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
             >
               <option value="0" disabled>-- Pilih Golongan --</option>
               {salaryGrades.map((g) => (
@@ -587,80 +555,39 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
             </select>
           </div>
 
-          {/* 2. Kategori Pernikahan (Menikah vs Tidak Menikah) */}
+          {/* 2. Kategori Pernikahan */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-              Kategori Pernikahan <span className="text-rose-500">*</span>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              2. Kategori Pernikahan <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label
-                className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all ${
-                  formData.marital_category === 'Menikah'
-                    ? 'border-emerald-500 bg-emerald-50/50 text-emerald-900 dark:border-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-200'
-                    : 'border-slate-200 hover:border-slate-300 dark:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="marital_category"
-                    checked={formData.marital_category === 'Menikah'}
-                    onChange={() => setFormData({ ...formData, marital_category: 'Menikah' })}
-                    className="h-4 w-4 text-emerald-600 focus:ring-emerald-500"
-                  />
-                  <div>
-                    <p className="text-xs font-bold">Menikah</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Karyawan + Tanggungan</p>
-                  </div>
-                </div>
-                <CheckCircle2 className={`h-4 w-4 ${formData.marital_category === 'Menikah' ? 'text-emerald-600' : 'text-slate-300'}`} />
-              </label>
-
-              <label
-                className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all ${
-                  formData.marital_category === 'Tidak Menikah'
-                    ? 'border-sky-500 bg-sky-50/50 text-sky-900 dark:border-sky-600 dark:bg-sky-950/30 dark:text-sky-200'
-                    : 'border-slate-200 hover:border-slate-300 dark:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="marital_category"
-                    checked={formData.marital_category === 'Tidak Menikah'}
-                    onChange={() => setFormData({ ...formData, marital_category: 'Tidak Menikah' })}
-                    className="h-4 w-4 text-sky-600 focus:ring-sky-500"
-                  />
-                  <div>
-                    <p className="text-xs font-bold">Tidak Menikah</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Lajang (Perorangan)</p>
-                  </div>
-                </div>
-                <UserX className={`h-4 w-4 ${formData.marital_category === 'Tidak Menikah' ? 'text-sky-600' : 'text-slate-300'}`} />
-              </label>
-            </div>
+            <select
+              value={formData.marital_category}
+              onChange={(e) => setFormData({ ...formData, marital_category: e.target.value as any })}
+              required
+              className="w-full h-9 px-3 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+            >
+              <option value="Menikah">Menikah (Keluarga)</option>
+              <option value="Tidak Menikah">Tidak Menikah (Lajang)</option>
+            </select>
           </div>
 
           {/* 3. Nominal Plafon */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-              Nominal Plafon (Rp) <span className="text-rose-500">*</span>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              3. Nominal Plafon (Rp) <span className="text-rose-500">*</span>
             </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">Rp</span>
-              <Input
-                type="number"
-                min="0"
-                step="1000"
-                placeholder="Contoh: 25000000"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                required
-                className="pl-9 font-mono text-sm"
-              />
-            </div>
+            <Input
+              type="number"
+              min="0"
+              step="1000"
+              placeholder="Contoh: 25000000"
+              value={formData.amount}
+              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              required
+              className="h-9 text-xs font-mono"
+            />
             {formData.amount && !isNaN(parseFloat(formData.amount)) && (
-              <p className="mt-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              <p className="mt-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                 Terbaca: {formatRupiah(formData.amount)}
               </p>
             )}
@@ -668,14 +595,14 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
           {/* 4. Periode Manfaat */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-              Periode / Frekuensi Plafon <span className="text-rose-500">*</span>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              4. Periode / Frekuensi Plafon <span className="text-rose-500">*</span>
             </label>
             <select
               value={formData.period_type}
               onChange={(e) => setFormData({ ...formData, period_type: e.target.value as any })}
               required
-              className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="w-full h-9 px-3 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
             >
               <option value="TAHUNAN">Per Tahun (Tahunan)</option>
               <option value="2_TAHUNAN">Per 2 Tahun (Khusus Kacamata / Optik)</option>
@@ -686,47 +613,31 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
           {/* 5. Deskripsi */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-              Ketentuan Tambahan / Catatan Cakupan
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              5. Ketentuan Tambahan / Cakupan
             </label>
             <textarea
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Contoh: Termasuk rawat jalan, rawat inap, tes diagnostik, dan obat resep..."
-              className="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="w-full rounded-lg border border-slate-200 p-2.5 text-xs focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             />
           </div>
 
           {/* 6. Status */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-              Status Plafon
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              6. Status Plafon
             </label>
-            <div className="flex items-center gap-4 pt-1">
-              <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
-                <input
-                  type="radio"
-                  name="status"
-                  value="ACTIVE"
-                  checked={formData.status === 'ACTIVE'}
-                  onChange={() => setFormData({ ...formData, status: 'ACTIVE' })}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span className="font-medium text-emerald-700 dark:text-emerald-400">Aktif</span>
-              </label>
-              <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
-                <input
-                  type="radio"
-                  name="status"
-                  value="INACTIVE"
-                  checked={formData.status === 'INACTIVE'}
-                  onChange={() => setFormData({ ...formData, status: 'INACTIVE' })}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span className="font-medium text-slate-500">Nonaktif</span>
-              </label>
-            </div>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+              className="w-full h-9 px-3 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+            >
+              <option value="ACTIVE">Aktif</option>
+              <option value="INACTIVE">Nonaktif</option>
+            </select>
           </div>
 
           {/* Action Buttons */}
@@ -744,9 +655,8 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
               type="submit"
               size="sm"
               isLoading={submitting}
-              leftIcon={<CreditCard className="h-4 w-4" />}
             >
-              {modalMode === 'create' ? `Simpan ${title}` : `Perbarui ${title}`}
+              {modalMode === 'create' ? `Simpan` : `Perbarui`}
             </Button>
           </div>
         </form>

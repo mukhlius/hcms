@@ -3,14 +3,10 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
-  HeartHandshake,
   Stethoscope,
   Glasses,
   Baby,
-  Plus,
-  TrendingUp,
-  ShieldCheck,
-  CalendarCheck
+  Plus
 } from 'lucide-react';
 import { companyService } from '@/services/masterDataService';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -55,7 +51,7 @@ function ReferensiBenefitContent() {
         });
       }
     } catch (err) {
-      console.warn('Failed to load benefit counts:', err);
+      console.warn('Non-blocking: failed to load benefit counts:', err);
     }
   }, []);
 
@@ -87,7 +83,7 @@ function ReferensiBenefitContent() {
       case 'plafon_persalinan':
         return 'Tambah Plafon Persalinan';
       default:
-        return 'Tambah Data Plafon';
+        return 'Tambah Data';
     }
   };
 
@@ -97,21 +93,21 @@ function ReferensiBenefitContent() {
       label: 'Flapon Pengobatan',
       icon: <Stethoscope className="h-4 w-4 shrink-0" />,
       count: counts.plafond_pengobatan,
-      badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300',
+      badgeColor: 'bg-emerald-100 text-emerald-800',
     },
     {
       id: 'plafon_kacamata' as BenefitTabType,
       label: 'Flapon Kacamata',
       icon: <Glasses className="h-4 w-4 shrink-0" />,
       count: counts.plafond_kacamata,
-      badgeColor: 'bg-violet-100 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300',
+      badgeColor: 'bg-violet-100 text-violet-800',
     },
     {
       id: 'plafon_persalinan' as BenefitTabType,
       label: 'Flapon Persalinan',
       icon: <Baby className="h-4 w-4 shrink-0" />,
       count: counts.plafond_persalinan,
-      badgeColor: 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300',
+      badgeColor: 'bg-rose-100 text-rose-800',
     },
   ];
 
@@ -120,7 +116,7 @@ function ReferensiBenefitContent() {
       {/* 1. Page Header */}
       <PageHeader
         title="Referensi Benefit"
-        subtitle="Kelola Standar Flapon Manfaat Karyawan Berdasarkan Golongan & Kategori Pernikahan"
+        subtitle="Kelola Master Standar Flapon Manfaat Karyawan"
         breadcrumbs={[
           { label: 'Beranda', href: '/' },
           { label: 'Data Master HCMS', href: '/admin/master-data' },
@@ -137,70 +133,7 @@ function ReferensiBenefitContent() {
         }
       />
 
-      {/* 2. Highlights Stat Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-emerald-100 bg-linear-to-br from-emerald-50/70 to-white p-4 shadow-xs dark:border-emerald-900/40 dark:from-emerald-950/20 dark:to-slate-900">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Flapon Pengobatan
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
-              <Stethoscope className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-              {counts.plafond_pengobatan}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Aturan Plafon</span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            Rawat jalan & inap tahunan per Golongan
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-violet-100 bg-linear-to-br from-violet-50/70 to-white p-4 shadow-xs dark:border-violet-900/40 dark:from-violet-950/20 dark:to-slate-900">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-400">
-              Flapon Kacamata
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
-              <Glasses className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-              {counts.plafond_kacamata}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Aturan Plafon</span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            Lensa & bingkai kacamata per 2 tahun
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-rose-100 bg-linear-to-br from-rose-50/70 to-white p-4 shadow-xs dark:border-rose-900/40 dark:from-rose-950/20 dark:to-slate-900">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-400">
-              Flapon Persalinan
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">
-              <Baby className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-              {counts.plafond_persalinan}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Aturan Plafon</span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            Kelahiran normal & caesar per kasus
-          </p>
-        </div>
-      </div>
-
-      {/* 3. Navigation Tabs */}
+      {/* 2. Tab Menu: Modern Navigation Tabs with Animated Sliding Underline */}
       <div className="border border-slate-200/90 bg-white rounded-xl px-2 pt-1 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <Tabs
           tabs={tabsConfig}
@@ -209,13 +142,13 @@ function ReferensiBenefitContent() {
         />
       </div>
 
-      {/* 4. Active Tab Content */}
+      {/* 3. Tab Content Panels */}
       <div className="transition-all duration-200">
         {activeTab === 'plafon_pengobatan' && (
           <BenefitPlafondTab
             key="benefit-pengobatan-tab"
             benefitType="PENGOBATAN"
-            title="Flapon Pengobatan"
+            title="Plafon Pengobatan"
             icon={<Stethoscope className="h-6 w-6" />}
             defaultPeriod="TAHUNAN"
             onRefreshAll={loadCounts}
@@ -227,7 +160,7 @@ function ReferensiBenefitContent() {
           <BenefitPlafondTab
             key="benefit-kacamata-tab"
             benefitType="KACAMATA"
-            title="Flapon Kacamata"
+            title="Plafon Kacamata"
             icon={<Glasses className="h-6 w-6" />}
             defaultPeriod="2_TAHUNAN"
             onRefreshAll={loadCounts}
@@ -239,7 +172,7 @@ function ReferensiBenefitContent() {
           <BenefitPlafondTab
             key="benefit-persalinan-tab"
             benefitType="PERSALINAN"
-            title="Flapon Persalinan"
+            title="Plafon Persalinan"
             icon={<Baby className="h-6 w-6" />}
             defaultPeriod="PER_KASUS"
             onRefreshAll={loadCounts}
@@ -255,14 +188,9 @@ export default function ReferensiBenefitPage() {
   return (
     <Suspense
       fallback={
-        <div className="space-y-6">
+        <div className="p-6 space-y-4">
           <Skeleton className="h-10 w-64" />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-16 w-full" />
           <Skeleton className="h-96 w-full" />
         </div>
       }
