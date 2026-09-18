@@ -122,7 +122,35 @@ class MasterImportService
     {
         return DB::transaction(function () use ($modelClass, $data, $moduleName) {
             $importedCount = 0;
+            $defaultCompanyId = \App\Models\OrganizationCompany::value('id');
+
             foreach ($data as $item) {
+                // Pre-process for OrganizationUnit
+                if ($modelClass === \App\Models\OrganizationUnit::class) {
+                    if (isset($item['unit_type']) && !isset($item['type'])) {
+                        $item['type'] = strtoupper($item['unit_type']);
+                        unset($item['unit_type']);
+                    }
+
+                    if (empty($item['company_id'])) {
+                        if (!empty($item['company_code'])) {
+                            $item['company_id'] = \App\Models\OrganizationCompany::where('code', $item['company_code'])->value('id') ?? $defaultCompanyId;
+                            unset($item['company_code']);
+                        } else {
+                            $item['company_id'] = $defaultCompanyId;
+                        }
+                    }
+
+                    if (!empty($item['parent_code'])) {
+                        $item['parent_id'] = \App\Models\OrganizationUnit::where('code', $item['parent_code'])->value('id');
+                        unset($item['parent_code']);
+                    }
+
+                    if (empty($item['status'])) {
+                        $item['status'] = 'ACTIVE';
+                    }
+                }
+
                 $modelClass::updateOrCreate(
                     ['code' => $item['code']],
                     $item

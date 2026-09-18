@@ -74,7 +74,7 @@ const ENTITY_CATALOG: EntityMeta[] = [
     description: 'Bagan hierarki departemen, divisi, seksi lapangan, dan unit operasional site.',
     icon: <Layers className="h-5 w-5 text-cyan-600" />,
     iconBg: 'bg-cyan-50 dark:bg-cyan-950/50',
-    columns: ['code', 'name', 'unit_type', 'description'],
+    columns: ['code', 'name', 'unit_type', 'parent_code', 'description'],
   },
   {
     id: 'positions',

@@ -181,8 +181,8 @@ class ImportExportController extends BaseApiController
                     'organization-units' => [
                         $item->code ?? '',
                         $item->name ?? '',
-                        $item->unit_type ?? '',
-                        $item->is_active ? 'ACTIVE' : 'INACTIVE',
+                        $item->type ?? '',
+                        $item->status ?? 'ACTIVE',
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     ],
                     'positions' => [
@@ -289,10 +289,10 @@ class ImportExportController extends BaseApiController
                 ],
             ],
             'organization-units' => [
-                'headers' => ['code', 'name', 'unit_type', 'description'],
+                'headers' => ['code', 'name', 'unit_type', 'parent_code', 'description'],
                 'samples' => [
-                    ['HCGA-SGT', 'Human Capital & General Affairs', 'DEPARTMENT', 'Departemen HCGA Operasional Site Sangatta'],
-                    ['MINE-OPS-SGT', 'Mining Operations & Fleet', 'DEPARTMENT', 'Departemen Operasi Tambang dan Armada Berat'],
+                    ['HCGA-SGT', 'Human Capital & General Affairs', 'DEPARTMENT', '', 'Departemen HCGA Operasional Site Sangatta'],
+                    ['SEC-HC-OPS', 'HC Operations Section', 'SECTION', 'HCGA-SGT', 'Seksi Operasional HC Lapangan'],
                 ],
             ],
             'positions' => [
