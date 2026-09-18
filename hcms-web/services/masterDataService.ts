@@ -260,7 +260,7 @@ export const jobGradeService = {
     const res = await apiClient.post<ApiResponse<any>>('/admin/master-data/jobs', payload);
     return res.data;
   },
-  getGrades: async (params?: { search?: string; pangkat?: string }) => {
+  getGrades: async (params?: { search?: string; pangkat?: string; status?: string }) => {
     const res = await apiClient.get<ApiResponse<GradeItem[]>>('/admin/master-data/grades', { params });
     return res.data;
   },
