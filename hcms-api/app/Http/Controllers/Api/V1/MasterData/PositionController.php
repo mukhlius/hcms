@@ -21,6 +21,9 @@ class PositionController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $query = Position::with([
+            'site:id,code,name',
+            'department:id,code,name',
+            'section:id,code,name',
             'organizationUnit:id,code,name,type',
             'job:id,code,name',
             'jobFamily:id,code,name',
@@ -30,19 +33,32 @@ class PositionController extends BaseApiController
             'costCenter:id,code,name',
         ]);
 
+        if ($request->filled('site_id')) {
+            $query->where('site_id', $request->query('site_id'));
+        }
+
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->query('department_id'));
+        }
+
+        if ($request->filled('section_id')) {
+            $query->where('section_id', $request->query('section_id'));
+        }
+
         if ($request->filled('organization_unit_id')) {
             $query->where('organization_unit_id', $request->query('organization_unit_id'));
         }
 
         if ($request->filled('company_id')) {
-            $query->whereHas('organizationUnit', function ($q) use ($request) {
-                $q->where('company_id', $request->query('company_id'));
-            });
-        }
-
-        if ($request->filled('site_id')) {
-            $query->whereHas('organizationUnit', function ($q) use ($request) {
-                $q->where('site_id', $request->query('site_id'));
+            $companyId = $request->query('company_id');
+            $query->where(function ($q) use ($companyId) {
+                $q->whereHas('department', function ($dq) use ($companyId) {
+                    $dq->where('company_id', $companyId);
+                })->orWhereHas('site', function ($sq) use ($companyId) {
+                    $sq->where('company_id', $companyId);
+                })->orWhereHas('organizationUnit', function ($uq) use ($companyId) {
+                    $uq->where('company_id', $companyId);
+                });
             });
         }
 
@@ -87,7 +103,10 @@ class PositionController extends BaseApiController
             'code' => ['required', 'string', 'max:50', 'unique:positions,code'],
             'title' => ['required', 'string', 'max:255'],
             'short_title' => ['nullable', 'string', 'max:50'],
-            'organization_unit_id' => ['required', 'exists:organization_units,id'],
+            'site_id' => ['nullable', 'exists:organization_sites,id'],
+            'department_id' => ['nullable', 'exists:organization_departments,id'],
+            'section_id' => ['nullable', 'exists:organization_sections,id'],
+            'organization_unit_id' => ['nullable', 'exists:organization_units,id'],
             'job_id' => ['nullable', 'exists:organization_jobs,id'],
             'job_family_id' => ['nullable', 'exists:job_families,id'],
             'grade_id' => ['nullable', 'exists:grades,id'],
@@ -158,7 +177,10 @@ class PositionController extends BaseApiController
             'code' => ['required', 'string', 'max:50', "unique:positions,code,{$position->id}"],
             'title' => ['required', 'string', 'max:255'],
             'short_title' => ['nullable', 'string', 'max:50'],
-            'organization_unit_id' => ['required', 'exists:organization_units,id'],
+            'site_id' => ['nullable', 'exists:organization_sites,id'],
+            'department_id' => ['nullable', 'exists:organization_departments,id'],
+            'section_id' => ['nullable', 'exists:organization_sections,id'],
+            'organization_unit_id' => ['nullable', 'exists:organization_units,id'],
             'job_id' => ['nullable', 'exists:organization_jobs,id'],
             'job_family_id' => ['nullable', 'exists:job_families,id'],
             'grade_id' => ['nullable', 'exists:grades,id'],

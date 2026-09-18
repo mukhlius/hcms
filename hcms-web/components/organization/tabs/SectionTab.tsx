@@ -15,8 +15,8 @@ import {
   Network,
   MapPin
 } from 'lucide-react';
-import { OrganizationUnitNode, MasterCompany, MasterSite, OrgUnitType } from '@/types';
-import { organizationUnitService } from '@/services/masterDataService';
+import { MasterSection, MasterDepartment, MasterCompany, MasterSite } from '@/types';
+import { sectionService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -32,7 +32,7 @@ import { toast, confirmDialog } from '@/stores/alertStore';
 interface SectionTabProps {
   companies: MasterCompany[];
   sites: MasterSite[];
-  departments: OrganizationUnitNode[];
+  departments: MasterDepartment[];
   selectedCompanyId: string;
   selectedSiteId: string;
   selectedDepartmentId: string;
@@ -52,7 +52,7 @@ export const SectionTab: React.FC<SectionTabProps> = ({
   onRefreshAll,
   createTrigger,
 }) => {
-  const [sections, setSections] = useState<OrganizationUnitNode[]>([]);
+  const [sections, setSections] = useState<MasterSection[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
 
@@ -64,8 +64,7 @@ export const SectionTab: React.FC<SectionTabProps> = ({
     id: 0,
     company_id: selectedCompanyId || (companies[0]?.id ? String(companies[0].id) : ''),
     site_id: selectedSiteId || '',
-    parent_id: selectedDepartmentId || '',
-    type: 'SECTION' as OrgUnitType,
+    department_id: selectedDepartmentId || '',
     code: '',
     name: '',
     description: '',
@@ -75,21 +74,16 @@ export const SectionTab: React.FC<SectionTabProps> = ({
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await organizationUnitService.getUnits({
+      const res = await sectionService.getSections({
         company_id: selectedCompanyId ? parseInt(selectedCompanyId) : undefined,
         site_id: selectedSiteId ? parseInt(selectedSiteId) : undefined,
-        parent_id: selectedDepartmentId ? parseInt(selectedDepartmentId) : undefined,
+        department_id: selectedDepartmentId ? parseInt(selectedDepartmentId) : undefined,
         search,
         per_page: 100,
       });
 
       if (res.success && res.data) {
-        const allUnits = res.data.data || [];
-        // Units that represent sections, sub-sections, or other unit levels below department
-        const sectionUnits = allUnits.filter((u) => 
-          ['SECTION', 'SUB_SECTION', 'OTHER'].includes(u.type)
-        );
-        setSections(sectionUnits);
+        setSections(res.data.data || []);
       }
     } catch (err) {
       console.error('Failed to load sections:', err);
@@ -124,8 +118,7 @@ export const SectionTab: React.FC<SectionTabProps> = ({
       id: 0,
       company_id: selectedCompanyId || (companies[0]?.id ? String(companies[0].id) : ''),
       site_id: selectedSiteId || '',
-      parent_id: selectedDepartmentId || (departments[0]?.id ? String(departments[0].id) : ''),
-      type: 'SECTION',
+      department_id: selectedDepartmentId || (departments[0]?.id ? String(departments[0].id) : ''),
       code: '',
       name: '',
       description: '',
@@ -140,14 +133,13 @@ export const SectionTab: React.FC<SectionTabProps> = ({
     }
   }, [createTrigger]);
 
-  const handleOpenEdit = (sec: OrganizationUnitNode) => {
+  const handleOpenEdit = (sec: MasterSection) => {
     setModalMode('edit');
     setFormData({
       id: sec.id,
-      company_id: String(sec.company_id),
+      company_id: String(sec.company_id || companies[0]?.id || ''),
       site_id: sec.site_id ? String(sec.site_id) : '',
-      parent_id: sec.parent_id ? String(sec.parent_id) : '',
-      type: sec.type,
+      department_id: String(sec.department_id || ''),
       code: sec.code,
       name: sec.name,
       description: sec.description || '',
@@ -156,13 +148,13 @@ export const SectionTab: React.FC<SectionTabProps> = ({
     setIsModalOpen(true);
   };
 
-  const handleToggleStatus = async (sec: OrganizationUnitNode) => {
+  const handleToggleStatus = async (sec: MasterSection) => {
     try {
       if (sec.status === 'ACTIVE') {
-        await organizationUnitService.deactivateUnit(sec.id);
+        await sectionService.deactivateSection(sec.id);
         toast.success(`Seksi "${sec.name}" berhasil dinonaktifkan.`, 'Status Diperbarui');
       } else {
-        await organizationUnitService.activateUnit(sec.id);
+        await sectionService.activateSection(sec.id);
         toast.success(`Seksi "${sec.name}" berhasil diaktifkan.`, 'Status Diperbarui');
       }
       await loadData();
@@ -172,10 +164,10 @@ export const SectionTab: React.FC<SectionTabProps> = ({
     }
   };
 
-  const handleDelete = async (sec: OrganizationUnitNode) => {
+  const handleDelete = async (sec: MasterSection) => {
     const confirmed = await confirmDialog({
       title: 'Hapus Seksi Kerja',
-      message: `Apakah Anda yakin ingin menghapus seksi "${sec.name}" (${sec.code})? Data akan dipindahkan ke Tempat Sampah dan dapat dipulihkan sewaktu-waktu.`,
+      message: `Apakah Anda yakin ingin menghapus seksi "${sec.name}" (${sec.code})? Data yang dihapus dapat dipulihkan sewaktu-waktu.`,
       confirmText: 'Ya, Hapus Seksi',
       cancelText: 'Batal',
       variant: 'danger',
@@ -184,7 +176,7 @@ export const SectionTab: React.FC<SectionTabProps> = ({
     if (!confirmed) return;
 
     try {
-      await organizationUnitService.deleteUnit(sec.id);
+      await sectionService.deleteSection(sec.id);
       toast.success(`Seksi "${sec.name}" berhasil dihapus.`, 'Berhasil Dihapus');
       await loadData();
       if (onRefreshAll) onRefreshAll();
@@ -199,9 +191,8 @@ export const SectionTab: React.FC<SectionTabProps> = ({
       setSubmitting(true);
       const payload: any = {
         company_id: parseInt(formData.company_id),
+        department_id: parseInt(formData.department_id),
         site_id: formData.site_id ? parseInt(formData.site_id) : null,
-        parent_id: formData.parent_id ? parseInt(formData.parent_id) : null,
-        type: formData.type,
         code: formData.code,
         name: formData.name,
         description: formData.description || null,
@@ -209,30 +200,29 @@ export const SectionTab: React.FC<SectionTabProps> = ({
       };
 
       if (modalMode === 'create') {
-        await organizationUnitService.createUnit(payload);
+        await sectionService.createSection(payload);
         toast.success(`Seksi "${formData.name}" berhasil dibuat.`, 'Berhasil Disimpan');
       } else {
-        await organizationUnitService.updateUnit(formData.id, payload);
+        await sectionService.updateSection(formData.id, payload);
         toast.success(`Seksi "${formData.name}" berhasil diperbarui.`, 'Berhasil Diperbarui');
       }
       setIsModalOpen(false);
       await loadData();
       if (onRefreshAll) onRefreshAll();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Gagal menyimpan seksi.', 'Gagal Menyimpan');
+      toast.error(err.response?.data?.message || 'Gagal menyimpan seksi kerja.', 'Gagal Menyimpan');
     } finally {
       setSubmitting(false);
     }
   };
 
+  const availableDepts = formData.company_id
+    ? departments.filter((d) => String(d.company_id) === formData.company_id)
+    : departments;
+
   const availableSites = formData.company_id
     ? sites.filter((s) => String(s.company_id) === formData.company_id)
     : sites;
-
-  const availableDepts = departments.filter((d) => {
-    if (formData.company_id && String(d.company_id) !== formData.company_id) return false;
-    return true;
-  });
 
   return (
     <div className="space-y-4">
@@ -242,7 +232,7 @@ export const SectionTab: React.FC<SectionTabProps> = ({
           <div className="relative w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Cari kode atau nama seksi kerja..."
+              placeholder="Cari kode, nama seksi, atau deskripsi..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 h-9 text-xs"
@@ -272,7 +262,7 @@ export const SectionTab: React.FC<SectionTabProps> = ({
           </div>
         ) : sections.length === 0 ? (
           <div className="p-12 text-center text-xs text-slate-400">
-            Tidak ada data seksi kerja ditemukan untuk filter ini.
+            Tidak ada data seksi kerja ditemukan.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -283,21 +273,24 @@ export const SectionTab: React.FC<SectionTabProps> = ({
                     <SortableHeader label="Kode Seksi" field="code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5">
-                    <SortableHeader label="Nama Seksi Kerja" field="name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Departemen Induk" field="department.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5">
-                    <SortableHeader label="Departemen Induk" field="parent.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Perusahaan" field="company.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5">
-                    <SortableHeader label="Perusahaan & Site" field="company.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Site Tambang" field="site.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
-                  <th className="px-4 py-3.5 text-center">
-                    <SortableHeader label="Posisi Jabatan" field="positions_count" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                  <th className="px-4 py-3.5">
+                    <SortableHeader label="Nama Seksi" field="name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                  </th>
+                  <th className="px-4 py-3.5">
+                    <SortableHeader label="Deskripsi" field="description" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5">
                     <SortableHeader label="Status" field="status" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
-                  <th className="px-4 py-3.5 text-center">Navigasi Jabatan</th>
+                  <th className="px-4 py-3.5 text-center">Navigasi Lanjut</th>
                   <th className="px-5 py-3.5 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -313,37 +306,28 @@ export const SectionTab: React.FC<SectionTabProps> = ({
                       </div>
                     </td>
                     <td className="px-4 py-3.5 font-medium text-slate-900">
-                      <div>{sec.name}</div>
-                      {sec.description && (
-                        <div className="text-[11px] text-slate-400 font-normal truncate max-w-xs">
-                          {sec.description}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        <Network className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+                        <span>{sec.department?.name || `Dept #${sec.department_id}`}</span>
+                      </div>
                     </td>
                     <td className="px-4 py-3.5 text-slate-600">
-                      <div className="flex items-center gap-1">
-                        <Network className="h-3 w-3 text-purple-500" />
-                        <span className="font-medium">{sec.parent?.name || '-'}</span>
+                      <div className="flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span>{sec.company?.name || `Perusahaan #${sec.company_id}`}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-slate-500">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-1">
-                          <Building2 className="h-3 w-3 text-slate-400" />
-                          <span className="text-[11px]">{sec.company?.name || `ID #${sec.company_id}`}</span>
-                        </div>
-                        {sec.site && (
-                          <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                            <MapPin className="h-3 w-3" />
-                            <span>{sec.site.name}</span>
-                          </div>
-                        )}
+                    <td className="px-4 py-3.5 text-slate-600">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span>{sec.site?.name || '-'}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-center">
-                      <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                        {sec.positions_count ?? 0}
-                      </span>
+                    <td className="px-4 py-3.5 font-medium text-slate-900">
+                      {sec.name}
+                    </td>
+                    <td className="px-4 py-3.5 text-slate-500 max-w-xs truncate" title={sec.description || '-'}>
+                      {sec.description || '-'}
                     </td>
                     <td className="px-4 py-3.5">
                       <Badge variant={sec.status === 'ACTIVE' ? 'success' : 'neutral'}>
@@ -422,14 +406,14 @@ export const SectionTab: React.FC<SectionTabProps> = ({
             <Select
               label="Perusahaan Induk *"
               value={formData.company_id}
-              onChange={(e) => setFormData({ ...formData, company_id: e.target.value, site_id: '', parent_id: '' })}
+              onChange={(e) => setFormData({ ...formData, company_id: e.target.value, site_id: '', department_id: '' })}
               options={companies.map((c) => ({ value: String(c.id), label: `${c.code} - ${c.name}` }))}
               required
             />
             <Select
               label="Departemen Induk *"
-              value={formData.parent_id}
-              onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
+              value={formData.department_id}
+              onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
               options={[
                 { value: '', label: '-- Pilih Departemen --' },
                 ...availableDepts.map((d) => ({ value: String(d.id), label: `${d.code} - ${d.name}` })),
@@ -468,32 +452,27 @@ export const SectionTab: React.FC<SectionTabProps> = ({
               required
               disabled={modalMode === 'edit'}
             />
-            <Select
-              label="Tipe Unit"
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-              options={[
-                { value: 'SECTION', label: 'Seksi Kerja (Section)' },
-                { value: 'SUB_SECTION', label: 'Sub-Seksi (Sub Section)' },
-                { value: 'OTHER', label: 'Unit Lainnya' },
-              ]}
+            <Input
+              label="Nama Seksi Kerja *"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Mine Survey & Drone Mapping Section"
+              required
             />
           </div>
 
-          <Input
-            label="Nama Seksi Kerja *"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Mine Survey & Drone Mapping Section"
-            required
-          />
-
-          <Input
-            label="Deskripsi / Catatan"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Pengukuran pit, kalkulasi volume batubara, dan pemetaan ortofoto"
-          />
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1.5">
+              Deskripsi / Catatan
+            </label>
+            <textarea
+              rows={3}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Pengukuran pit, kalkulasi volume batubara, dan pemetaan ortofoto"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>

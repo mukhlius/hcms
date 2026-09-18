@@ -193,6 +193,45 @@ export interface MasterSite {
   created_at?: string;
 }
 
+export interface MasterDepartment {
+  id: number;
+  company_id: number;
+  site_id?: number | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  leader_user_id?: number | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  is_active?: boolean;
+  company?: MasterCompany;
+  site?: MasterSite;
+  leader?: { id: number; name: string; email?: string } | null;
+  sections_count?: number;
+  users_count?: number;
+  sections?: MasterSection[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MasterSection {
+  id: number;
+  company_id: number;
+  department_id: number;
+  site_id?: number | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  leader_user_id?: number | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  company?: MasterCompany;
+  department?: MasterDepartment;
+  site?: MasterSite;
+  leader?: { id: number; name: string; email?: string } | null;
+  users_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export type OrgUnitType = 'BUSINESS_UNIT' | 'DIVISION' | 'DEPARTMENT' | 'SECTION' | 'SUB_SECTION' | 'OTHER';
 
 export interface OrganizationUnitNode {
@@ -223,7 +262,10 @@ export interface PositionItem {
   code: string;
   title: string;
   short_title?: string | null;
-  organization_unit_id: number;
+  site_id?: number | null;
+  department_id?: number | null;
+  section_id?: number | null;
+  organization_unit_id?: number | null;
   job_id?: number | null;
   job_family_id?: number | null;
   grade_id?: number | null;
@@ -235,11 +277,15 @@ export interface PositionItem {
   vacancy_headcount: number;
   is_frozen: boolean;
   status: 'ACTIVE' | 'INACTIVE';
+  site?: MasterSite | null;
+  department?: MasterDepartment | null;
+  section?: MasterSection | null;
   organization_unit?: OrganizationUnitNode;
   job?: { id: number; code: string; name: string };
   job_family?: { id: number; code: string; name: string };
   grade?: { id: number; code: string; name: string; level: number };
   reports_to?: { id: number; code: string; title: string };
+  reportsTo?: { id: number; code: string; title: string };
   work_location?: { id: number; code: string; name: string };
   cost_center?: { id: number; code: string; name: string };
   subordinates?: PositionItem[];
@@ -321,6 +367,17 @@ export interface ReferenceItem {
   name: string;
   status?: string;
   metadata?: any;
+}
+
+export interface EmploymentTypeItem {
+  id: number;
+  code: string;
+  name: string;
+  is_permanent?: boolean;
+  description?: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AuthState {

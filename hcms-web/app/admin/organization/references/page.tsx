@@ -11,12 +11,14 @@ import {
   Award,
   Compass,
   ShieldCheck,
+  FileSignature,
   Plus
 } from 'lucide-react';
-import { MasterCompany, MasterSite, OrganizationUnitNode } from '@/types';
+import { MasterCompany, MasterSite, MasterDepartment, OrganizationUnitNode } from '@/types';
 import {
   companyService,
   siteService,
+  departmentService,
   organizationUnitService
 } from '@/services/masterDataService';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -30,10 +32,11 @@ import { LevelTab } from '@/components/organization/tabs/LevelTab';
 import { GradeTab } from '@/components/organization/tabs/GradeTab';
 import { PohTab } from '@/components/organization/tabs/PohTab';
 import { WorkAreaTab } from '@/components/organization/tabs/WorkAreaTab';
+import { HubunganKerjaTab } from '@/components/organization/tabs/HubunganKerjaTab';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Tabs } from '@/components/ui/Tabs';
 
-type OrgTabType = 'company' | 'site' | 'department' | 'section' | 'position' | 'level' | 'grade' | 'poh' | 'work_area';
+type OrgTabType = 'company' | 'site' | 'department' | 'section' | 'position' | 'level' | 'grade' | 'hubungan_kerja' | 'poh' | 'work_area';
 
 function OrganizationReferencesContent() {
   const searchParams = useSearchParams();
@@ -41,7 +44,7 @@ function OrganizationReferencesContent() {
 
   const tabParam = searchParams.get('tab') as OrgTabType | null;
   const [activeTab, setActiveTab] = useState<OrgTabType>(
-    tabParam && ['company', 'site', 'department', 'section', 'position', 'level', 'grade', 'poh', 'work_area'].includes(tabParam)
+    tabParam && ['company', 'site', 'department', 'section', 'position', 'level', 'grade', 'hubungan_kerja', 'poh', 'work_area'].includes(tabParam)
       ? tabParam
       : 'company'
   );
@@ -55,6 +58,7 @@ function OrganizationReferencesContent() {
   // Metadata Lists & Counts
   const [companies, setCompanies] = useState<MasterCompany[]>([]);
   const [sites, setSites] = useState<MasterSite[]>([]);
+  const [departmentsList, setDepartmentsList] = useState<MasterDepartment[]>([]);
   const [allUnits, setAllUnits] = useState<OrganizationUnitNode[]>([]);
   const [counts, setCounts] = useState<{
     companies: number;
@@ -64,6 +68,7 @@ function OrganizationReferencesContent() {
     positions: number;
     grades: number;
     salary_grades: number;
+    employment_types: number;
     poh: number;
     work_area: number;
   }>({
@@ -74,6 +79,7 @@ function OrganizationReferencesContent() {
     positions: 0,
     grades: 0,
     salary_grades: 0,
+    employment_types: 0,
     poh: 0,
     work_area: 0,
   });
@@ -95,7 +101,10 @@ function OrganizationReferencesContent() {
         site_id: selectedSiteId || undefined,
       });
       if (res.success && res.data) {
-        setCounts(res.data);
+        setCounts({
+          ...res.data,
+          employment_types: res.data.employment_types ?? 0,
+        });
       }
     } catch (err) {
       console.warn('Non-blocking: failed to load overview counts:', err);
@@ -115,10 +124,12 @@ function OrganizationReferencesContent() {
       const promises: Promise<any>[] = [];
       const fetchSites = sites.length === 0;
       const fetchCompanies = companies.length === 0;
-      const fetchUnits = ['section'].includes(activeTab) && allUnits.length === 0;
+      const fetchDepts = ['section'].includes(activeTab) && departmentsList.length === 0;
+      const fetchUnits = ['position'].includes(activeTab) && allUnits.length === 0;
 
       if (fetchSites) promises.push(siteService.getSites());
       if (fetchCompanies) promises.push(companyService.getCompanies({ per_page: 50 }));
+      if (fetchDepts) promises.push(departmentService.getDepartments({ per_page: 100 }));
       if (fetchUnits) promises.push(organizationUnitService.getUnits({ per_page: 100 }));
 
       if (promises.length === 0) return;
@@ -137,6 +148,12 @@ function OrganizationReferencesContent() {
           setCompanies(r.value.data.data || []);
         }
       }
+      if (fetchDepts) {
+        const r = results[idx++];
+        if (r && r.status === 'fulfilled' && r.value?.success && r.value.data) {
+          setDepartmentsList(r.value.data.data || []);
+        }
+      }
       if (fetchUnits) {
         const r = results[idx++];
         if (r && r.status === 'fulfilled' && r.value?.success && r.value.data) {
@@ -146,7 +163,7 @@ function OrganizationReferencesContent() {
     } catch (err) {
       console.warn('Non-blocking: failed to load filter options:', err);
     }
-  }, [activeTab, sites.length, companies.length, allUnits.length]);
+  }, [activeTab, sites.length, companies.length, departmentsList.length, allUnits.length]);
 
   useEffect(() => {
     loadFilterOptions();
@@ -267,6 +284,13 @@ function OrganizationReferencesContent() {
       badgeColor: 'bg-cyan-100 text-cyan-800',
     },
     {
+      id: 'hubungan_kerja' as OrgTabType,
+      label: 'Hubungan Kerja',
+      icon: <FileSignature className="h-4 w-4 shrink-0" />,
+      count: counts.employment_types,
+      badgeColor: 'bg-rose-100 text-rose-800',
+    },
+    {
       id: 'poh' as OrgTabType,
       label: 'POH',
       icon: <Compass className="h-4 w-4 shrink-0" />,
@@ -300,6 +324,7 @@ function OrganizationReferencesContent() {
       case 'position': return 'Tambah Position';
       case 'level': return 'Tambah Level';
       case 'grade': return 'Tambah Grade';
+      case 'hubungan_kerja': return 'Tambah Hubungan Kerja';
       case 'poh': return 'Tambah POH';
       case 'work_area': return 'Tambah Work Area';
       default: return 'Tambah Data';
@@ -380,7 +405,7 @@ function OrganizationReferencesContent() {
             key="section-tab"
             companies={companies}
             sites={sites}
-            departments={departments}
+            departments={departmentsList}
             selectedCompanyId={selectedCompanyId}
             selectedSiteId={selectedSiteId}
             selectedDepartmentId={selectedDepartmentId}
@@ -408,6 +433,10 @@ function OrganizationReferencesContent() {
 
         {activeTab === 'grade' && (
           <GradeTab key="grade-tab" onRefreshAll={loadCounts} createTrigger={createTriggers['grade'] || 0} />
+        )}
+
+        {activeTab === 'hubungan_kerja' && (
+          <HubunganKerjaTab key="hubungan-kerja-tab" onRefreshAll={loadCounts} createTrigger={createTriggers['hubungan_kerja'] || 0} />
         )}
 
         {activeTab === 'poh' && (

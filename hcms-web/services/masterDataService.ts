@@ -6,11 +6,14 @@ import {
   HeadcountSummary,
   MasterCompany,
   MasterSite,
+  MasterDepartment,
+  MasterSection,
   OrganizationUnitNode,
   PositionItem,
   ReferenceItem,
   ShiftItem,
   WorkScheduleItem,
+  EmploymentTypeItem,
 } from '@/types';
 
 export const companyService = {
@@ -25,6 +28,7 @@ export const companyService = {
       salary_grades: number;
       poh: number;
       work_area: number;
+      employment_types?: number;
     }>>('/admin/master-data/overview-counts', { params });
     return res.data;
   },
@@ -89,6 +93,68 @@ export const siteService = {
   },
 };
 
+export const departmentService = {
+  getDepartments: async (params?: { company_id?: number; site_id?: number; search?: string; status?: string; per_page?: number; page?: number }) => {
+    const res = await apiClient.get<ApiResponse<{ data: MasterDepartment[]; total: number }>>('/admin/master-data/departments', { params });
+    return res.data;
+  },
+  getDepartment: async (id: number) => {
+    const res = await apiClient.get<ApiResponse<{ department: MasterDepartment; audit_trail: any[] }>>(`/admin/master-data/departments/${id}`);
+    return res.data;
+  },
+  createDepartment: async (payload: Partial<MasterDepartment>) => {
+    const res = await apiClient.post<ApiResponse<MasterDepartment>>('/admin/master-data/departments', payload);
+    return res.data;
+  },
+  updateDepartment: async (id: number, payload: Partial<MasterDepartment>) => {
+    const res = await apiClient.put<ApiResponse<MasterDepartment>>(`/admin/master-data/departments/${id}`, payload);
+    return res.data;
+  },
+  activateDepartment: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<MasterDepartment>>(`/admin/master-data/departments/${id}/activate`);
+    return res.data;
+  },
+  deactivateDepartment: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<MasterDepartment>>(`/admin/master-data/departments/${id}/deactivate`);
+    return res.data;
+  },
+  deleteDepartment: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/departments/${id}`);
+    return res.data;
+  },
+};
+
+export const sectionService = {
+  getSections: async (params?: { department_id?: number; company_id?: number; site_id?: number; search?: string; status?: string; per_page?: number; page?: number }) => {
+    const res = await apiClient.get<ApiResponse<{ data: MasterSection[]; total: number }>>('/admin/master-data/sections', { params });
+    return res.data;
+  },
+  getSection: async (id: number) => {
+    const res = await apiClient.get<ApiResponse<{ section: MasterSection; audit_trail: any[] }>>(`/admin/master-data/sections/${id}`);
+    return res.data;
+  },
+  createSection: async (payload: Partial<MasterSection>) => {
+    const res = await apiClient.post<ApiResponse<MasterSection>>('/admin/master-data/sections', payload);
+    return res.data;
+  },
+  updateSection: async (id: number, payload: Partial<MasterSection>) => {
+    const res = await apiClient.put<ApiResponse<MasterSection>>(`/admin/master-data/sections/${id}`, payload);
+    return res.data;
+  },
+  activateSection: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<MasterSection>>(`/admin/master-data/sections/${id}/activate`);
+    return res.data;
+  },
+  deactivateSection: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<MasterSection>>(`/admin/master-data/sections/${id}/deactivate`);
+    return res.data;
+  },
+  deleteSection: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/sections/${id}`);
+    return res.data;
+  },
+};
+
 export const organizationUnitService = {
   getTree: async (params?: { company_id?: number; status?: string }) => {
     const res = await apiClient.get<ApiResponse<OrganizationUnitNode[]>>('/admin/master-data/organization-units/tree', { params });
@@ -129,7 +195,7 @@ export const organizationUnitService = {
 };
 
 export const positionService = {
-  getPositions: async (params?: { company_id?: number; site_id?: number; organization_unit_id?: number; grade_id?: number; is_frozen?: boolean; search?: string; status?: string; per_page?: number }) => {
+  getPositions: async (params?: { company_id?: number; site_id?: number; department_id?: number; section_id?: number; organization_unit_id?: number; grade_id?: number; is_frozen?: boolean; search?: string; status?: string; per_page?: number }) => {
     const res = await apiClient.get<ApiResponse<{ data: PositionItem[]; total: number }>>('/admin/master-data/positions', { params });
     return res.data;
   },
@@ -350,6 +416,37 @@ export const referenceDataService = {
   },
   getOvertimeTypes: async () => {
     const res = await apiClient.get<ApiResponse<any[]>>('/admin/master-data/overtime-types');
+    return res.data;
+  },
+};
+
+export const employmentTypeService = {
+  getEmploymentTypes: async (params?: { search?: string; status?: string; per_page?: number }) => {
+    const res = await apiClient.get<ApiResponse<EmploymentTypeItem[]>>('/admin/master-data/employment-types', { params });
+    return res.data;
+  },
+  getEmploymentType: async (id: number) => {
+    const res = await apiClient.get<ApiResponse<EmploymentTypeItem>>(`/admin/master-data/employment-types/${id}`);
+    return res.data;
+  },
+  createEmploymentType: async (payload: Partial<EmploymentTypeItem>) => {
+    const res = await apiClient.post<ApiResponse<EmploymentTypeItem>>('/admin/master-data/employment-types', payload);
+    return res.data;
+  },
+  updateEmploymentType: async (id: number, payload: Partial<EmploymentTypeItem>) => {
+    const res = await apiClient.put<ApiResponse<EmploymentTypeItem>>(`/admin/master-data/employment-types/${id}`, payload);
+    return res.data;
+  },
+  deleteEmploymentType: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/employment-types/${id}`);
+    return res.data;
+  },
+  activateEmploymentType: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<EmploymentTypeItem>>(`/admin/master-data/employment-types/${id}/activate`);
+    return res.data;
+  },
+  deactivateEmploymentType: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<EmploymentTypeItem>>(`/admin/master-data/employment-types/${id}/deactivate`);
     return res.data;
   },
 };

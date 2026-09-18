@@ -16,6 +16,9 @@ class Position extends Model
         'code',
         'title',
         'short_title',
+        'site_id',
+        'department_id',
+        'section_id',
         'organization_unit_id',
         'job_id',
         'job_family_id',
@@ -46,6 +49,21 @@ class Position extends Model
     public function getVacancyHeadcountAttribute(): int
     {
         return max(0, (int)$this->approved_headcount - (int)$this->current_headcount);
+    }
+
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(OrganizationSite::class, 'site_id');
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(OrganizationDepartment::class, 'department_id');
+    }
+
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(OrganizationSection::class, 'section_id');
     }
 
     public function organizationUnit(): BelongsTo

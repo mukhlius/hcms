@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api\V1\MasterData;
 
 use App\Http\Controllers\Api\BaseApiController;
 use App\Models\AuditLog;
+use App\Models\EmploymentType;
 use App\Models\Grade;
 use App\Models\OrganizationCompany;
+use App\Models\OrganizationDepartment;
+use App\Models\OrganizationSection;
 use App\Models\OrganizationSite;
 use App\Models\OrganizationUnit;
 use App\Models\Position;
@@ -217,24 +220,33 @@ class CompanyController extends BaseApiController
             $siteQuery->where('company_id', $companyId);
         }
 
-        $unitQuery = OrganizationUnit::query();
+        $deptQuery = OrganizationDepartment::query();
         if ($companyId) {
-            $unitQuery->where('company_id', $companyId);
+            $deptQuery->where('company_id', $companyId);
         }
         if ($siteId) {
-            $unitQuery->where('site_id', $siteId);
+            $deptQuery->where('site_id', $siteId);
+        }
+
+        $secQuery = OrganizationSection::query();
+        if ($companyId) {
+            $secQuery->where('company_id', $companyId);
+        }
+        if ($siteId) {
+            $secQuery->where('site_id', $siteId);
         }
 
         $counts = [
             'companies' => OrganizationCompany::count(),
             'sites' => $siteQuery->count(),
-            'departments' => (clone $unitQuery)->whereIn('type', ['DEPARTMENT', 'DIVISION', 'BUSINESS_UNIT'])->count(),
-            'sections' => (clone $unitQuery)->whereIn('type', ['SECTION', 'SUB_SECTION', 'OTHER'])->count(),
+            'departments' => $deptQuery->count(),
+            'sections' => $secQuery->count(),
             'positions' => Position::count(),
             'grades' => Grade::count(),
             'salary_grades' => SalaryGrade::count(),
             'poh' => StandardReference::where('category', 'POH')->where('status', 'ACTIVE')->count(),
             'work_area' => StandardReference::where('category', 'WORK_AREA')->where('status', 'ACTIVE')->count(),
+            'employment_types' => EmploymentType::count(),
         ];
 
         return $this->successResponse($counts, 'Ringkasan hitungan master data berhasil diambil.');

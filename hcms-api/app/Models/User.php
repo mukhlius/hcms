@@ -97,6 +97,11 @@ class User extends Authenticatable
         return $this->belongsTo(OrganizationDepartment::class, 'department_id');
     }
 
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(OrganizationSection::class, 'section_id');
+    }
+
     public function userSessions(): HasMany
     {
         return $this->hasMany(UserSession::class);

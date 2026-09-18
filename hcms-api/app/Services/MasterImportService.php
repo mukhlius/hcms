@@ -125,6 +125,98 @@ class MasterImportService
             $defaultCompanyId = \App\Models\OrganizationCompany::value('id');
 
             foreach ($data as $item) {
+                // Pre-process for OrganizationDepartment
+                if ($modelClass === \App\Models\OrganizationDepartment::class) {
+                    if (empty($item['company_id'])) {
+                        if (!empty($item['company_code'])) {
+                            $item['company_id'] = \App\Models\OrganizationCompany::where('code', $item['company_code'])->value('id') ?? $defaultCompanyId;
+                            unset($item['company_code']);
+                        } else {
+                            $item['company_id'] = $defaultCompanyId;
+                        }
+                    }
+
+                    if (!empty($item['site_code'])) {
+                        $item['site_id'] = \App\Models\OrganizationSite::where('code', $item['site_code'])->value('id');
+                        unset($item['site_code']);
+                    }
+
+                    if (empty($item['status'])) {
+                        $item['status'] = 'ACTIVE';
+                    }
+                    $item['is_active'] = $item['status'] === 'ACTIVE';
+                }
+
+                // Pre-process for OrganizationSection
+                if ($modelClass === \App\Models\OrganizationSection::class) {
+                    if (!empty($item['department_code'])) {
+                        $item['department_id'] = \App\Models\OrganizationDepartment::where('code', $item['department_code'])->value('id');
+                        unset($item['department_code']);
+                    }
+
+                    if (empty($item['department_id'])) {
+                        $item['department_id'] = \App\Models\OrganizationDepartment::value('id');
+                    }
+
+                    if (empty($item['company_id'])) {
+                        if (!empty($item['company_code'])) {
+                            $item['company_id'] = \App\Models\OrganizationCompany::where('code', $item['company_code'])->value('id') ?? $defaultCompanyId;
+                            unset($item['company_code']);
+                        } elseif (!empty($item['department_id'])) {
+                            $item['company_id'] = \App\Models\OrganizationDepartment::where('id', $item['department_id'])->value('company_id') ?? $defaultCompanyId;
+                        } else {
+                            $item['company_id'] = $defaultCompanyId;
+                        }
+                    }
+
+                    if (!empty($item['site_code'])) {
+                        $item['site_id'] = \App\Models\OrganizationSite::where('code', $item['site_code'])->value('id');
+                        unset($item['site_code']);
+                    }
+
+                    if (empty($item['status'])) {
+                        $item['status'] = 'ACTIVE';
+                    }
+                }
+
+                // Pre-process for Position
+                if ($modelClass === \App\Models\Position::class) {
+                    if (!empty($item['site_code'])) {
+                        $item['site_id'] = \App\Models\OrganizationSite::where('code', $item['site_code'])->value('id');
+                        unset($item['site_code']);
+                    }
+
+                    if (!empty($item['department_code'])) {
+                        $item['department_id'] = \App\Models\OrganizationDepartment::where('code', $item['department_code'])->value('id');
+                        unset($item['department_code']);
+                    }
+
+                    if (!empty($item['section_code'])) {
+                        $item['section_id'] = \App\Models\OrganizationSection::where('code', $item['section_code'])->value('id');
+                        unset($item['section_code']);
+                    }
+
+                    if (!empty($item['grade_code'])) {
+                        $item['grade_id'] = \App\Models\Grade::where('code', $item['grade_code'])->value('id');
+                        unset($item['grade_code']);
+                    }
+
+                    if (!empty($item['reports_to_code'])) {
+                        $item['reports_to_position_id'] = \App\Models\Position::where('code', $item['reports_to_code'])->value('id');
+                        unset($item['reports_to_code']);
+                    }
+
+                    if (empty($item['approved_headcount'])) {
+                        $item['approved_headcount'] = 1;
+                    } else {
+                        $item['approved_headcount'] = (int) $item['approved_headcount'];
+                    }
+
+                    if (empty($item['status'])) {
+                        $item['status'] = 'ACTIVE';
+                    }
+                }
+
                 // Pre-process for OrganizationUnit
                 if ($modelClass === \App\Models\OrganizationUnit::class) {
                     if (isset($item['unit_type']) && !isset($item['type'])) {

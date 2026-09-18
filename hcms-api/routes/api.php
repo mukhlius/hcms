@@ -139,6 +139,28 @@ Route::prefix('v1')->group(function () {
                     Route::patch('/{site}/deactivate', [\App\Http\Controllers\Api\V1\MasterData\SiteController::class, 'deactivate']);
                 });
 
+                // Departments
+                Route::prefix('departments')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'index']);
+                    Route::post('/', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'store']);
+                    Route::get('/{department}', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'show']);
+                    Route::put('/{department}', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'update']);
+                    Route::delete('/{department}', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'destroy']);
+                    Route::patch('/{department}/activate', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'activate']);
+                    Route::patch('/{department}/deactivate', [\App\Http\Controllers\Api\V1\MasterData\DepartmentController::class, 'deactivate']);
+                });
+
+                // Sections
+                Route::prefix('sections')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'index']);
+                    Route::post('/', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'store']);
+                    Route::get('/{section}', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'show']);
+                    Route::put('/{section}', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'update']);
+                    Route::delete('/{section}', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'destroy']);
+                    Route::patch('/{section}/activate', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'activate']);
+                    Route::patch('/{section}/deactivate', [\App\Http\Controllers\Api\V1\MasterData\SectionController::class, 'deactivate']);
+                });
+
                 // Organization Units & Visual Tree
                 Route::prefix('organization-units')->group(function () {
                     Route::get('/tree', [\App\Http\Controllers\Api\V1\MasterData\OrganizationUnitController::class, 'tree']);
@@ -184,8 +206,15 @@ Route::prefix('v1')->group(function () {
                 Route::post('/cost-centers', [\App\Http\Controllers\Api\V1\MasterData\JobAndGradeController::class, 'storeCostCenter']);
 
                 // Employment Masters
-                Route::get('/employment-types', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'employmentTypes']);
-                Route::post('/employment-types', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'storeEmploymentType']);
+                Route::prefix('employment-types')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'employmentTypes']);
+                    Route::post('/', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'storeEmploymentType']);
+                    Route::get('/{employmentType}', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'showEmploymentType']);
+                    Route::put('/{employmentType}', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'updateEmploymentType']);
+                    Route::delete('/{employmentType}', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'destroyEmploymentType']);
+                    Route::patch('/{employmentType}/activate', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'activateEmploymentType']);
+                    Route::patch('/{employmentType}/deactivate', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'deactivateEmploymentType']);
+                });
                 Route::get('/employment-statuses', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'employmentStatuses']);
                 Route::post('/employment-statuses', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'storeEmploymentStatus']);
                 Route::get('/worker-categories', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'workerCategories']);

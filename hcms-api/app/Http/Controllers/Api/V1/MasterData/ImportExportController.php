@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Api\V1\MasterData;
 use App\Http\Controllers\Api\BaseApiController;
 use App\Models\AuditLog;
 use App\Models\CostCenter;
+use App\Models\EmploymentType;
 use App\Models\Grade;
 use App\Models\JobFamily;
 use App\Models\OrganizationCompany;
+use App\Models\OrganizationDepartment;
 use App\Models\OrganizationJob;
+use App\Models\OrganizationSection;
 use App\Models\OrganizationSite;
 use App\Models\OrganizationUnit;
 use App\Models\Position;
@@ -28,6 +31,8 @@ class ImportExportController extends BaseApiController
     protected array $entityModelMap = [
         'companies' => OrganizationCompany::class,
         'sites' => OrganizationSite::class,
+        'departments' => OrganizationDepartment::class,
+        'sections' => OrganizationSection::class,
         'organization-units' => OrganizationUnit::class,
         'positions' => Position::class,
         'grades' => Grade::class,
@@ -38,6 +43,7 @@ class ImportExportController extends BaseApiController
         'cost-centers' => CostCenter::class,
         'shifts' => Shift::class,
         'work-schedules' => WorkSchedule::class,
+        'employment-types' => EmploymentType::class,
         'users' => User::class,
     ];
 
@@ -139,8 +145,10 @@ class ImportExportController extends BaseApiController
         $headers = match ($entity) {
             'companies' => ['Kode', 'Nama Perusahaan', 'Nama Legal', 'Nama Pendek', 'NPWP', 'Timezone', 'Status', 'Tanggal Dibuat'],
             'sites' => ['Kode Site', 'Nama Site', 'Nama Pendek', 'Tipe Site', 'Lokasi', 'Provinsi', 'Kota', 'Timezone', 'Status'],
+            'departments' => ['Kode Departemen', 'Nama Departemen', 'Kode Perusahaan', 'Kode Site', 'Status', 'Tanggal Dibuat'],
+            'sections' => ['Kode Section', 'Nama Section', 'Kode Departemen', 'Kode Site', 'Status', 'Tanggal Dibuat'],
             'organization-units' => ['Kode Unit', 'Nama Unit', 'Tipe Unit', 'Status', 'Tanggal Dibuat'],
-            'positions' => ['Kode Posisi', 'Nama Posisi / Jabatan', 'Kuota Formasi', 'Status Aktif', 'Dibekukan', 'Tanggal Dibuat'],
+            'positions' => ['Kode Posisi', 'Nama Posisi', 'Site', 'Departemen', 'Section', 'Level', 'Atasan Langsung', 'MPP', 'Status', 'Tanggal Dibuat'],
             'grades' => ['Kode Grade', 'Nama Grade', 'Level', 'Status'],
             'salary-grades' => ['Kode Skala', 'Nama Skala Gaji', 'Gaji Pokok Min', 'Gaji Pokok Mid', 'Gaji Pokok Max'],
             'job-families' => ['Kode Rumpun', 'Nama Rumpun Jabatan', 'Deskripsi'],
@@ -149,6 +157,7 @@ class ImportExportController extends BaseApiController
             'cost-centers' => ['Kode Cost Center', 'Nama Cost Center', 'Deskripsi'],
             'shifts' => ['Kode Shift', 'Nama Shift', 'Jam Masuk', 'Jam Pulang', 'Istirahat (Menit)', 'Status'],
             'work-schedules' => ['Kode Jadwal', 'Nama Jadwal Kerja', 'Tipe Pola', 'Hari Kerja', 'Hari Libur'],
+            'employment-types' => ['Kode Hubungan Kerja', 'Nama Hubungan Kerja', 'Sifat Hubungan', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'users' => ['Username', 'Nama Lengkap', 'Email', 'Status Akun', 'Cakupan Akses', 'Tanggal Bergabung'],
             default => ['Kode', 'Nama', 'Status', 'Tanggal Dibuat'],
         };
@@ -178,6 +187,22 @@ class ImportExportController extends BaseApiController
                         $item->timezone ?? 'Asia/Makassar',
                         $item->is_active ? 'ACTIVE' : 'INACTIVE',
                     ],
+                    'departments' => [
+                        $item->code ?? '',
+                        $item->name ?? '',
+                        $item->company?->code ?? '',
+                        $item->site?->code ?? '',
+                        $item->status ?? 'ACTIVE',
+                        $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
+                    ],
+                    'sections' => [
+                        $item->code ?? '',
+                        $item->name ?? '',
+                        $item->department?->code ?? '',
+                        $item->site?->code ?? '',
+                        $item->status ?? 'ACTIVE',
+                        $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
+                    ],
                     'organization-units' => [
                         $item->code ?? '',
                         $item->name ?? '',
@@ -188,9 +213,13 @@ class ImportExportController extends BaseApiController
                     'positions' => [
                         $item->code ?? '',
                         $item->title ?? '',
+                        $item->site?->code ?? '',
+                        $item->department?->code ?? '',
+                        $item->section?->code ?? '',
+                        $item->grade?->code ?? '',
+                        $item->reportsTo?->code ?? '',
                         (string) ($item->approved_headcount ?? 1),
-                        $item->is_active ? 'ACTIVE' : 'INACTIVE',
-                        $item->is_frozen ? 'FROZEN' : 'ACTIVE',
+                        $item->status ?? 'ACTIVE',
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     ],
                     'grades' => [
@@ -242,6 +271,14 @@ class ImportExportController extends BaseApiController
                         (string) ($item->work_days ?? 0),
                         (string) ($item->off_days ?? 0),
                     ],
+                    'employment-types' => [
+                        $item->code ?? '',
+                        $item->name ?? '',
+                        $item->is_permanent ? 'TETAP' : 'KONTRAK',
+                        $item->description ?? '',
+                        $item->status ?? 'ACTIVE',
+                        $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
+                    ],
                     'users' => [
                         $item->username ?? '',
                         $item->name ?? '',
@@ -288,6 +325,20 @@ class ImportExportController extends BaseApiController
                     ['SITE-BGL', 'Bengalon East Pit', 'BGL', 'MINING_SITE', 'Bengalon, Kutai Timur', 'Kalimantan Timur', 'Kutai Timur', 'Asia/Makassar'],
                 ],
             ],
+            'departments' => [
+                'headers' => ['code', 'name', 'company_code', 'site_code', 'description'],
+                'samples' => [
+                    ['HCGA-SGT', 'Human Capital & General Affairs', 'CMN-CORP', 'SITE-SGT', 'Departemen HC & GA Site Sangatta'],
+                    ['MINE-OPS', 'Mining Operations Department', 'CMN-CORP', 'SITE-SGT', 'Departemen Operasi Penambangan dan Fleet'],
+                ],
+            ],
+            'sections' => [
+                'headers' => ['code', 'name', 'department_code', 'site_code', 'description'],
+                'samples' => [
+                    ['SEC-HC-OPS', 'HC Operations Section', 'HCGA-SGT', 'SITE-SGT', 'Seksi Operasional HC & GA Lapangan'],
+                    ['SEC-HAUL-01', 'Coal Hauling Section', 'MINE-OPS', 'SITE-SGT', 'Seksi Pengangkutan dan Jalan Tambang Pit 1'],
+                ],
+            ],
             'organization-units' => [
                 'headers' => ['code', 'name', 'unit_type', 'parent_code', 'description'],
                 'samples' => [
@@ -296,10 +347,10 @@ class ImportExportController extends BaseApiController
                 ],
             ],
             'positions' => [
-                'headers' => ['code', 'title', 'approved_headcount', 'job_type', 'critical_level'],
+                'headers' => ['site_code', 'department_code', 'section_code', 'grade_code', 'code', 'title', 'reports_to_code', 'approved_headcount', 'status'],
                 'samples' => [
-                    ['POS-HC-SPV', 'HC Operations Supervisor', '2', 'PERMANENT', 'CORE'],
-                    ['POS-EXC-OPR', 'Excavator Heavy Operator', '15', 'PERMANENT', 'OPERATIONAL'],
+                    ['SITE-SGT', 'HCGA-SGT', 'SEC-HC-OPS', 'GR-04', 'POS-HC-SPV', 'HC Operations Supervisor', '', '2', 'ACTIVE'],
+                    ['SITE-SGT', 'MINE-OPS', 'SEC-HAUL-01', 'GR-01', 'POS-EXC-OPR', 'Excavator Heavy Operator', 'POS-HC-SPV', '15', 'ACTIVE'],
                 ],
             ],
             'grades' => [
@@ -349,6 +400,15 @@ class ImportExportController extends BaseApiController
                 'samples' => [
                     ['SHIFT-DS', 'Day Shift Tambang', '06:00', '18:00', '60', '1'],
                     ['SHIFT-NS', 'Night Shift Tambang', '18:00', '06:00', '60', '1'],
+                ],
+            ],
+            'employment-types' => [
+                'headers' => ['code', 'name', 'is_permanent', 'description', 'status'],
+                'samples' => [
+                    ['PKWTT', 'Perjanjian Kerja Waktu Tidak Tertentu (Tetap)', '1', 'Karyawan tetap', 'ACTIVE'],
+                    ['PKWT', 'Perjanjian Kerja Waktu Tertentu (Kontrak)', '0', 'Karyawan kontrak PKWT', 'ACTIVE'],
+                    ['PROBATION', 'Masa Percobaan (Probation)', '0', 'Karyawan masa percobaan 3 bulan', 'ACTIVE'],
+                    ['INTERNSHIP', 'Magang / Praktik Industri', '0', 'Peserta magang mahasiswa/siswa', 'ACTIVE'],
                 ],
             ],
             'users' => [

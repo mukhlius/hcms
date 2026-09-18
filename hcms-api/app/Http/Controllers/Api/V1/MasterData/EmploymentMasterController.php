@@ -18,7 +18,30 @@ class EmploymentMasterController extends BaseApiController
     // ================= EMPLOYMENT TYPES =================
     public function employmentTypes(Request $request): JsonResponse
     {
-        $types = EmploymentType::orderBy('name')->get();
+        $query = EmploymentType::query();
+
+        if ($request->filled('search')) {
+            $s = $request->query('search');
+            $query->where(function ($q) use ($s) {
+                $q->where('code', 'like', "%{$s}%")
+                  ->orWhere('name', 'like', "%{$s}%")
+                  ->orWhere('description', 'like', "%{$s}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->query('status'));
+        }
+
+        $query->orderBy('code');
+
+        if ($request->has('per_page')) {
+            $perPage = (int)$request->query('per_page', 15);
+            $types = $query->paginate($perPage);
+        } else {
+            $types = $query->get();
+        }
+
         return $this->successResponse($types, 'Data jenis ketenagakerjaan berhasil diambil.');
     }
 
@@ -36,6 +59,55 @@ class EmploymentMasterController extends BaseApiController
         AuditService::log('CREATE', 'EMPLOYMENT_TYPE', EmploymentType::class, (string)$item->id, newValues: $item->toArray());
 
         return $this->createdResponse($item, 'Jenis ketenagakerjaan berhasil dibuat.');
+    }
+
+    public function showEmploymentType(EmploymentType $employmentType): JsonResponse
+    {
+        return $this->successResponse($employmentType, 'Detail jenis ketenagakerjaan berhasil diambil.');
+    }
+
+    public function updateEmploymentType(Request $request, EmploymentType $employmentType): JsonResponse
+    {
+        $validated = $request->validate([
+            'code' => ['sometimes', 'required', 'string', 'max:50', 'unique:employment_types,code,' . $employmentType->id],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'is_permanent' => ['nullable', 'boolean'],
+            'description' => ['nullable', 'string'],
+            'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
+        ]);
+
+        $oldValues = $employmentType->toArray();
+        $employmentType->update($validated);
+        AuditService::log('UPDATE', 'EMPLOYMENT_TYPE', EmploymentType::class, (string)$employmentType->id, oldValues: $oldValues, newValues: $employmentType->fresh()->toArray());
+
+        return $this->successResponse($employmentType->fresh(), 'Jenis ketenagakerjaan berhasil diperbarui.');
+    }
+
+    public function destroyEmploymentType(EmploymentType $employmentType): JsonResponse
+    {
+        $old = $employmentType->toArray();
+        $employmentType->delete();
+        AuditService::log('DELETE', 'EMPLOYMENT_TYPE', EmploymentType::class, (string)$employmentType->id, oldValues: $old);
+
+        return $this->successResponse(null, 'Jenis ketenagakerjaan berhasil dihapus.');
+    }
+
+    public function activateEmploymentType(EmploymentType $employmentType): JsonResponse
+    {
+        $old = $employmentType->toArray();
+        $employmentType->update(['status' => 'ACTIVE']);
+        AuditService::log('ACTIVATE', 'EMPLOYMENT_TYPE', EmploymentType::class, (string)$employmentType->id, oldValues: $old, newValues: $employmentType->fresh()->toArray());
+
+        return $this->successResponse($employmentType->fresh(), 'Jenis ketenagakerjaan berhasil diaktifkan.');
+    }
+
+    public function deactivateEmploymentType(EmploymentType $employmentType): JsonResponse
+    {
+        $old = $employmentType->toArray();
+        $employmentType->update(['status' => 'INACTIVE']);
+        AuditService::log('DEACTIVATE', 'EMPLOYMENT_TYPE', EmploymentType::class, (string)$employmentType->id, oldValues: $old, newValues: $employmentType->fresh()->toArray());
+
+        return $this->successResponse($employmentType->fresh(), 'Jenis ketenagakerjaan berhasil dinonaktifkan.');
     }
 
     // ================= EMPLOYMENT STATUSES =================

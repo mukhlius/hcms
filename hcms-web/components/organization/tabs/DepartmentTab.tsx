@@ -16,8 +16,8 @@ import {
   MapPin,
   UserCheck
 } from 'lucide-react';
-import { OrganizationUnitNode, MasterCompany, MasterSite, OrgUnitType } from '@/types';
-import { organizationUnitService } from '@/services/masterDataService';
+import { MasterDepartment, MasterCompany, MasterSite } from '@/types';
+import { departmentService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -51,7 +51,7 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
   onRefreshAll,
   createTrigger,
 }) => {
-  const [departments, setDepartments] = useState<OrganizationUnitNode[]>([]);
+  const [departments, setDepartments] = useState<MasterDepartment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
 
@@ -67,8 +67,6 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
     id: 0,
     company_id: selectedCompanyId || (defaultCompany?.id ? String(defaultCompany.id) : ''),
     site_id: selectedSiteId || (defaultSite?.id ? String(defaultSite.id) : ''),
-    parent_id: '',
-    type: 'DEPARTMENT' as OrgUnitType,
     code: '',
     name: '',
     description: '',
@@ -78,7 +76,7 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await organizationUnitService.getUnits({
+      const res = await departmentService.getDepartments({
         company_id: selectedCompanyId ? parseInt(selectedCompanyId) : undefined,
         site_id: selectedSiteId ? parseInt(selectedSiteId) : undefined,
         search,
@@ -86,12 +84,7 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
       });
 
       if (res.success && res.data) {
-        // Filter units that represent departments, divisions, or business units
-        const allUnits = res.data.data || [];
-        const deptUnits = allUnits.filter((u) => 
-          ['DEPARTMENT', 'DIVISION', 'BUSINESS_UNIT'].includes(u.type)
-        );
-        setDepartments(deptUnits);
+        setDepartments(res.data.data || []);
       }
     } catch (err) {
       console.error('Failed to load departments:', err);
@@ -126,8 +119,6 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
       id: 0,
       company_id: selectedCompanyId || (defaultCompany?.id ? String(defaultCompany.id) : ''),
       site_id: selectedSiteId || (defaultSite?.id ? String(defaultSite.id) : ''),
-      parent_id: '',
-      type: 'DEPARTMENT',
       code: '',
       name: '',
       description: '',
@@ -142,14 +133,12 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
     }
   }, [createTrigger]);
 
-  const handleOpenEdit = (dept: OrganizationUnitNode) => {
+  const handleOpenEdit = (dept: MasterDepartment) => {
     setModalMode('edit');
     setFormData({
       id: dept.id,
       company_id: String(dept.company_id || defaultCompany?.id || ''),
       site_id: String(dept.site_id || defaultSite?.id || ''),
-      parent_id: dept.parent_id ? String(dept.parent_id) : '',
-      type: dept.type || 'DEPARTMENT',
       code: dept.code,
       name: dept.name,
       description: dept.description || '',
@@ -158,13 +147,13 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
     setIsModalOpen(true);
   };
 
-  const handleToggleStatus = async (dept: OrganizationUnitNode) => {
+  const handleToggleStatus = async (dept: MasterDepartment) => {
     try {
       if (dept.status === 'ACTIVE') {
-        await organizationUnitService.deactivateUnit(dept.id);
+        await departmentService.deactivateDepartment(dept.id);
         toast.success(`Departemen "${dept.name}" berhasil dinonaktifkan.`, 'Status Diperbarui');
       } else {
-        await organizationUnitService.activateUnit(dept.id);
+        await departmentService.activateDepartment(dept.id);
         toast.success(`Departemen "${dept.name}" berhasil diaktifkan.`, 'Status Diperbarui');
       }
       await loadData();
@@ -174,10 +163,10 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
     }
   };
 
-  const handleDelete = async (dept: OrganizationUnitNode) => {
+  const handleDelete = async (dept: MasterDepartment) => {
     const confirmed = await confirmDialog({
-      title: 'Hapus Unit Departemen',
-      message: `Apakah Anda yakin ingin menghapus departemen "${dept.name}" (${dept.code})? Data akan dipindahkan ke Tempat Sampah dan dapat dipulihkan sewaktu-waktu.`,
+      title: 'Hapus Departemen',
+      message: `Apakah Anda yakin ingin menghapus departemen "${dept.name}" (${dept.code})? Data yang memiliki seksi (section) tidak dapat dihapus.`,
       confirmText: 'Ya, Hapus Departemen',
       cancelText: 'Batal',
       variant: 'danger',
@@ -186,12 +175,12 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
     if (!confirmed) return;
 
     try {
-      await organizationUnitService.deleteUnit(dept.id);
+      await departmentService.deleteDepartment(dept.id);
       toast.success(`Departemen "${dept.name}" berhasil dihapus.`, 'Berhasil Dihapus');
       await loadData();
       if (onRefreshAll) onRefreshAll();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Gagal menghapus unit departemen.', 'Gagal Menghapus');
+      toast.error(err.response?.data?.message || 'Gagal menghapus departemen.', 'Gagal Menghapus');
     }
   };
 
@@ -202,8 +191,6 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
       const payload: any = {
         company_id: parseInt(formData.company_id),
         site_id: formData.site_id ? parseInt(formData.site_id) : null,
-        parent_id: formData.parent_id ? parseInt(formData.parent_id) : null,
-        type: formData.type,
         code: formData.code,
         name: formData.name,
         description: formData.description || null,
@@ -211,10 +198,10 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
       };
 
       if (modalMode === 'create') {
-        await organizationUnitService.createUnit(payload);
+        await departmentService.createDepartment(payload);
         toast.success(`Departemen "${formData.name}" berhasil dibuat.`, 'Berhasil Disimpan');
       } else {
-        await organizationUnitService.updateUnit(formData.id, payload);
+        await departmentService.updateDepartment(formData.id, payload);
         toast.success(`Departemen "${formData.name}" berhasil diperbarui.`, 'Berhasil Diperbarui');
       }
       setIsModalOpen(false);
@@ -429,14 +416,13 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
             </div>
 
             <Select
-              label="Site Operasional *"
+              label="Site Operasional"
               value={formData.site_id}
               onChange={(e) => setFormData({ ...formData, site_id: e.target.value })}
               options={[
-                { value: '', label: '-- Pilih Site Operasional --' },
+                { value: '', label: '-- Pilih Site Operasional (Opsional) --' },
                 ...availableSites.map((s) => ({ value: String(s.id), label: `${s.code} - ${s.name}` })),
               ]}
-              required
             />
           </div>
 
