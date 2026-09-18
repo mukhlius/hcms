@@ -8,7 +8,6 @@ import {
   RefreshCw, 
   Edit, 
   Trash2, 
-  Home,
   Layers,
   Download
 } from 'lucide-react';
@@ -30,15 +29,6 @@ interface GradeTabProps {
   createTrigger?: number;
 }
 
-const formatRupiah = (val?: number | null): string => {
-  if (val === undefined || val === null || isNaN(val)) return 'Rp 0';
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(val);
-};
-
 export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger }) => {
   const [items, setItems] = useState<SalaryGradeItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -49,13 +39,12 @@ export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger 
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [submitting, setSubmitting] = useState(false);
 
-  // 4 Specific Form Fields:
-  // 1. Kode, 2. Nama Golongan, 3. Uang Bantuan Perumahan, 4. Status
+  // Form Fields:
+  // 1. Kode, 2. Nama Golongan, 3. Status
   const [formData, setFormData] = useState({
     id: 0,
     code: '',
     name: '',
-    housing_allowance: '1500000',
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
   });
 
@@ -103,7 +92,6 @@ export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger 
       id: 0,
       code: 'GOL-',
       name: '',
-      housing_allowance: '2000000',
       status: 'ACTIVE',
     });
     setIsModalOpen(true);
@@ -121,7 +109,6 @@ export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger 
       id: item.id,
       code: item.code,
       name: item.name,
-      housing_allowance: item.housing_allowance !== undefined && item.housing_allowance !== null ? String(item.housing_allowance) : '0',
       status: item.status,
     });
     setIsModalOpen(true);
@@ -139,7 +126,6 @@ export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger 
       const payload: Partial<SalaryGradeItem> = {
         code: formData.code.toUpperCase().trim(),
         name: formData.name.trim(),
-        housing_allowance: parseFloat(formData.housing_allowance) || 0,
         status: formData.status,
       };
 
@@ -228,7 +214,7 @@ export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger 
         </div>
       </Card>
 
-      {/* Table Card - strictly showing the 5 requested fields */}
+      {/* Table Card */}
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-600">
@@ -239,9 +225,6 @@ export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger 
                 </th>
                 <th className="px-4 py-3.5">
                   <SortableHeader label="Nama Golongan" field="name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
-                </th>
-                <th className="px-4 py-3.5 text-right">
-                  <SortableHeader label="Uang Bantuan Perumahan" field="housing_allowance" align="right" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
                 <th className="px-4 py-3.5 text-center">
                   <SortableHeader label="Status" field="status" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
@@ -255,14 +238,13 @@ export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger 
                   <tr key={i} className="animate-pulse">
                     <td className="px-5 py-4"><Skeleton className="h-4 w-20" /></td>
                     <td className="px-4 py-4"><Skeleton className="h-4 w-48" /></td>
-                    <td className="px-4 py-4 text-right"><Skeleton className="h-4 w-28 ml-auto" /></td>
                     <td className="px-4 py-4 text-center"><Skeleton className="h-5 w-16 mx-auto rounded-full" /></td>
                     <td className="px-5 py-4 text-right"><Skeleton className="h-6 w-14 ml-auto" /></td>
                   </tr>
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-slate-400">
+                  <td colSpan={4} className="px-5 py-12 text-center text-slate-400">
                     <ShieldCheck className="h-10 w-10 mx-auto text-slate-300 mb-2" />
                     <p className="font-semibold text-slate-600">Tidak ada data Golongan / Grade ditemukan</p>
                     <p className="text-xs text-slate-400 mt-0.5">Silakan tambahkan data golongan baru atau bersihkan filter pencarian.</p>
@@ -287,15 +269,7 @@ export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger 
                         </div>
                       </td>
 
-                      {/* 3. Uang Bantuan Perumahan */}
-                      <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-700">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Home className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                          <span>{formatRupiah(item.housing_allowance)}</span>
-                        </div>
-                      </td>
-
-                      {/* 4. Status */}
+                      {/* 3. Status */}
                       <td className="px-4 py-3.5 text-center">
                         <Badge variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}>
                           {item.status === 'ACTIVE' ? 'AKTIF' : 'NON-AKTIF'}
@@ -344,7 +318,7 @@ export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger 
         />
       </Card>
 
-      {/* Create / Edit Modal strictly with the 5 requested fields */}
+      {/* Create / Edit Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -364,7 +338,7 @@ export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger 
               className="font-mono uppercase text-xs"
             />
             <p className="text-[11px] text-slate-400 mt-1">
-              Kode unik untuk penjenjangan kepangkatan dan tunjangan perumahan.
+              Kode unik untuk penjenjangan kepangkatan golongan karyawan.
             </p>
           </div>
 
@@ -382,33 +356,10 @@ export const GradeTab: React.FC<GradeTabProps> = ({ onRefreshAll, createTrigger 
             />
           </div>
 
-          {/* 3. Uang Bantuan Perumahan */}
+          {/* 3. Status */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              3. Uang Bantuan Perumahan (IDR) <span className="text-rose-500">*</span>
-            </label>
-            <div className="relative">
-              <Home className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-              <Input
-                type="number"
-                min="0"
-                step="50000"
-                value={formData.housing_allowance}
-                onChange={(e) => setFormData({ ...formData, housing_allowance: e.target.value })}
-                placeholder="Contoh: 1500000"
-                required
-                className="pl-9 font-mono text-xs"
-              />
-            </div>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Besaran kompensasi bantuan tunjangan sewa rumah / perumahan bulanan sesuai golongan.
-            </p>
-          </div>
-
-          {/* 4. Status */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              4. Status Golongan
+              3. Status Golongan
             </label>
             <div className="flex items-center gap-4 pt-0.5">
               <label className="inline-flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer">
