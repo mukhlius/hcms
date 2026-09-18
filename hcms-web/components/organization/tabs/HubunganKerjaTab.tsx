@@ -303,13 +303,6 @@ export const HubunganKerjaTab: React.FC<HubunganKerjaTabProps> = ({ onRefreshAll
             >
               Segarkan
             </Button>
-            <Button
-              size="sm"
-              leftIcon={<Plus className="h-4 w-4" />}
-              onClick={handleOpenCreate}
-            >
-              Tambah Hubungan Kerja
-            </Button>
           </div>
         </div>
       </Card>
@@ -429,11 +422,10 @@ export const HubunganKerjaTab: React.FC<HubunganKerjaTabProps> = ({ onRefreshAll
                         <Button
                           variant="ghost"
                           size="sm"
-                          className={`h-8 w-8 p-0 ${
-                            item.status === 'ACTIVE'
+                          className={`h-8 w-8 p-0 ${item.status === 'ACTIVE'
                               ? 'text-amber-500 hover:text-amber-700 dark:text-amber-400'
                               : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
-                          }`}
+                            }`}
                           title={item.status === 'ACTIVE' ? 'Nonaktifkan' : 'Aktifkan'}
                           onClick={() => handleToggleStatus(item)}
                         >
@@ -517,11 +509,10 @@ export const HubunganKerjaTab: React.FC<HubunganKerjaTabProps> = ({ onRefreshAll
             </label>
             <div className="grid grid-cols-2 gap-3">
               <label
-                className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all ${
-                  formData.is_permanent
+                className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all ${formData.is_permanent
                     ? 'border-emerald-500 bg-emerald-50/50 text-emerald-900 dark:border-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-200'
                     : 'border-slate-200 hover:border-slate-300 dark:border-slate-700'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <input
@@ -540,11 +531,10 @@ export const HubunganKerjaTab: React.FC<HubunganKerjaTabProps> = ({ onRefreshAll
               </label>
 
               <label
-                className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all ${
-                  !formData.is_permanent
+                className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all ${!formData.is_permanent
                     ? 'border-indigo-500 bg-indigo-50/50 text-indigo-900 dark:border-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-200'
                     : 'border-slate-200 hover:border-slate-300 dark:border-slate-700'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <input
