@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\MasterData;
 
 use App\Http\Controllers\Api\BaseApiController;
 use App\Models\AuditLog;
+use App\Models\BenefitPlafond;
 use App\Models\EmploymentType;
 use App\Models\Grade;
 use App\Models\OrganizationCompany;
@@ -247,6 +248,10 @@ class CompanyController extends BaseApiController
             'poh' => StandardReference::where('category', 'POH')->where('status', 'ACTIVE')->count(),
             'work_area' => StandardReference::where('category', 'WORK_AREA')->where('status', 'ACTIVE')->count(),
             'employment_types' => EmploymentType::count(),
+            'marital_statuses' => StandardReference::where('category', 'MARITAL_STATUS')->where('status', 'ACTIVE')->count(),
+            'plafond_pengobatan' => BenefitPlafond::where('benefit_type', 'PENGOBATAN')->where('status', 'ACTIVE')->count(),
+            'plafond_kacamata' => BenefitPlafond::where('benefit_type', 'KACAMATA')->where('status', 'ACTIVE')->count(),
+            'plafond_persalinan' => BenefitPlafond::where('benefit_type', 'PERSALINAN')->where('status', 'ACTIVE')->count(),
         ];
 
         return $this->successResponse($counts, 'Ringkasan hitungan master data berhasil diambil.');

@@ -38,11 +38,12 @@ import { SortableHeader } from '@/components/ui/SortableHeader';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { useClientTable } from '@/hooks/useClientTable';
 import { toast, confirmDialog } from '@/stores/alertStore';
+import { StatusMenikahTab } from '@/components/organization/tabs/StatusMenikahTab';
 
 const categories: TabItem[] = [
   { id: 'RELIGION', label: 'Agama', icon: <BookOpen className="h-4 w-4 shrink-0" /> },
   { id: 'EDUCATION', label: 'Pendidikan', icon: <GraduationCap className="h-4 w-4 shrink-0" /> },
-  { id: 'MARITAL_STATUS', label: 'Status Nikah', icon: <Heart className="h-4 w-4 shrink-0" /> },
+  { id: 'MARITAL_STATUS', label: 'Status Menikah', icon: <Heart className="h-4 w-4 shrink-0" /> },
   { id: 'BLOOD_TYPE', label: 'Golongan Darah', icon: <Droplet className="h-4 w-4 shrink-0" /> },
   { id: 'UNIFORM_SIZE', label: 'Ukuran Seragam', icon: <Shirt className="h-4 w-4 shrink-0" /> },
   { id: 'PANTS_SIZE', label: 'Ukuran Celana', icon: <Ruler className="h-4 w-4 shrink-0" /> },
@@ -572,16 +573,18 @@ function ReferencesContent() {
           { label: 'Referensi Standar' },
         ]}
         actions={
-          <Button
-            size="sm"
-            leftIcon={<Plus className="h-4 w-4" />}
-            onClick={handleOpenAdd}
-          >
-            {selectedCategory === 'DOCUMENTS' && 'Tambah Jenis Dokumen'}
-            {selectedCategory === 'SHIFTS' && 'Tambah Master Shift'}
-            {selectedCategory === 'ROSTERS' && 'Tambah Pola Roster'}
-            {!['DOCUMENTS', 'SHIFTS', 'ROSTERS'].includes(selectedCategory) && `Tambah Entri ${activeCategoryLabel}`}
-          </Button>
+          selectedCategory !== 'MARITAL_STATUS' ? (
+            <Button
+              size="sm"
+              leftIcon={<Plus className="h-4 w-4" />}
+              onClick={handleOpenAdd}
+            >
+              {selectedCategory === 'DOCUMENTS' && 'Tambah Jenis Dokumen'}
+              {selectedCategory === 'SHIFTS' && 'Tambah Master Shift'}
+              {selectedCategory === 'ROSTERS' && 'Tambah Pola Roster'}
+              {!['DOCUMENTS', 'SHIFTS', 'ROSTERS', 'MARITAL_STATUS'].includes(selectedCategory) && `Tambah Entri ${activeCategoryLabel}`}
+            </Button>
+          ) : null
         }
       />
 
@@ -597,7 +600,8 @@ function ReferencesContent() {
       </div>
 
       {/* Action Toolbar */}
-      <Card className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {selectedCategory !== 'MARITAL_STATUS' && (
+        <Card className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -619,6 +623,7 @@ function ReferencesContent() {
           Segarkan
         </Button>
       </Card>
+      )}
 
       {/* VIEW 1: SHIFTS */}
       {selectedCategory === 'SHIFTS' && (
@@ -868,8 +873,13 @@ function ReferencesContent() {
         </Card>
       )}
 
+      {/* VIEW 2: STATUS MENIKAH (MARITAL STATUS) */}
+      {selectedCategory === 'MARITAL_STATUS' && (
+        <StatusMenikahTab onRefreshAll={loadData} />
+      )}
+
       {/* VIEW 3: STANDARD REFERENCES & DOCUMENTS */}
-      {!['SHIFTS', 'ROSTERS'].includes(selectedCategory) && (
+      {!['SHIFTS', 'ROSTERS', 'MARITAL_STATUS'].includes(selectedCategory) && (
         <Card className="p-0 overflow-hidden">
           {loading ? (
             <div className="p-6 space-y-4">

@@ -225,6 +225,17 @@ Route::prefix('v1')->group(function () {
                 Route::get('/contract-types', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'contractTypes']);
                 Route::post('/contract-types', [\App\Http\Controllers\Api\V1\MasterData\EmploymentMasterController::class, 'storeContractType']);
 
+                // Benefit Plafonds (Pengobatan, Kacamata, Persalinan)
+                Route::prefix('benefit-plafonds')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'index']);
+                    Route::post('/', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'store']);
+                    Route::get('/{benefitPlafond}', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'show']);
+                    Route::put('/{benefitPlafond}', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'update']);
+                    Route::delete('/{benefitPlafond}', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'destroy']);
+                    Route::patch('/{benefitPlafond}/activate', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'activate']);
+                    Route::patch('/{benefitPlafond}/deactivate', [\App\Http\Controllers\Api\V1\MasterData\BenefitPlafondController::class, 'deactivate']);
+                });
+
                 // Time & Schedules
                 Route::get('/shifts', [\App\Http\Controllers\Api\V1\MasterData\ScheduleMasterController::class, 'shifts']);
                 Route::post('/shifts', [\App\Http\Controllers\Api\V1\MasterData\ScheduleMasterController::class, 'storeShift']);

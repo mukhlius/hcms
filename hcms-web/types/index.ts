@@ -380,6 +380,22 @@ export interface EmploymentTypeItem {
   updated_at?: string;
 }
 
+export interface BenefitPlafondItem {
+  id: number;
+  benefit_type: 'PENGOBATAN' | 'KACAMATA' | 'PERSALINAN';
+  grade_id: number;
+  marital_category: 'Menikah' | 'Tidak Menikah' | 'SEMUA';
+  marital_status_id?: number | null;
+  amount: number;
+  period_type: 'TAHUNAN' | 'PER_KASUS' | '2_TAHUNAN' | 'SEUMUR_HIDUP';
+  description?: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  grade?: GradeItem | null;
+  marital_status?: ReferenceItem | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface AuthState {
   token: string | null;
   user: User | null;

@@ -14,6 +14,7 @@ import {
   ShiftItem,
   WorkScheduleItem,
   EmploymentTypeItem,
+  BenefitPlafondItem,
 } from '@/types';
 
 export const companyService = {
@@ -29,6 +30,10 @@ export const companyService = {
       poh: number;
       work_area: number;
       employment_types?: number;
+      marital_statuses?: number;
+      plafond_pengobatan?: number;
+      plafond_kacamata?: number;
+      plafond_persalinan?: number;
     }>>('/admin/master-data/overview-counts', { params });
     return res.data;
   },
@@ -447,6 +452,44 @@ export const employmentTypeService = {
   },
   deactivateEmploymentType: async (id: number) => {
     const res = await apiClient.patch<ApiResponse<EmploymentTypeItem>>(`/admin/master-data/employment-types/${id}/deactivate`);
+    return res.data;
+  },
+};
+
+export const benefitPlafondService = {
+  getBenefitPlafonds: async (params?: {
+    benefit_type?: 'PENGOBATAN' | 'KACAMATA' | 'PERSALINAN' | string;
+    grade_id?: number | string;
+    marital_category?: string;
+    status?: string;
+    search?: string;
+    per_page?: number;
+  }) => {
+    const res = await apiClient.get<ApiResponse<BenefitPlafondItem[]>>('/admin/master-data/benefit-plafonds', { params });
+    return res.data;
+  },
+  getBenefitPlafond: async (id: number) => {
+    const res = await apiClient.get<ApiResponse<BenefitPlafondItem>>(`/admin/master-data/benefit-plafonds/${id}`);
+    return res.data;
+  },
+  createBenefitPlafond: async (payload: Partial<BenefitPlafondItem>) => {
+    const res = await apiClient.post<ApiResponse<BenefitPlafondItem>>('/admin/master-data/benefit-plafonds', payload);
+    return res.data;
+  },
+  updateBenefitPlafond: async (id: number, payload: Partial<BenefitPlafondItem>) => {
+    const res = await apiClient.put<ApiResponse<BenefitPlafondItem>>(`/admin/master-data/benefit-plafonds/${id}`, payload);
+    return res.data;
+  },
+  deleteBenefitPlafond: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/benefit-plafonds/${id}`);
+    return res.data;
+  },
+  activateBenefitPlafond: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<BenefitPlafondItem>>(`/admin/master-data/benefit-plafonds/${id}/activate`);
+    return res.data;
+  },
+  deactivateBenefitPlafond: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<BenefitPlafondItem>>(`/admin/master-data/benefit-plafonds/${id}/deactivate`);
     return res.data;
   },
 };
