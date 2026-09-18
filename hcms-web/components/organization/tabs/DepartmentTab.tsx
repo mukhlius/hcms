@@ -14,10 +14,11 @@ import {
   Briefcase,
   Building2,
   MapPin,
-  UserCheck
+  UserCheck,
+  Download
 } from 'lucide-react';
 import { MasterDepartment, MasterCompany, MasterSite } from '@/types';
-import { departmentService } from '@/services/masterDataService';
+import { departmentService, importExportService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -234,6 +235,14 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            leftIcon={<Download className="h-3.5 w-3.5" />} 
+            onClick={() => window.open(importExportService.getExportUrl('departments'), '_blank')}
+          >
+            Ekspor CSV
+          </Button>
           <Button 
             variant="outline" 
             size="sm" 

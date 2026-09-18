@@ -28,7 +28,12 @@ import {
   Search,
   ExternalLink,
   ShieldAlert,
-  Info
+  Info,
+  HeartPulse,
+  Glasses,
+  Baby,
+  Compass,
+  Users
 } from 'lucide-react';
 import { importExportService } from '@/services/masterDataService';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -42,122 +47,197 @@ import { toast } from '@/stores/alertStore';
 interface EntityMeta {
   id: string;
   name: string;
-  category: 'Organisasi' | 'Jabatan & Formasi' | 'Operasional' | 'Akses & Akun';
+  category: 'Organisasi' | 'Benefit & Plafon' | 'Jabatan & Formasi' | 'Operasional' | 'Akses & Akun';
   description: string;
   icon: React.ReactNode;
   iconBg: string;
   columns: string[];
 }
 
+export const FIELD_DEFINITIONS: Record<string, { label: string; required?: boolean; aliases: string[] }> = {
+  // Common
+  code: { label: 'Kode Entitas (code)', required: true, aliases: ['kode', 'code', 'kode unik', 'kode entitas', 'kode perusahaan', 'kode site', 'kode departemen', 'kode seksi', 'kode posisi', 'kode golongan', 'kode level', 'kode status'] },
+  name: { label: 'Nama Entitas (name)', required: true, aliases: ['nama', 'name', 'nama entitas', 'nama lengkap', 'nama perusahaan', 'nama site', 'nama departemen', 'nama seksi', 'nama posisi', 'nama golongan', 'nama level', 'nama status', 'nama area'] },
+  status: { label: 'Status (status)', required: false, aliases: ['status', 'aktif', 'is_active', 'status akun'] },
+  description: { label: 'Deskripsi / Keterangan (description)', required: false, aliases: ['deskripsi', 'description', 'keterangan', 'fungsi', 'ketentuan', 'cakupan', 'fungsi / keterangan', 'ketentuan / cakupan', 'ketentuan / keterangan'] },
+
+  // Perusahaan & Site
+  short_name: { label: 'Nama Singkat (short_name)', required: false, aliases: ['nama singkat', 'short_name', 'alias', 'singkatan'] },
+  tax_identifier: { label: 'NPWP Perusahaan (tax_identifier)', required: false, aliases: ['npwp', 'tax_identifier', 'nomor npwp', 'tax id'] },
+  address: { label: 'Alamat Lengkap (address)', required: false, aliases: ['alamat', 'address', 'alamat lengkap', 'lokasi'] },
+  company_code: { label: 'Kode Perusahaan Induk (company_code)', required: false, aliases: ['perusahaan', 'company_code', 'perusahaan induk', 'kode perusahaan', 'perusahaan_induk'] },
+  site_code: { label: 'Kode Site Operasional (site_code)', required: false, aliases: ['site', 'site_code', 'kode site', 'site tambang', 'site operasional', 'site tambang/fasilitas'] },
+
+  // Departemen & Seksi & Posisi
+  department_code: { label: 'Kode Departemen (department_code)', required: false, aliases: ['departemen', 'department_code', 'kode departemen', 'departemen induk'] },
+  section_code: { label: 'Kode Seksi Lapangan (section_code)', required: false, aliases: ['seksi', 'section_code', 'kode seksi', 'section', 'section (seksi)'] },
+  grade_code: { label: 'Kode Level/Grade (grade_code)', required: false, aliases: ['level', 'grade', 'grade_code', 'level/grade', 'level grade'] },
+  title: { label: 'Nama / Judul Posisi (title)', required: true, aliases: ['judul', 'title', 'nama posisi', 'nama jabatan', 'posisi'] },
+  reports_to_code: { label: 'Kode Posisi Atasan (reports_to_code)', required: false, aliases: ['atasan', 'reports_to', 'reports_to_code', 'atasan langsung', 'posisi atasan'] },
+  approved_headcount: { label: 'Kuota MPP / Headcount (approved_headcount)', required: false, aliases: ['mpp', 'headcount', 'approved_headcount', 'kuota'] },
+
+  // Golongan & Level & Hubungan Kerja
+  housing_allowance: { label: 'Bantuan Perumahan (housing_allowance)', required: false, aliases: ['perumahan', 'housing_allowance', 'bantuan perumahan'] },
+  level: { label: 'Tingkat Level (level)', required: true, aliases: ['tingkat level', 'level', 'tingkatan'] },
+  pangkat: { label: 'Pangkat Pegawai (pangkat)', required: false, aliases: ['pangkat', 'golongan pangkat', 'staff/non staff'] },
+  is_permanent: { label: 'Sifat Hubungan / Permanen (is_permanent)', required: false, aliases: ['sifat', 'is_permanent', 'permanent', 'tetap', 'sifat hubungan'] },
+
+  // Area Kerja & POH & Status Menikah
+  risk_level: { label: 'Tingkat Risiko K3 (risk_level)', required: false, aliases: ['risiko', 'risk_level', 'risiko k3', 'tingkat risiko'] },
+  destination_airport: { label: 'Bandara Tujuan (destination_airport)', required: false, aliases: ['bandara', 'destination_airport', 'bandara tujuan'] },
+  additional_travel_days: { label: 'Tambahan Hari Cuti (additional_travel_days)', required: false, aliases: ['hari perjalanan', 'additional_travel_days', 'cuti perjalanan', 'hari perjalanan cuti'] },
+  category: { label: 'Kategori Pernikahan (category)', required: true, aliases: ['kategori', 'category', 'kategori status', 'kategori pernikahan'] },
+
+  // Benefit Plafon
+  salary_grade_code: { label: 'Kode Golongan Gaji (salary_grade_code)', required: true, aliases: ['kode golongan', 'salary_grade_code', 'golongan', 'grade'] },
+  marital_category: { label: 'Kategori Pernikahan (marital_category)', required: true, aliases: ['kategori pernikahan', 'marital_category', 'status pernikahan'] },
+  amount: { label: 'Nominal Plafon (amount)', required: true, aliases: ['nominal', 'amount', 'nominal plafon', 'plafon', 'total plafon'] },
+  period_type: { label: 'Periode Plafon (period_type)', required: false, aliases: ['periode', 'period_type', 'jangka waktu'] },
+  lens_type: { label: 'Kriteria / Tipe Lensa (lens_type)', required: true, aliases: ['kriteria lensa', 'lens_type', 'tipe lensa', 'lensa', 'kriteria / jenis lensa'] },
+  frame_amount: { label: 'Bantuan Biaya Frame (frame_amount)', required: true, aliases: ['bantuan frame', 'frame_amount', 'frame'] },
+  lens_amount: { label: 'Bantuan Biaya Lensa (lens_amount)', required: true, aliases: ['bantuan lensa', 'lens_amount', 'lensa'] },
+
+  // Shift & User
+  start_time: { label: 'Jam Masuk (start_time)', required: false, aliases: ['jam masuk', 'start_time', 'mulai'] },
+  end_time: { label: 'Jam Pulang (end_time)', required: false, aliases: ['jam pulang', 'end_time', 'selesai'] },
+  break_minutes: { label: 'Istirahat Menit (break_minutes)', required: false, aliases: ['istirahat', 'break_minutes', 'durasi istirahat', 'istirahat (menit)'] },
+  username: { label: 'Username Akun (username)', required: true, aliases: ['username', 'nama pengguna', 'user id'] },
+  email: { label: 'Alamat Email (email)', required: true, aliases: ['email', 'surel', 'alamat surel'] },
+  data_scope: { label: 'Cakupan Akses Data (data_scope)', required: false, aliases: ['cakupan', 'data_scope', 'akses data', 'cakupan akses'] },
+};
+
 const ENTITY_CATALOG: EntityMeta[] = [
+  // 1. ORGANISASI
   {
     id: 'companies',
-    name: 'Perusahaan Tambang',
+    name: 'Perusahaan',
     category: 'Organisasi',
-    description: 'Holding, anak perusahaan, dan kontraktor penambangan batubara terintegrasi.',
+    description: 'Data legalitas holding, anak perusahaan, NPWP, dan kantor operasional.',
     icon: <Building2 className="h-5 w-5 text-blue-600" />,
     iconBg: 'bg-blue-50 dark:bg-blue-950/50',
-    columns: ['code', 'name', 'legal_name', 'short_name', 'tax_identifier', 'timezone', 'description'],
+    columns: ['code', 'name', 'short_name', 'tax_identifier', 'address', 'status'],
   },
   {
     id: 'sites',
-    name: 'Site Operasional Tambang',
+    name: 'Site Operasional',
     category: 'Organisasi',
-    description: 'Area konsesi tambang, pit batubara, pelabuhan muat (port), dan camp mess.',
+    description: 'Area konsesi tambang batubara, pit operasional, pelabuhan, dan fasilitas camp.',
     icon: <MapPin className="h-5 w-5 text-indigo-600" />,
     iconBg: 'bg-indigo-50 dark:bg-indigo-950/50',
-    columns: ['code', 'name', 'short_name', 'site_type', 'location', 'province', 'city', 'timezone'],
+    columns: ['company_code', 'code', 'short_name', 'name', 'address', 'status'],
   },
   {
     id: 'departments',
-    name: 'Departemen Organisasi',
+    name: 'Departemen',
     category: 'Organisasi',
-    description: 'Departemen divisi operasional, teknis penambangan, HR, dan pemeliharaan site.',
+    description: 'Struktur departemen operasional pit, engineering tambang, HR, dan SHE.',
     icon: <Network className="h-5 w-5 text-emerald-600" />,
     iconBg: 'bg-emerald-50 dark:bg-emerald-950/50',
-    columns: ['code', 'name', 'company_code', 'site_code', 'description'],
+    columns: ['company_code', 'site_code', 'code', 'name', 'description', 'status'],
   },
   {
     id: 'sections',
-    name: 'Seksi / Section Lapangan',
+    name: 'Seksi / Section',
     category: 'Organisasi',
     description: 'Unit kerja seksi lini operasional di bawah naungan departemen terkait.',
     icon: <Layers className="h-5 w-5 text-teal-600" />,
     iconBg: 'bg-teal-50 dark:bg-teal-950/50',
-    columns: ['code', 'name', 'department_code', 'site_code', 'description'],
-  },
-  {
-    id: 'organization-units',
-    name: 'Struktur Unit Kerja',
-    category: 'Organisasi',
-    description: 'Bagan hierarki departemen, divisi, seksi lapangan, dan unit operasional site.',
-    icon: <Layers className="h-5 w-5 text-cyan-600" />,
-    iconBg: 'bg-cyan-50 dark:bg-cyan-950/50',
-    columns: ['code', 'name', 'unit_type', 'parent_code', 'description'],
+    columns: ['company_code', 'department_code', 'site_code', 'code', 'name', 'description', 'status'],
   },
   {
     id: 'positions',
-    name: 'Formasi Posisi & Jabatan',
-    category: 'Jabatan & Formasi',
-    description: 'Spesifikasi posisi formasi, kuota approved headcount, dan tingkat kekritisan.',
+    name: 'Posisi & Formasi Jabatan',
+    category: 'Organisasi',
+    description: 'Spesifikasi posisi formasi, kuota approved headcount/MPP, dan garis atasan.',
     icon: <Briefcase className="h-5 w-5 text-purple-600" />,
     iconBg: 'bg-purple-50 dark:bg-purple-950/50',
     columns: ['site_code', 'department_code', 'section_code', 'grade_code', 'code', 'title', 'reports_to_code', 'approved_headcount', 'status'],
   },
   {
-    id: 'grades',
-    name: 'Golongan / Level Pegawai',
-    category: 'Jabatan & Formasi',
-    description: 'Tingkatan karir struktural dan non-struktural karyawan mulai operator hingga manajemen.',
+    id: 'salary-grades',
+    name: 'Golongan Karyawan',
+    category: 'Organisasi',
+    description: 'Master golongan karyawan dan ketentuan tunjangan bantuan perumahan.',
     icon: <Table className="h-5 w-5 text-amber-600" />,
     iconBg: 'bg-amber-50 dark:bg-amber-950/50',
-    columns: ['code', 'name', 'level', 'description'],
+    columns: ['code', 'name', 'housing_allowance', 'status'],
   },
   {
-    id: 'salary-grades',
-    name: 'Skala Rentang Remunerasi',
-    category: 'Jabatan & Formasi',
-    description: 'Plafon dan rentang gaji pokok minimum, midpoint, dan maksimum formasi.',
-    icon: <FileSpreadsheet className="h-5 w-5 text-emerald-600" />,
-    iconBg: 'bg-emerald-50 dark:bg-emerald-950/50',
-    columns: ['code', 'name', 'min_salary', 'mid_salary', 'max_salary'],
+    id: 'levels',
+    name: 'Level Jabatan',
+    category: 'Organisasi',
+    description: 'Tingkatan jenjang karir manajerial, pimpinan, dan pangkat karyawan.',
+    icon: <ShieldCheck className="h-5 w-5 text-blue-600" />,
+    iconBg: 'bg-blue-50 dark:bg-blue-950/50',
+    columns: ['code', 'level', 'pangkat', 'name', 'description', 'status'],
   },
   {
-    id: 'job-families',
-    name: 'Rumpun Pekerjaan (Job Families)',
-    category: 'Jabatan & Formasi',
-    description: 'Klasifikasi keahlian teknis (Mining Operations, Hauling, Safety, Plant & Fleet).',
-    icon: <Database className="h-5 w-5 text-rose-600" />,
+    id: 'employment-types',
+    name: 'Hubungan Kerja',
+    category: 'Organisasi',
+    description: 'Status ikatan kerja pegawai (PKWTT/Permanen, PKWT/Kontrak, Magang, Harian).',
+    icon: <FileCheck className="h-5 w-5 text-green-600" />,
+    iconBg: 'bg-green-50 dark:bg-green-950/50',
+    columns: ['code', 'name', 'is_permanent', 'description', 'status'],
+  },
+  {
+    id: 'work-areas',
+    name: 'Area Kerja & Risiko K3',
+    category: 'Organisasi',
+    description: 'Zonasi area pit tambang, fasilitas pabrik/workshop, dan klasifikasi risiko K3.',
+    icon: <MapPin className="h-5 w-5 text-rose-600" />,
     iconBg: 'bg-rose-50 dark:bg-rose-950/50',
-    columns: ['code', 'name', 'description'],
+    columns: ['code', 'name', 'description', 'risk_level', 'status'],
   },
   {
-    id: 'jobs',
-    name: 'Katalog Pekerjaan Standar',
-    category: 'Jabatan & Formasi',
-    description: 'Standar kompetensi pekerjaan spesifik (Operator Excavator, Haul Truck Driver, Mekanik).',
-    icon: <FileCheck className="h-5 w-5 text-teal-600" />,
-    iconBg: 'bg-teal-50 dark:bg-teal-950/50',
-    columns: ['code', 'name', 'description'],
-  },
-  {
-    id: 'cost-centers',
-    name: 'Pusat Biaya (Cost Centers)',
-    category: 'Operasional',
-    description: 'Akun pembebanan anggaran operasional alat gali muat, BBM, dan logistik camp.',
-    icon: <Table className="h-5 w-5 text-orange-600" />,
-    iconBg: 'bg-orange-50 dark:bg-orange-950/50',
-    columns: ['code', 'name', 'description'],
-  },
-  {
-    id: 'work-locations',
-    name: 'Lokasi Kerja Lapangan',
-    category: 'Operasional',
-    description: 'Lokasi fisik penugasan (Pit Front, Workshop Central, Jetty, Port, ROM Pad).',
-    icon: <MapPin className="h-5 w-5 text-sky-600" />,
+    id: 'poh',
+    name: 'Titik Penerimaan (POH)',
+    category: 'Organisasi',
+    description: 'Point of Hire, bandara tujuan cuti roster, dan alokasi hari perjalanan.',
+    icon: <Compass className="h-5 w-5 text-sky-600" />,
     iconBg: 'bg-sky-50 dark:bg-sky-950/50',
-    columns: ['code', 'name', 'location_type', 'description'],
+    columns: ['code', 'name', 'destination_airport', 'additional_travel_days', 'status'],
   },
+  {
+    id: 'marital-statuses',
+    name: 'Status Menikah',
+    category: 'Organisasi',
+    description: 'Klasifikasi status perkawinan karyawan untuk acuan benefit dan perpajakan.',
+    icon: <Users className="h-5 w-5 text-pink-600" />,
+    iconBg: 'bg-pink-50 dark:bg-pink-950/50',
+    columns: ['code', 'name', 'category', 'status'],
+  },
+
+  // 2. BENEFIT & PLAFON
+  {
+    id: 'plafon-pengobatan',
+    name: 'Plafon Pengobatan',
+    category: 'Benefit & Plafon',
+    description: 'Plafon biaya rawat jalan & pengobatan per golongan gaji dan kategori nikah.',
+    icon: <HeartPulse className="h-5 w-5 text-emerald-600" />,
+    iconBg: 'bg-emerald-50 dark:bg-emerald-950/50',
+    columns: ['salary_grade_code', 'marital_category', 'amount', 'period_type', 'description', 'status'],
+  },
+  {
+    id: 'plafon-kacamata',
+    name: 'Plafon Kacamata',
+    category: 'Benefit & Plafon',
+    description: 'Bantuan biaya kacamata (frame dan lensa) berdasarkan kriteria tipe lensa.',
+    icon: <Glasses className="h-5 w-5 text-cyan-600" />,
+    iconBg: 'bg-cyan-50 dark:bg-cyan-950/50',
+    columns: ['lens_type', 'frame_amount', 'lens_amount', 'period_type', 'description', 'status'],
+  },
+  {
+    id: 'plafon-persalinan',
+    name: 'Plafon Persalinan',
+    category: 'Benefit & Plafon',
+    description: 'Plafon bantuan biaya persalinan normal/caesar per golongan gaji dan status nikah.',
+    icon: <Baby className="h-5 w-5 text-amber-600" />,
+    iconBg: 'bg-amber-50 dark:bg-amber-950/50',
+    columns: ['salary_grade_code', 'marital_category', 'amount', 'period_type', 'description', 'status'],
+  },
+
+  // 3. OPERASIONAL & AKUN
   {
     id: 'shifts',
     name: 'Shift Operasional Tambang',
@@ -165,7 +245,7 @@ const ENTITY_CATALOG: EntityMeta[] = [
     description: 'Jam masuk kerja bergilir pit lapangan, durasi istirahat, dan pengaturan lembur.',
     icon: <Clock className="h-5 w-5 text-violet-600" />,
     iconBg: 'bg-violet-50 dark:bg-violet-950/50',
-    columns: ['code', 'name', 'start_time', 'end_time', 'break_minutes', 'is_active'],
+    columns: ['code', 'name', 'start_time', 'end_time', 'break_minutes', 'status'],
   },
   {
     id: 'users',
@@ -264,6 +344,44 @@ export default function ImportExportCenterPage() {
     }
   };
 
+  // Helper to auto-map CSV headers to entity target columns based on aliases
+  const autoMapHeaders = (csvHeaders: string[], entityId: string) => {
+    const ent = ENTITY_CATALOG.find(e => e.id === entityId);
+    const targetCols = ent ? ent.columns : ['code', 'name'];
+    const newMapping: Record<string, string> = {};
+
+    targetCols.forEach(col => {
+      const def = FIELD_DEFINITIONS[col];
+      const aliases = def ? [col, ...def.aliases] : [col];
+
+      const found = csvHeaders.find(h => {
+        const cleanH = h.toLowerCase().replace(/[^a-z0-9_]/g, ' ').trim();
+        return aliases.some(alias => {
+          const cleanAlias = alias.toLowerCase().replace(/[^a-z0-9_]/g, ' ').trim();
+          return cleanH === cleanAlias || cleanH.includes(cleanAlias) || cleanAlias.includes(cleanH);
+        });
+      });
+
+      newMapping[col] = found || '';
+    });
+
+    return newMapping;
+  };
+
+  const handleEntityChange = (entityId: string) => {
+    setSelectedEntity(entityId);
+    if (headers.length > 0) {
+      setColumnMapping(autoMapHeaders(headers, entityId));
+    } else {
+      const ent = ENTITY_CATALOG.find(e => e.id === entityId);
+      const initialMap: Record<string, string> = {};
+      (ent?.columns || ['code', 'name']).forEach(col => {
+        initialMap[col] = '';
+      });
+      setColumnMapping(initialMap);
+    }
+  };
+
   // Step 1: Upload and Inspect
   const handleFileUpload = async () => {
     if (!file) {
@@ -279,20 +397,8 @@ export default function ImportExportCenterPage() {
         setSampleRows(res.data.sample_rows);
         setAllRows(res.data.all_rows);
 
-        // Auto-match common header names
-        const autoMap: Record<string, string> = {};
-        res.data.headers.forEach(h => {
-          const lower = h.toLowerCase().trim();
-          if (lower.includes('kode') || lower === 'code') autoMap['code'] = h;
-          if (lower.includes('nama') || lower === 'name') autoMap['name'] = h;
-          if (lower.includes('judul') || lower === 'title') autoMap['title'] = h;
-          if (lower.includes('legal') || lower === 'legal_name') autoMap['legal_name'] = h;
-          if (lower.includes('npwp') || lower === 'tax_identifier') autoMap['tax_identifier'] = h;
-          if (lower.includes('username') || lower === 'user') autoMap['username'] = h;
-          if (lower.includes('email') || lower === 'surel') autoMap['email'] = h;
-          if (lower.includes('headcount') || lower === 'kuota') autoMap['approved_headcount'] = h;
-        });
-        setColumnMapping(prev => ({ ...prev, ...autoMap }));
+        const newMap = autoMapHeaders(res.data.headers, selectedEntity);
+        setColumnMapping(newMap);
         setCurrentStep(2);
       }
     } catch (err: any) {
@@ -540,7 +646,7 @@ export default function ImportExportCenterPage() {
                       </label>
                       <Select
                         value={selectedEntity}
-                        onChange={(e) => setSelectedEntity(e.target.value)}
+                        onChange={(e) => handleEntityChange(e.target.value)}
                         options={ENTITY_CATALOG.map(e => ({ value: e.id, label: `${e.name} (${e.category})` }))}
                       />
                     </div>
@@ -594,7 +700,7 @@ export default function ImportExportCenterPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Langkah 2: Pemetaan Atribut Kolom</h3>
-                      <p className="text-xs text-slate-500">Cocokkan kolom pada berkas CSV Anda dengan field database sistem</p>
+                      <p className="text-xs text-slate-500">Cocokkan kolom pada berkas CSV Anda dengan field formulir sistem</p>
                     </div>
                     <Badge variant="neutral">{headers.length} Kolom Ditemukan</Badge>
                   </div>
@@ -610,35 +716,43 @@ export default function ImportExportCenterPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                        {['code', 'name'].map((field) => {
-                          const mappedCol = columnMapping[field] || '';
-                          const mappedColIdx = headers.indexOf(mappedCol);
-                          const sampleVal = mappedColIdx !== -1 && sampleRows[0] ? sampleRows[0][mappedColIdx] : '-';
+                        {(() => {
+                          const currentEntityMeta = ENTITY_CATALOG.find(e => e.id === selectedEntity) || ENTITY_CATALOG[0];
+                          return currentEntityMeta.columns.map((field) => {
+                            const def = FIELD_DEFINITIONS[field] || { label: field, required: false };
+                            const mappedCol = columnMapping[field] || '';
+                            const mappedColIdx = headers.indexOf(mappedCol);
+                            const sampleVal = mappedColIdx !== -1 && sampleRows[0] ? sampleRows[0][mappedColIdx] : '-';
 
-                          return (
-                            <tr key={field} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                              <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">
-                                {field === 'code' ? 'Kode Unik (code)' : 'Nama Entitas (name)'}
-                              </td>
-                              <td className="p-3">
-                                <Badge variant="danger">Wajib</Badge>
-                              </td>
-                              <td className="p-3">
-                                <Select
-                                  value={mappedCol}
-                                  onChange={(e) => setColumnMapping(prev => ({ ...prev, [field]: e.target.value }))}
-                                  options={[
-                                    { value: '', label: '-- Pilih Kolom CSV --' },
-                                    ...headers.map(h => ({ value: h, label: h }))
-                                  ]}
-                                />
-                              </td>
-                              <td className="p-3 font-mono text-slate-500 dark:text-slate-400 truncate max-w-xs">
-                                {sampleVal}
-                              </td>
-                            </tr>
-                          );
-                        })}
+                            return (
+                              <tr key={field} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                                <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">
+                                  {def.label}
+                                </td>
+                                <td className="p-3">
+                                  {def.required ? (
+                                    <Badge variant="danger">Wajib</Badge>
+                                  ) : (
+                                    <Badge variant="neutral">Opsional</Badge>
+                                  )}
+                                </td>
+                                <td className="p-3">
+                                  <Select
+                                    value={mappedCol}
+                                    onChange={(e) => setColumnMapping(prev => ({ ...prev, [field]: e.target.value }))}
+                                    options={[
+                                      { value: '', label: '-- Lewati / Tidak Ada --' },
+                                      ...headers.map(h => ({ value: h, label: h }))
+                                    ]}
+                                  />
+                                </td>
+                                <td className="p-3 font-mono text-slate-500 dark:text-slate-400 truncate max-w-xs">
+                                  {sampleVal}
+                                </td>
+                              </tr>
+                            );
+                          });
+                        })()}
                       </tbody>
                     </table>
                   </div>
@@ -886,7 +1000,7 @@ export default function ImportExportCenterPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-slate-500">Kategori:</span>
                   <div className="flex flex-wrap gap-1">
-                    {['ALL', 'Organisasi', 'Jabatan & Formasi', 'Operasional', 'Akses & Akun'].map(cat => (
+                    {['ALL', 'Organisasi', 'Benefit & Plafon', 'Operasional', 'Akses & Akun'].map(cat => (
                       <button
                         key={cat}
                         type="button"

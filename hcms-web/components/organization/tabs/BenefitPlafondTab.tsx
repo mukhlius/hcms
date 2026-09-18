@@ -11,10 +11,11 @@ import {
   RotateCcw,
   X,
   Glasses,
-  ChevronDown
+  ChevronDown,
+  Download
 } from 'lucide-react';
 import { BenefitPlafondItem, SalaryGradeItem } from '@/types';
-import { benefitPlafondService, salaryGradeService } from '@/services/masterDataService';
+import { benefitPlafondService, salaryGradeService, importExportService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -515,6 +516,21 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Download className="h-3.5 w-3.5" />}
+              onClick={() => {
+                const entity = benefitType === 'PENGOBATAN'
+                  ? 'plafon-pengobatan'
+                  : benefitType === 'KACAMATA'
+                  ? 'plafon-kacamata'
+                  : 'plafon-persalinan';
+                window.open(importExportService.getExportUrl(entity), '_blank');
+              }}
+            >
+              Ekspor CSV
+            </Button>
             <Button
               variant="outline"
               size="sm"

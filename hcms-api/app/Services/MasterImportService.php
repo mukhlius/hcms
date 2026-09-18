@@ -30,11 +30,39 @@ class MasterImportService
             ]);
         }
 
+        // Auto-detect CSV delimiter (comma, semicolon, tab, pipe)
+        $delimiters = [',', ';', "\t", '|'];
+        $bestDelimiter = ',';
+        $maxCols = 0;
+
+        $sampleLines = [];
+        for ($i = 0; $i < 5; $i++) {
+            $line = fgets($handle);
+            if ($line !== false && trim($line) !== '') {
+                $sampleLines[] = preg_replace('/^\xEF\xBB\xBF/', '', $line);
+            }
+        }
+        rewind($handle);
+
+        foreach ($delimiters as $delim) {
+            $colCounts = [];
+            foreach ($sampleLines as $sLine) {
+                $colCounts[] = count(str_getcsv($sLine, $delim));
+            }
+            if (!empty($colCounts)) {
+                $avgCols = array_sum($colCounts) / count($colCounts);
+                if ($avgCols > $maxCols) {
+                    $maxCols = $avgCols;
+                    $bestDelimiter = $delim;
+                }
+            }
+        }
+
         $headers = [];
         $rows = [];
         $line = 0;
 
-        while (($data = fgetcsv($handle, 4096, ',')) !== false) {
+        while (($data = fgetcsv($handle, 4096, $bestDelimiter)) !== false) {
             // Formula injection prevention: sanitize strings starting with =, +, -, @
             $cleanData = array_map(function ($val) {
                 $trimmed = trim((string)$val);
@@ -45,6 +73,11 @@ class MasterImportService
             }, $data);
 
             if ($line === 0) {
+                // Strip UTF-8 BOM from the first header element if present
+                if (!empty($cleanData[0])) {
+                    $cleanData[0] = preg_replace('/^\xEF\xBB\xBF/', '', $cleanData[0]);
+                    $cleanData[0] = trim($cleanData[0]);
+                }
                 $headers = $cleanData;
             } else {
                 if (count(array_filter($cleanData)) > 0) {
@@ -125,7 +158,57 @@ class MasterImportService
             $defaultCompanyId = \App\Models\OrganizationCompany::value('id');
 
             foreach ($data as $item) {
-                // Pre-process for OrganizationDepartment
+                // Universal normalization of status to prevent varchar overflow
+                if (!empty($item['status'])) {
+                    $rawStatus = strtoupper(trim((string)$item['status']));
+                    $item['status'] = in_array($rawStatus, ['INACTIVE', 'NONAKTIF', '0', 'FALSE', 'TIDAK']) ? 'INACTIVE' : 'ACTIVE';
+                } else {
+                    $item['status'] = 'ACTIVE';
+                }
+                $item['is_active'] = $item['status'] === 'ACTIVE';
+
+                if (isset($item['code'])) {
+                    $item['code'] = trim((string)$item['code']);
+                }
+                if (isset($item['name'])) {
+                    $item['name'] = trim((string)$item['name']);
+                }
+
+                // 1. OrganizationCompany
+                if ($modelClass === \App\Models\OrganizationCompany::class) {
+                    \App\Models\OrganizationCompany::updateOrCreate(
+                        ['code' => $item['code']],
+                        $item
+                    );
+                    $importedCount++;
+                    continue;
+                }
+
+                // 2. OrganizationSite
+                if ($modelClass === \App\Models\OrganizationSite::class) {
+                    if (empty($item['company_id'])) {
+                        if (!empty($item['company_code'])) {
+                            $item['company_id'] = \App\Models\OrganizationCompany::where('code', $item['company_code'])->value('id') ?? $defaultCompanyId;
+                            unset($item['company_code']);
+                        } else {
+                            $item['company_id'] = $defaultCompanyId;
+                        }
+                    }
+
+                    if (empty($item['status'])) {
+                        $item['status'] = 'ACTIVE';
+                    }
+                    $item['is_active'] = $item['status'] === 'ACTIVE';
+
+                    \App\Models\OrganizationSite::updateOrCreate(
+                        ['code' => $item['code']],
+                        $item
+                    );
+                    $importedCount++;
+                    continue;
+                }
+
+                // 3. Pre-process for OrganizationDepartment
                 if ($modelClass === \App\Models\OrganizationDepartment::class) {
                     if (empty($item['company_id'])) {
                         if (!empty($item['company_code'])) {
@@ -145,9 +228,16 @@ class MasterImportService
                         $item['status'] = 'ACTIVE';
                     }
                     $item['is_active'] = $item['status'] === 'ACTIVE';
+
+                    \App\Models\OrganizationDepartment::updateOrCreate(
+                        ['code' => $item['code']],
+                        $item
+                    );
+                    $importedCount++;
+                    continue;
                 }
 
-                // Pre-process for OrganizationSection
+                // 4. Pre-process for OrganizationSection
                 if ($modelClass === \App\Models\OrganizationSection::class) {
                     if (!empty($item['department_code'])) {
                         $item['department_id'] = \App\Models\OrganizationDepartment::where('code', $item['department_code'])->value('id');
@@ -177,9 +267,16 @@ class MasterImportService
                     if (empty($item['status'])) {
                         $item['status'] = 'ACTIVE';
                     }
+
+                    \App\Models\OrganizationSection::updateOrCreate(
+                        ['code' => $item['code']],
+                        $item
+                    );
+                    $importedCount++;
+                    continue;
                 }
 
-                // Pre-process for Position
+                // 5. Pre-process for Position
                 if ($modelClass === \App\Models\Position::class) {
                     if (!empty($item['site_code'])) {
                         $item['site_id'] = \App\Models\OrganizationSite::where('code', $item['site_code'])->value('id');
@@ -215,9 +312,174 @@ class MasterImportService
                     if (empty($item['status'])) {
                         $item['status'] = 'ACTIVE';
                     }
+
+                    \App\Models\Position::updateOrCreate(
+                        ['code' => $item['code']],
+                        $item
+                    );
+                    $importedCount++;
+                    continue;
                 }
 
-                // Pre-process for OrganizationUnit
+                // 6. SalaryGrade (Golongan)
+                if ($modelClass === \App\Models\SalaryGrade::class) {
+                    if (isset($item['housing_allowance'])) {
+                        $item['housing_allowance'] = (float) $item['housing_allowance'];
+                    }
+                    if (empty($item['status'])) {
+                        $item['status'] = 'ACTIVE';
+                    }
+
+                    \App\Models\SalaryGrade::updateOrCreate(
+                        ['code' => $item['code']],
+                        $item
+                    );
+                    $importedCount++;
+                    continue;
+                }
+
+                // 7. Grade (Level Jabatan)
+                if ($modelClass === \App\Models\Grade::class) {
+                    if (isset($item['level'])) {
+                        $item['level'] = (int) $item['level'];
+                    }
+                    if (empty($item['status'])) {
+                        $item['status'] = 'ACTIVE';
+                    }
+
+                    \App\Models\Grade::updateOrCreate(
+                        ['code' => $item['code']],
+                        $item
+                    );
+                    $importedCount++;
+                    continue;
+                }
+
+                // 8. EmploymentType (Hubungan Kerja)
+                if ($modelClass === \App\Models\EmploymentType::class) {
+                    if (isset($item['is_permanent'])) {
+                        $val = strtolower((string)$item['is_permanent']);
+                        $item['is_permanent'] = in_array($val, ['1', 'true', 'yes', 'ya', 'permanent', 'tetap']);
+                    }
+                    if (empty($item['status'])) {
+                        $item['status'] = 'ACTIVE';
+                    }
+
+                    \App\Models\EmploymentType::updateOrCreate(
+                        ['code' => $item['code']],
+                        $item
+                    );
+                    $importedCount++;
+                    continue;
+                }
+
+                // 9. StandardReference (Area Kerja, POH, Status Menikah)
+                if ($modelClass === \App\Models\StandardReference::class) {
+                    $category = match ($moduleName) {
+                        'POH' => 'POH',
+                        'MARITAL-STATUSES' => 'MARITAL_STATUS',
+                        default => 'WORK_AREA',
+                    };
+
+                    $metadata = [];
+                    if ($category === 'WORK_AREA') {
+                        $metadata = [
+                            'description' => $item['description'] ?? '',
+                            'risk_level' => $item['risk_level'] ?? 'RENDAH',
+                        ];
+                    } elseif ($category === 'POH') {
+                        $metadata = [
+                            'destination_airport' => $item['destination_airport'] ?? '',
+                            'additional_travel_days' => (int)($item['additional_travel_days'] ?? 0),
+                        ];
+                    } elseif ($category === 'MARITAL_STATUS') {
+                        $metadata = [
+                            'category' => $item['category'] ?? 'Tidak Menikah',
+                        ];
+                    }
+
+                    \App\Models\StandardReference::updateOrCreate(
+                        ['category' => $category, 'code' => $item['code']],
+                        [
+                            'category' => $category,
+                            'code' => $item['code'],
+                            'name' => $item['name'] ?? $item['code'],
+                            'metadata' => $metadata,
+                            'status' => $item['status'] ?? 'ACTIVE',
+                        ]
+                    );
+                    $importedCount++;
+                    continue;
+                }
+
+                // 10. BenefitPlafond (Plafon Pengobatan, Kacamata, Persalinan)
+                if ($modelClass === \App\Models\BenefitPlafond::class) {
+                    $benefitType = match ($moduleName) {
+                        'PLAFON-PENGOBATAN' => 'PENGOBATAN',
+                        'PLAFON-KACAMATA' => 'KACAMATA',
+                        'PLAFON-PERSALINAN' => 'PERSALINAN',
+                        default => 'PENGOBATAN',
+                    };
+
+                    if ($benefitType === 'KACAMATA') {
+                        $lensType = $item['lens_type'] ?? '';
+                        $frameAmount = (float)($item['frame_amount'] ?? 0);
+                        $lensAmount = (float)($item['lens_amount'] ?? 0);
+                        $amount = $frameAmount + $lensAmount;
+
+                        \App\Models\BenefitPlafond::updateOrCreate(
+                            [
+                                'benefit_type' => 'KACAMATA',
+                                'lens_type' => $lensType,
+                            ],
+                            [
+                                'benefit_type' => 'KACAMATA',
+                                'salary_grade_id' => null,
+                                'lens_type' => $lensType,
+                                'frame_amount' => $frameAmount,
+                                'lens_amount' => $lensAmount,
+                                'amount' => $amount,
+                                'marital_category' => 'SEMUA',
+                                'period_type' => $item['period_type'] ?? '2_TAHUNAN',
+                                'description' => $item['description'] ?? null,
+                                'status' => $item['status'] ?? 'ACTIVE',
+                            ]
+                        );
+                    } else {
+                        $salaryGradeId = null;
+                        if (!empty($item['salary_grade_code'])) {
+                            $salaryGradeId = \App\Models\SalaryGrade::where('code', $item['salary_grade_code'])->value('id');
+                        }
+                        if (!$salaryGradeId && !empty($item['salary_grade_id'])) {
+                            $salaryGradeId = $item['salary_grade_id'];
+                        }
+
+                        $maritalCategory = $item['marital_category'] ?? 'SEMUA';
+                        $amount = (float)($item['amount'] ?? 0);
+                        $periodType = $item['period_type'] ?? ($benefitType === 'PERSALINAN' ? 'PER_KASUS' : 'TAHUNAN');
+
+                        \App\Models\BenefitPlafond::updateOrCreate(
+                            [
+                                'benefit_type' => $benefitType,
+                                'salary_grade_id' => $salaryGradeId,
+                                'marital_category' => $maritalCategory,
+                            ],
+                            [
+                                'benefit_type' => $benefitType,
+                                'salary_grade_id' => $salaryGradeId,
+                                'marital_category' => $maritalCategory,
+                                'amount' => $amount,
+                                'period_type' => $periodType,
+                                'description' => $item['description'] ?? null,
+                                'status' => $item['status'] ?? 'ACTIVE',
+                            ]
+                        );
+                    }
+                    $importedCount++;
+                    continue;
+                }
+
+                // 11. Pre-process for OrganizationUnit
                 if ($modelClass === \App\Models\OrganizationUnit::class) {
                     if (isset($item['unit_type']) && !isset($item['type'])) {
                         $item['type'] = strtoupper($item['unit_type']);
@@ -241,10 +503,26 @@ class MasterImportService
                     if (empty($item['status'])) {
                         $item['status'] = 'ACTIVE';
                     }
+
+                    \App\Models\OrganizationUnit::updateOrCreate(
+                        ['code' => $item['code']],
+                        $item
+                    );
+                    $importedCount++;
+                    continue;
                 }
 
+                // 12. User
+                if ($modelClass === \App\Models\User::class) {
+                    $key = !empty($item['email']) ? ['email' => $item['email']] : ['username' => $item['username']];
+                    \App\Models\User::updateOrCreate($key, $item);
+                    $importedCount++;
+                    continue;
+                }
+
+                // Generic Fallback
                 $modelClass::updateOrCreate(
-                    ['code' => $item['code']],
+                    ['code' => $item['code'] ?? $item['id']],
                     $item
                 );
                 $importedCount++;

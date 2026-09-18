@@ -16,10 +16,11 @@ import {
   Network,
   Building2,
   MapPin,
-  Layers
+  Layers,
+  Download
 } from 'lucide-react';
 import { PositionItem, HeadcountSummary, MasterSite, MasterDepartment, MasterSection } from '@/types';
-import { positionService, siteService, departmentService, sectionService, jobGradeService } from '@/services/masterDataService';
+import { positionService, siteService, departmentService, sectionService, jobGradeService, importExportService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -321,6 +322,14 @@ export const PositionTab: React.FC<PositionTabProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Download className="h-3.5 w-3.5" />}
+            onClick={() => window.open(importExportService.getExportUrl('positions'), '_blank')}
+          >
+            Ekspor CSV
+          </Button>
           <Button
             variant="outline"
             size="sm"

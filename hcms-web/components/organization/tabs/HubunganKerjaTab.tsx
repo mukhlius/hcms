@@ -11,10 +11,11 @@ import {
   CheckCircle2,
   Power,
   Info,
-  Briefcase
+  Briefcase,
+  Download
 } from 'lucide-react';
 import { EmploymentTypeItem } from '@/types';
-import { employmentTypeService } from '@/services/masterDataService';
+import { employmentTypeService, importExportService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -285,6 +286,14 @@ export const HubunganKerjaTab: React.FC<HubunganKerjaTabProps> = ({ onRefreshAll
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Download className="h-4 w-4" />}
+              onClick={() => window.open(importExportService.getExportUrl('employment-types'), '_blank')}
+            >
+              Ekspor CSV
+            </Button>
             <Button
               variant="outline"
               size="sm"

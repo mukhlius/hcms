@@ -10,10 +10,11 @@ import {
   Heart,
   CheckCircle2,
   UserX,
-  Power
+  Power,
+  Download
 } from 'lucide-react';
 import { ReferenceItem } from '@/types';
-import { referenceDataService } from '@/services/masterDataService';
+import { referenceDataService, importExportService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -292,6 +293,14 @@ export const StatusMenikahTab: React.FC<StatusMenikahTabProps> = ({ onRefreshAll
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Download className="h-4 w-4" />}
+              onClick={() => window.open(importExportService.getExportUrl('marital-statuses'), '_blank')}
+            >
+              Ekspor CSV
+            </Button>
             <Button
               variant="outline"
               size="sm"

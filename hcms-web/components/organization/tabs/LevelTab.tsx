@@ -15,10 +15,11 @@ import {
   Gift,
   Plane,
   UserCheck,
-  Filter
+  Filter,
+  Download
 } from 'lucide-react';
 import { GradeItem } from '@/types';
-import { jobGradeService } from '@/services/masterDataService';
+import { jobGradeService, importExportService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -251,6 +252,14 @@ export const LevelTab: React.FC<LevelTabProps> = ({ onRefreshAll, createTrigger 
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Download className="h-3.5 w-3.5" />}
+            onClick={() => window.open(importExportService.getExportUrl('levels'), '_blank')}
+          >
+            Ekspor CSV
+          </Button>
           <Button
             variant="outline"
             size="sm"

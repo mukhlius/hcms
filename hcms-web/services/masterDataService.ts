@@ -611,6 +611,10 @@ export const importExportService = {
   },
   getExportUrl: (entity: string) => {
     const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1').replace(/\/+$/, '');
-    return `${baseUrl}/admin/master-data/export/${entity}`;
+    let token = '';
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('token') || localStorage.getItem('auth_token') || sessionStorage.getItem('token') || '';
+    }
+    return `${baseUrl}/admin/master-data/export/${entity}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
   },
 };
