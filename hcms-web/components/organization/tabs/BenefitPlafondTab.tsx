@@ -34,14 +34,14 @@ import { toast, confirmDialog } from '@/stores/alertStore';
 
 interface BenefitPlafondTabProps {
   benefitType:
-    | 'PENGOBATAN'
-    | 'KACAMATA'
-    | 'PERSALINAN'
-    | 'TUNJANGAN_LAPANGAN'
-    | 'UANG_PERDIN'
-    | 'BANTUAN_LUMPSUM'
-    | 'BANTUAN_KOMUNIKASI'
-    | 'BANTUAN_PERUMAHAN';
+  | 'PENGOBATAN'
+  | 'KACAMATA'
+  | 'PERSALINAN'
+  | 'TUNJANGAN_LAPANGAN'
+  | 'UANG_PERDIN'
+  | 'BANTUAN_LUMPSUM'
+  | 'BANTUAN_KOMUNIKASI'
+  | 'BANTUAN_PERUMAHAN';
   title: string;
   icon: React.ReactNode;
   defaultPeriod?: 'HARIAN' | 'BULANAN' | 'TAHUNAN' | '2_TAHUNAN' | 'PER_KASUS' | 'SEUMUR_HIDUP';
@@ -640,8 +640,8 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const isAnyFilterActive = isKacamata
     ? Boolean(search || filterLensType !== 'ALL' || filterStatus !== 'ALL')
     : isUangPerdin
-    ? Boolean(search || filterGolongan !== 'ALL' || filterZone !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL')
-    : Boolean(search || filterGolongan !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL');
+      ? Boolean(search || filterGolongan !== 'ALL' || filterZone !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL')
+      : Boolean(search || filterGolongan !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL');
 
   const handleResetFilter = () => {
     setSearch('');
@@ -1129,11 +1129,6 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                       <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
                         <div className="flex items-center gap-1.5">
                           <span>{gol?.name || '-'}</span>
-                          {gol?.pangkat && (
-                            <span className="text-[11px] text-slate-400 font-normal">
-                              ({gol.pangkat})
-                            </span>
-                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
@@ -1200,11 +1195,6 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                       <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
                         <div className="flex items-center gap-1.5">
                           <span>{gol?.name || '-'}</span>
-                          {gol?.pangkat && (
-                            <span className="text-[11px] text-slate-400 font-normal">
-                              ({gol.pangkat})
-                            </span>
-                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
@@ -1436,7 +1426,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                     <option value="0" disabled>-- Pilih Golongan --</option>
                     {salaryGrades.map((g) => (
                       <option key={g.id} value={g.id}>
-                        {g.code} - {g.name}{g.pangkat ? ` (${g.pangkat})` : ''}
+                        {g.code} - {g.name}
                       </option>
                     ))}
                   </select>
@@ -1574,7 +1564,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                     <option value="0" disabled>-- Pilih Golongan --</option>
                     {salaryGrades.map((g) => (
                       <option key={g.id} value={g.id}>
-                        {g.code} - {g.name}{g.pangkat ? ` (${g.pangkat})` : ''}
+                        {g.code} - {g.name}
                       </option>
                     ))}
                   </select>
@@ -1591,9 +1581,9 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                     <select
                       value={
                         (isTunjanganLapangan && TUNJANGAN_LAPANGAN_CATEGORIES.includes(formData.category_name)) ||
-                        (isBantuanLumpsum && LUMPSUM_CATEGORIES.includes(formData.category_name)) ||
-                        (isBantuanKomunikasi && KOMUNIKASI_CATEGORIES.includes(formData.category_name)) ||
-                        (isBantuanPerumahan && PERUMAHAN_CATEGORIES.includes(formData.category_name))
+                          (isBantuanLumpsum && LUMPSUM_CATEGORIES.includes(formData.category_name)) ||
+                          (isBantuanKomunikasi && KOMUNIKASI_CATEGORIES.includes(formData.category_name)) ||
+                          (isBantuanPerumahan && PERUMAHAN_CATEGORIES.includes(formData.category_name))
                           ? formData.category_name
                           : 'CUSTOM'
                       }
@@ -1714,7 +1704,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                     <option value="0" disabled>-- Pilih Golongan --</option>
                     {salaryGrades.map((g) => (
                       <option key={g.id} value={g.id}>
-                        {g.code} - {g.name}{g.pangkat ? ` (${g.pangkat})` : ''}
+                        {g.code}
                       </option>
                     ))}
                   </select>

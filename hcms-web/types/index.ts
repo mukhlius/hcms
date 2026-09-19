@@ -346,7 +346,6 @@ export interface SalaryGradeItem {
   id: number;
   code: string;
   name: string;
-  pangkat?: 'Staff' | 'Non Staff' | string | null;
   housing_allowance?: number | null;
   level_id?: number | null;
   level?: GradeItem | null;

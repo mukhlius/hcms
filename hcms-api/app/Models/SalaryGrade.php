@@ -15,7 +15,6 @@ class SalaryGrade extends Model
     protected $fillable = [
         'code',
         'name',
-        'pangkat',
         'housing_allowance',
         'level_id',
         'min_salary',
@@ -27,7 +26,6 @@ class SalaryGrade extends Model
 
     protected $casts = [
         'housing_allowance' => 'float',
-        'pangkat' => 'string',
         'level_id' => 'integer',
         'min_salary' => 'float',
         'mid_salary' => 'float',

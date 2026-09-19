@@ -252,7 +252,7 @@ class ImportExportController extends BaseApiController
             'departments' => ['Perusahaan Induk', 'Site Operasional', 'Kode Departemen', 'Nama Departemen', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'sections' => ['Perusahaan Induk', 'Departemen Induk', 'Site Tambang/Fasilitas', 'Kode Seksi', 'Nama Seksi', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'positions' => ['Site Tambang', 'Departemen', 'Section (Seksi)', 'Level/Grade', 'Kode Posisi', 'Nama Posisi', 'Atasan Langsung', 'MPP', 'Status', 'Tanggal Dibuat'],
-            'salary-grades' => ['Kode Golongan', 'Nama Golongan', 'Bantuan Perumahan', 'Status', 'Tanggal Dibuat'],
+            'salary-grades' => ['Kode Golongan', 'Nama Golongan', 'Status', 'Tanggal Dibuat'],
             'grades', 'levels' => ['Kode Level', 'Level', 'Pangkat', 'Nama Level Jabatan', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'employment-types' => ['Kode Hubungan Kerja', 'Nama Hubungan Kerja', 'Sifat Hubungan', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'work-locations', 'work-areas' => ['Kode Area', 'Nama Area Kerja', 'Fungsi / Keterangan', 'Risiko K3', 'Status', 'Tanggal Dibuat'],
@@ -347,7 +347,6 @@ class ImportExportController extends BaseApiController
                     'salary-grades' => [
                         $item->code ?? '',
                         $item->name ?? '',
-                        (string) ($item->housing_allowance ?? 0),
                         $item->status ?? 'ACTIVE',
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     ],
@@ -549,11 +548,11 @@ class ImportExportController extends BaseApiController
                 ],
             ],
             'salary-grades' => [
-                'headers' => ['code', 'name', 'housing_allowance', 'status'],
+                'headers' => ['code', 'name', 'status'],
                 'samples' => [
-                    ['GOL-1A', 'Golongan 1A - Operator', '1500000', 'ACTIVE'],
-                    ['GOL-2A', 'Golongan 2A - Senior Operator', '1800000', 'ACTIVE'],
-                    ['GOL-4A', 'Golongan 4A - Supervisor', '2500000', 'ACTIVE'],
+                    ['GOL-1A', 'Golongan 1A - Operator', 'ACTIVE'],
+                    ['GOL-2A', 'Golongan 2A - Senior Operator', 'ACTIVE'],
+                    ['GOL-4A', 'Golongan 4A - Supervisor', 'ACTIVE'],
                 ],
             ],
             'grades' => [

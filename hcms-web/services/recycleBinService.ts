@@ -1,14 +1,28 @@
 import { apiClient } from '@/lib/api';
 import { ApiResponse } from '@/types';
 
-export type RecycleBinEntity = 'users' | 'companies' | 'sites' | 'units' | 'positions';
+export type RecycleBinEntity =
+  | 'users'
+  | 'companies'
+  | 'sites'
+  | 'departments'
+  | 'sections'
+  | 'positions'
+  | 'employment-types'
+  | 'benefit-plafonds'
+  | 'units';
 
 export interface TrashSummary {
   users: number;
   companies: number;
   sites: number;
-  units: number;
+  departments?: number;
+  sections?: number;
   positions: number;
+  'employment-types'?: number;
+  'benefit-plafonds'?: number;
+  units?: number;
+  [key: string]: number | undefined;
 }
 
 export interface TrashItem {
@@ -56,6 +70,16 @@ export const recycleBinService = {
 
   forceDeleteItem: async (entity: RecycleBinEntity, id: number | string) => {
     const response = await apiClient.delete<ApiResponse<null>>(`/admin/recycle-bin/${entity}/${id}/force`);
+    return response.data;
+  },
+
+  bulkRestore: async (entity: RecycleBinEntity, ids: (number | string)[]) => {
+    const response = await apiClient.post<ApiResponse<{ restored_count: number }>>(`/admin/recycle-bin/${entity}/bulk-restore`, { ids });
+    return response.data;
+  },
+
+  bulkForceDelete: async (entity: RecycleBinEntity, ids: (number | string)[]) => {
+    const response = await apiClient.post<ApiResponse<{ deleted_count: number }>>(`/admin/recycle-bin/${entity}/bulk-force-delete`, { ids });
     return response.data;
   },
 };

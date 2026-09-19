@@ -182,10 +182,10 @@ const ENTITY_CATALOG: EntityMeta[] = [
     id: 'salary-grades',
     name: 'Golongan Karyawan',
     category: 'Organisasi',
-    description: 'Master golongan karyawan dan ketentuan tunjangan bantuan perumahan.',
+    description: 'Master golongan karyawan dan penjenjangan kepangkatan.',
     icon: <Table className="h-5 w-5 text-amber-600" />,
     iconBg: 'bg-amber-50 dark:bg-amber-950/50',
-    columns: ['code', 'name', 'housing_allowance', 'status'],
+    columns: ['code', 'name', 'status'],
   },
   {
     id: 'levels',
