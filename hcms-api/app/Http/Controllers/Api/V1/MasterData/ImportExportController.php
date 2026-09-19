@@ -17,6 +17,7 @@ use App\Models\OrganizationSite;
 use App\Models\OrganizationUnit;
 use App\Models\Position;
 use App\Models\SalaryGrade;
+use App\Models\SalaryGradeJenjang;
 use App\Models\Shift;
 use App\Models\StandardReference;
 use App\Models\User;
@@ -38,6 +39,7 @@ class ImportExportController extends BaseApiController
         'organization-units' => OrganizationUnit::class,
         'positions' => Position::class,
         'salary-grades' => SalaryGrade::class, // Golongan
+        'jenjang' => SalaryGradeJenjang::class, // Jenjang Jabatan
         'grades' => Grade::class,              // Level Jabatan
         'levels' => Grade::class,              // Alias Level Jabatan
         'employment-types' => EmploymentType::class,
@@ -130,6 +132,12 @@ class ImportExportController extends BaseApiController
                 'name' => ['required', 'string', 'max:150'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
+            'jenjang' => [
+                'salary_grade_code' => ['required', 'string', 'max:50'],
+                'grade_code' => ['required', 'string', 'max:50'],
+                'name' => ['required', 'string', 'max:150'],
+                'status' => ['nullable', 'string', 'max:50'],
+            ],
             'grades', 'levels' => [
                 'code' => ['required', 'string', 'max:50'],
                 'name' => ['required', 'string', 'max:150'],
@@ -157,10 +165,17 @@ class ImportExportController extends BaseApiController
                 'category' => ['required', 'string', 'max:50'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
-            'plafon-pengobatan', 'plafon-persalinan' => [
+            'plafon-pengobatan' => [
                 'salary_grade_code' => ['required', 'string', 'max:50'],
                 'marital_category' => ['required', 'string', 'max:50'],
                 'amount' => ['required', 'numeric', 'min:0'],
+                'status' => ['nullable', 'string', 'max:50'],
+            ],
+            'plafon-persalinan' => [
+                'salary_grade_code' => ['required', 'string', 'max:50'],
+                'category_name' => ['required', 'string', 'max:100'],
+                'amount' => ['required', 'numeric', 'min:0'],
+                'period_type' => ['nullable', 'string', 'max:50'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
             'plafon-kacamata' => [
@@ -169,16 +184,15 @@ class ImportExportController extends BaseApiController
                 'lens_amount' => ['required', 'numeric', 'min:0'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
-            'tunjangan-lapangan', 'bantuan-lumpsum', 'bantuan-komunikasi', 'bantuan-perumahan' => [
-                'salary_grade_code' => ['required', 'string', 'max:50'],
-                'category_name' => ['nullable', 'string', 'max:100'],
+            'tunjangan-lapangan', 'uang-perdin' => [
+                'grade_code' => ['required_without:salary_grade_code', 'nullable', 'string', 'max:50'],
+                'salary_grade_code' => ['nullable', 'string', 'max:50'],
                 'amount' => ['required', 'numeric', 'min:0'],
                 'period_type' => ['nullable', 'string', 'max:50'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
-            'uang-perdin' => [
+            'bantuan-lumpsum', 'bantuan-komunikasi', 'bantuan-perumahan' => [
                 'salary_grade_code' => ['required', 'string', 'max:50'],
-                'zone_name' => ['nullable', 'string', 'max:100'],
                 'category_name' => ['nullable', 'string', 'max:100'],
                 'amount' => ['required', 'numeric', 'min:0'],
                 'period_type' => ['nullable', 'string', 'max:50'],
@@ -253,6 +267,7 @@ class ImportExportController extends BaseApiController
             'sections' => ['Perusahaan Induk', 'Departemen Induk', 'Site Tambang/Fasilitas', 'Kode Seksi', 'Nama Seksi', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'positions' => ['Site Tambang', 'Departemen', 'Section (Seksi)', 'Level/Grade', 'Kode Posisi', 'Nama Posisi', 'Atasan Langsung', 'MPP', 'Status', 'Tanggal Dibuat'],
             'salary-grades' => ['Kode Golongan', 'Nama Golongan', 'Status', 'Tanggal Dibuat'],
+            'jenjang' => ['Kode Golongan', 'Nama Golongan', 'Kode Level', 'Nama Level Jabatan', 'Pangkat', 'Nama Jenjang', 'Status', 'Tanggal Dibuat'],
             'grades', 'levels' => ['Kode Level', 'Level', 'Pangkat', 'Nama Level Jabatan', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'employment-types' => ['Kode Hubungan Kerja', 'Nama Hubungan Kerja', 'Sifat Hubungan', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'work-locations', 'work-areas' => ['Kode Area', 'Nama Area Kerja', 'Fungsi / Keterangan', 'Risiko K3', 'Status', 'Tanggal Dibuat'],
@@ -260,9 +275,9 @@ class ImportExportController extends BaseApiController
             'marital-statuses' => ['Kode Status', 'Nama Status', 'Kategori', 'Status', 'Tanggal Dibuat'],
             'plafon-pengobatan' => ['Kode Golongan', 'Nama Golongan', 'Kategori Pernikahan', 'Nominal Plafon', 'Periode', 'Ketentuan / Cakupan', 'Status', 'Tanggal Dibuat'],
             'plafon-kacamata' => ['Kriteria Lensa', 'Bantuan Frame', 'Bantuan Lensa', 'Total Plafon', 'Periode', 'Ketentuan / Keterangan', 'Status', 'Tanggal Dibuat'],
-            'plafon-persalinan' => ['Kode Golongan', 'Nama Golongan', 'Kategori Pernikahan', 'Nominal Plafon', 'Periode', 'Ketentuan / Cakupan', 'Status', 'Tanggal Dibuat'],
-            'tunjangan-lapangan' => ['Kode Golongan', 'Nama Golongan', 'Kategori Penempatan', 'Nominal Tunjangan', 'Periode', 'Ketentuan / Keterangan', 'Status', 'Tanggal Dibuat'],
-            'uang-perdin' => ['Kode Golongan', 'Nama Golongan', 'Zona / Wilayah', 'Komponen Perdin', 'Nominal Per Hari', 'Periode', 'Ketentuan / Keterangan', 'Status', 'Tanggal Dibuat'],
+            'plafon-persalinan' => ['Kode Golongan', 'Nama Golongan', 'Kriteria Persalinan', 'Nominal Plafon', 'Periode', 'Ketentuan / Cakupan', 'Status', 'Tanggal Dibuat'],
+            'tunjangan-lapangan' => ['Kode Level Jabatan', 'Nama Level Jabatan', 'Pangkat', 'Nominal Tunjangan', 'Periode', 'Status', 'Tanggal Dibuat'],
+            'uang-perdin' => ['Kode Level Jabatan', 'Nama Level Jabatan', 'Pangkat', 'Besaran Uang Perdin', 'Periode', 'Status', 'Tanggal Dibuat'],
             'bantuan-lumpsum' => ['Kode Golongan', 'Nama Golongan', 'Jenis Bantuan Lumpsum', 'Besaran Bantuan', 'Periode', 'Ketentuan / Syarat', 'Status', 'Tanggal Dibuat'],
             'bantuan-komunikasi' => ['Kode Golongan', 'Nama Golongan', 'Kategori Komunikasi', 'Nominal Bantuan', 'Periode', 'Ketentuan / Fasilitas', 'Status', 'Tanggal Dibuat'],
             'bantuan-perumahan' => ['Kode Golongan', 'Nama Golongan', 'Kategori Perumahan', 'Nominal Bantuan', 'Periode', 'Ketentuan / Keterangan', 'Status', 'Tanggal Dibuat'],
@@ -279,8 +294,8 @@ class ImportExportController extends BaseApiController
                 'plafon-pengobatan' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'PENGOBATAN')->orderBy('id'),
                 'plafon-kacamata' => BenefitPlafond::where('benefit_type', 'KACAMATA')->orderBy('id'),
                 'plafon-persalinan' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'PERSALINAN')->orderBy('id'),
-                'tunjangan-lapangan' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'TUNJANGAN_LAPANGAN')->orderBy('id'),
-                'uang-perdin' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'UANG_PERDIN')->orderBy('id'),
+                'tunjangan-lapangan' => BenefitPlafond::with('grade')->where('benefit_type', 'TUNJANGAN_LAPANGAN')->orderBy('id'),
+                'uang-perdin' => BenefitPlafond::with('grade')->where('benefit_type', 'UANG_PERDIN')->orderBy('id'),
                 'bantuan-lumpsum' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'BANTUAN_LUMPSUM')->orderBy('id'),
                 'bantuan-komunikasi' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'BANTUAN_KOMUNIKASI')->orderBy('id'),
                 'bantuan-perumahan' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'BANTUAN_PERUMAHAN')->orderBy('id'),
@@ -289,6 +304,7 @@ class ImportExportController extends BaseApiController
                 'sites' => OrganizationSite::with('company')->orderBy('code'),
                 'positions' => Position::with(['site', 'department', 'section', 'grade', 'reportsTo'])->orderBy('code'),
                 'salary-grades' => SalaryGrade::orderBy('code'),
+                'jenjang' => SalaryGradeJenjang::with(['salaryGrade', 'grade'])->orderBy('salary_grade_id')->orderBy('name'),
                 'grades', 'levels' => Grade::orderBy('level'),
                 default => $modelClass::query(),
             };
@@ -346,6 +362,16 @@ class ImportExportController extends BaseApiController
                     ],
                     'salary-grades' => [
                         $item->code ?? '',
+                        $item->name ?? '',
+                        $item->status ?? 'ACTIVE',
+                        $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
+                    ],
+                    'jenjang' => [
+                        $item->salaryGrade?->code ?? '',
+                        $item->salaryGrade?->name ?? '',
+                        $item->grade?->code ?? '',
+                        $item->grade?->name ?? '',
+                        $item->grade?->pangkat ?? '',
                         $item->name ?? '',
                         $item->status ?? 'ACTIVE',
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
@@ -413,7 +439,7 @@ class ImportExportController extends BaseApiController
                     'plafon-persalinan' => [
                         $item->salaryGrade?->code ?? '',
                         $item->salaryGrade?->name ?? '',
-                        $item->marital_category ?? 'SEMUA',
+                        $item->category_name ?? '',
                         (string) ($item->amount ?? 0),
                         $item->period_type ?? 'PER_KASUS',
                         $item->description ?? '',
@@ -421,23 +447,20 @@ class ImportExportController extends BaseApiController
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     ],
                     'tunjangan-lapangan' => [
-                        $item->salaryGrade?->code ?? '',
-                        $item->salaryGrade?->name ?? '',
-                        $item->category_name ?? '',
+                        $item->grade?->code ?? '',
+                        $item->grade?->name ?? '',
+                        $item->grade?->pangkat ?? '',
                         (string) ($item->amount ?? 0),
                         $item->period_type ?? 'BULANAN',
-                        $item->description ?? '',
                         $item->status ?? 'ACTIVE',
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     ],
                     'uang-perdin' => [
-                        $item->salaryGrade?->code ?? '',
-                        $item->salaryGrade?->name ?? '',
-                        $item->zone_name ?? '',
-                        $item->category_name ?? '',
+                        $item->grade?->code ?? '',
+                        $item->grade?->name ?? '',
+                        $item->grade?->pangkat ?? '',
                         (string) ($item->amount ?? 0),
                         $item->period_type ?? 'HARIAN',
-                        $item->description ?? '',
                         $item->status ?? 'ACTIVE',
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     ],
@@ -555,6 +578,14 @@ class ImportExportController extends BaseApiController
                     ['GOL-4A', 'Golongan 4A - Supervisor', 'ACTIVE'],
                 ],
             ],
+            'jenjang' => [
+                'headers' => ['salary_grade_code', 'grade_code', 'name', 'status'],
+                'samples' => [
+                    ['4B', 'GL', 'Senior Group Leader', 'ACTIVE'],
+                    ['4B', 'SH', 'Junior Supervisor', 'ACTIVE'],
+                    ['4B', 'OFF', 'Senior Officer', 'ACTIVE'],
+                ],
+            ],
             'grades' => [
                 'headers' => ['code', 'level', 'pangkat', 'name', 'description', 'status'],
                 'samples' => [
@@ -628,24 +659,27 @@ class ImportExportController extends BaseApiController
                 ],
             ],
             'plafon-persalinan' => [
-                'headers' => ['salary_grade_code', 'marital_category', 'amount', 'period_type', 'description', 'status'],
+                'headers' => ['salary_grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
                 'samples' => [
-                    ['GOL-1A', 'Menikah', '8000000', 'PER_KASUS', 'Biaya persalinan normal maupun caesar per kelahiran', 'ACTIVE'],
-                    ['GOL-4A', 'Menikah', '15000000', 'PER_KASUS', 'Biaya persalinan normal maupun caesar per kelahiran', 'ACTIVE'],
+                    ['GOL-1A', 'Persalinan di Bidan', '3500000', 'PER_KASUS', 'Bantuan biaya persalinan normal di fasilitas Bidan terakreditasi', 'ACTIVE'],
+                    ['GOL-1A', 'Persalinan di Dokter', '8000000', 'PER_KASUS', 'Bantuan biaya persalinan normal maupun caesar di Dokter Spesialis / RS', 'ACTIVE'],
+                    ['GOL-4A', 'Persalinan di Bidan', '5000000', 'PER_KASUS', 'Bantuan biaya persalinan normal di fasilitas Bidan terakreditasi', 'ACTIVE'],
+                    ['GOL-4A', 'Persalinan di Dokter', '15000000', 'PER_KASUS', 'Bantuan biaya persalinan normal maupun caesar di Dokter Spesialis / RS', 'ACTIVE'],
                 ],
             ],
             'tunjangan-lapangan' => [
-                'headers' => ['salary_grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
+                'headers' => ['grade_code', 'amount', 'period_type', 'status'],
                 'samples' => [
-                    ['GOL-1A', 'Pit Tambang & Operasional Front', '1500000', 'BULANAN', 'Penempatan pit tambang & hauling road', 'ACTIVE'],
-                    ['GOL-4A', 'Pit Tambang & Operasional Front', '3500000', 'BULANAN', 'Penempatan pit tambang & hauling road', 'ACTIVE'],
+                    ['L1', '1500000', 'BULANAN', 'ACTIVE'],
+                    ['MGR', '3500000', 'BULANAN', 'ACTIVE'],
                 ],
             ],
             'uang-perdin' => [
-                'headers' => ['salary_grade_code', 'zone_name', 'category_name', 'amount', 'period_type', 'description', 'status'],
+                'headers' => ['grade_code', 'amount', 'period_type', 'status'],
                 'samples' => [
-                    ['GOL-1A', 'Luar Kota / Antar Provinsi', 'Uang Saku Harian', '300000', 'HARIAN', 'Perjalanan dinas luar provinsi/HO', 'ACTIVE'],
-                    ['GOL-4A', 'Luar Kota / Antar Provinsi', 'Uang Saku Harian', '600000', 'HARIAN', 'Perjalanan dinas luar provinsi/HO', 'ACTIVE'],
+                    ['PM', '500000', 'HARIAN', 'ACTIVE'],
+                    ['SH', '350000', 'HARIAN', 'ACTIVE'],
+                    ['OFF', '250000', 'HARIAN', 'ACTIVE'],
                 ],
             ],
             'bantuan-lumpsum' => [

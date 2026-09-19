@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SalaryGrade extends Model
 {
@@ -15,6 +16,7 @@ class SalaryGrade extends Model
     protected $fillable = [
         'code',
         'name',
+        'jenjang',
         'housing_allowance',
         'level_id',
         'min_salary',
@@ -35,5 +37,10 @@ class SalaryGrade extends Model
     public function level(): BelongsTo
     {
         return $this->belongsTo(Grade::class, 'level_id');
+    }
+
+    public function jenjangs(): HasMany
+    {
+        return $this->hasMany(SalaryGradeJenjang::class, 'salary_grade_id')->orderBy('name');
     }
 }

@@ -202,6 +202,11 @@ Route::prefix('v1')->group(function () {
                 Route::post('/salary-grades', [\App\Http\Controllers\Api\V1\MasterData\JobAndGradeController::class, 'storeSalaryGrade']);
                 Route::put('/salary-grades/{salaryGrade}', [\App\Http\Controllers\Api\V1\MasterData\JobAndGradeController::class, 'updateSalaryGrade']);
                 Route::delete('/salary-grades/{salaryGrade}', [\App\Http\Controllers\Api\V1\MasterData\JobAndGradeController::class, 'destroySalaryGrade']);
+                Route::get('/jenjang', [\App\Http\Controllers\Api\V1\MasterData\SalaryGradeJenjangController::class, 'index']);
+                Route::post('/jenjang', [\App\Http\Controllers\Api\V1\MasterData\SalaryGradeJenjangController::class, 'store']);
+                Route::get('/jenjang/{jenjang}', [\App\Http\Controllers\Api\V1\MasterData\SalaryGradeJenjangController::class, 'show']);
+                Route::put('/jenjang/{jenjang}', [\App\Http\Controllers\Api\V1\MasterData\SalaryGradeJenjangController::class, 'update']);
+                Route::delete('/jenjang/{jenjang}', [\App\Http\Controllers\Api\V1\MasterData\SalaryGradeJenjangController::class, 'destroy']);
                 Route::get('/work-locations', [\App\Http\Controllers\Api\V1\MasterData\JobAndGradeController::class, 'workLocations']);
                 Route::post('/work-locations', [\App\Http\Controllers\Api\V1\MasterData\JobAndGradeController::class, 'storeWorkLocation']);
                 Route::get('/cost-centers', [\App\Http\Controllers\Api\V1\MasterData\JobAndGradeController::class, 'costCenters']);

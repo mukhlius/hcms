@@ -3,6 +3,7 @@ import {
   ApiResponse,
   GradeItem,
   SalaryGradeItem,
+  SalaryGradeJenjangItem,
   HeadcountSummary,
   MasterCompany,
   MasterSite,
@@ -27,6 +28,7 @@ export const companyService = {
       positions: number;
       grades: number;
       salary_grades: number;
+      jenjang?: number;
       poh: number;
       work_area: number;
       employment_types?: number;
@@ -309,6 +311,25 @@ export const salaryGradeService = {
   },
   deleteSalaryGrade: async (id: number) => {
     const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/salary-grades/${id}`);
+    return res.data;
+  },
+};
+
+export const jenjangService = {
+  getJenjangs: async (params?: { search?: string; salary_grade_id?: number; grade_id?: number; status?: string }) => {
+    const res = await apiClient.get<ApiResponse<SalaryGradeJenjangItem[]>>('/admin/master-data/jenjang', { params });
+    return res.data;
+  },
+  createJenjang: async (payload: Partial<SalaryGradeJenjangItem>) => {
+    const res = await apiClient.post<ApiResponse<SalaryGradeJenjangItem>>('/admin/master-data/jenjang', payload);
+    return res.data;
+  },
+  updateJenjang: async (id: number, payload: Partial<SalaryGradeJenjangItem>) => {
+    const res = await apiClient.put<ApiResponse<SalaryGradeJenjangItem>>(`/admin/master-data/jenjang/${id}`, payload);
+    return res.data;
+  },
+  deleteJenjang: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/jenjang/${id}`);
     return res.data;
   },
 };

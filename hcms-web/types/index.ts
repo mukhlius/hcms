@@ -358,6 +358,18 @@ export interface SalaryGradeItem {
   updated_at?: string;
 }
 
+export interface SalaryGradeJenjangItem {
+  id: number;
+  salary_grade_id: number;
+  salary_grade?: SalaryGradeItem | null;
+  grade_id: number;
+  grade?: GradeItem | null;
+  name: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ReferenceItem {
   id: number;
   category?: string;
