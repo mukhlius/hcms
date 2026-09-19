@@ -57,8 +57,7 @@ class BenefitPlafondController extends BaseApiController
             $query->where(function ($q) use ($s) {
                 $q->whereHas('salaryGrade', function ($gq) use ($s) {
                     $gq->where('name', 'like', "%{$s}%")
-                       ->orWhere('code', 'like', "%{$s}%")
-                       ->orWhere('pangkat', 'like', "%{$s}%");
+                       ->orWhere('code', 'like', "%{$s}%");
                 })->orWhere('description', 'like', "%{$s}%")
                   ->orWhere('marital_category', 'like', "%{$s}%")
                   ->orWhere('lens_type', 'like', "%{$s}%")

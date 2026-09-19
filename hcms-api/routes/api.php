@@ -101,6 +101,8 @@ Route::prefix('v1')->group(function () {
             // Recycle Bin (Tempat Sampah & Pemulihan Data)
             Route::prefix('recycle-bin')->group(function () {
                 Route::get('/summary', [RecycleBinController::class, 'summary']);
+                Route::post('/{entity}/bulk-restore', [RecycleBinController::class, 'bulkRestore']);
+                Route::post('/{entity}/bulk-force-delete', [RecycleBinController::class, 'bulkForceDelete']);
                 Route::get('/{entity}', [RecycleBinController::class, 'index']);
                 Route::post('/{entity}/{id}/restore', [RecycleBinController::class, 'restore']);
                 Route::delete('/{entity}/{id}/force', [RecycleBinController::class, 'forceDelete']);

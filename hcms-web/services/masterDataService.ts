@@ -295,7 +295,7 @@ export const jobGradeService = {
 };
 
 export const salaryGradeService = {
-  getSalaryGrades: async (params?: { search?: string; level_id?: number; pangkat?: string; status?: string }) => {
+  getSalaryGrades: async (params?: { search?: string; level_id?: number; status?: string }) => {
     const res = await apiClient.get<ApiResponse<SalaryGradeItem[]>>('/admin/master-data/salary-grades', { params });
     return res.data;
   },

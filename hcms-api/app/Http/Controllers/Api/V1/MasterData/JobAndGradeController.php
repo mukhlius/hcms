@@ -227,9 +227,6 @@ class JobAndGradeController extends BaseApiController
     public function salaryGrades(Request $request): JsonResponse
     {
         $query = SalaryGrade::with('level:id,code,name,level');
-        if ($request->filled('pangkat')) {
-            $query->where('pangkat', $request->query('pangkat'));
-        }
         if ($request->filled('level_id')) {
             $query->where('level_id', $request->query('level_id'));
         }
@@ -240,8 +237,7 @@ class JobAndGradeController extends BaseApiController
             $s = $request->query('search');
             $query->where(function ($q) use ($s) {
                 $q->where('code', 'like', "%{$s}%")
-                  ->orWhere('name', 'like', "%{$s}%")
-                  ->orWhere('pangkat', 'like', "%{$s}%");
+                  ->orWhere('name', 'like', "%{$s}%");
             });
         }
         return $this->successResponse($query->orderBy('code')->get(), 'Data golongan / grade berhasil diambil.');
@@ -252,7 +248,6 @@ class JobAndGradeController extends BaseApiController
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:50', 'unique:salary_grades,code'],
             'name' => ['required', 'string', 'max:255'],
-            'pangkat' => ['nullable', 'string', 'in:Staff,Non Staff,STAFF,NON_STAFF'],
             'housing_allowance' => ['nullable', 'numeric', 'min:0'],
             'level_id' => ['nullable', 'exists:grades,id'],
             'min_salary' => ['nullable', 'numeric', 'min:0'],
@@ -261,12 +256,6 @@ class JobAndGradeController extends BaseApiController
             'description' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
         ]);
-
-        if (isset($validated['pangkat'])) {
-            $validated['pangkat'] = in_array(strtoupper($validated['pangkat']), ['NON STAFF', 'NON_STAFF']) ? 'Non Staff' : 'Staff';
-        } else {
-            $validated['pangkat'] = 'Staff';
-        }
 
         if (!isset($validated['mid_salary']) && isset($validated['min_salary']) && isset($validated['max_salary'])) {
             $validated['mid_salary'] = ($validated['min_salary'] + $validated['max_salary']) / 2;
@@ -283,7 +272,6 @@ class JobAndGradeController extends BaseApiController
         $validated = $request->validate([
             'code' => ['sometimes', 'required', 'string', 'max:50', 'unique:salary_grades,code,' . $salaryGrade->id],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'pangkat' => ['nullable', 'string', 'in:Staff,Non Staff,STAFF,NON_STAFF'],
             'housing_allowance' => ['nullable', 'numeric', 'min:0'],
             'level_id' => ['nullable', 'exists:grades,id'],
             'min_salary' => ['nullable', 'numeric', 'min:0'],
@@ -292,10 +280,6 @@ class JobAndGradeController extends BaseApiController
             'description' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
         ]);
-
-        if (isset($validated['pangkat'])) {
-            $validated['pangkat'] = in_array(strtoupper($validated['pangkat']), ['NON STAFF', 'NON_STAFF']) ? 'Non Staff' : 'Staff';
-        }
 
         if (!isset($validated['mid_salary']) && isset($validated['min_salary']) && isset($validated['max_salary'])) {
             $validated['mid_salary'] = ($validated['min_salary'] + $validated['max_salary']) / 2;
