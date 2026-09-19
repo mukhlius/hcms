@@ -497,7 +497,39 @@ class MasterImportService
                                 'status' => $item['status'] ?? 'ACTIVE',
                             ]
                         );
-                    } elseif (in_array($benefitType, ['TUNJANGAN_LAPANGAN', 'UANG_PERDIN', 'BANTUAN_LUMPSUM', 'BANTUAN_KOMUNIKASI', 'BANTUAN_PERUMAHAN'])) {
+                    } elseif ($benefitType === 'TUNJANGAN_LAPANGAN') {
+                        $gradeId = null;
+                        $gradeCode = $item['grade_code'] ?? $item['level_code'] ?? $item['job_level_code'] ?? $item['salary_grade_code'] ?? null;
+                        if (!empty($gradeCode)) {
+                            $gradeId = \App\Models\Grade::where('code', $gradeCode)->orWhere('name', $gradeCode)->value('id');
+                        }
+                        if (!$gradeId && !empty($item['grade_id'])) {
+                            $gradeId = $item['grade_id'];
+                        }
+                        if (!$gradeId && !empty($item['level_id'])) {
+                            $gradeId = $item['level_id'];
+                        }
+
+                        $amount = (float)($item['amount'] ?? 0);
+                        $periodType = $item['period_type'] ?? 'BULANAN';
+
+                        \App\Models\BenefitPlafond::updateOrCreate(
+                            [
+                                'benefit_type' => 'TUNJANGAN_LAPANGAN',
+                                'grade_id' => $gradeId,
+                            ],
+                            [
+                                'benefit_type' => 'TUNJANGAN_LAPANGAN',
+                                'grade_id' => $gradeId,
+                                'category_name' => null,
+                                'amount' => $amount,
+                                'marital_category' => 'SEMUA',
+                                'period_type' => $periodType,
+                                'description' => null,
+                                'status' => $item['status'] ?? 'ACTIVE',
+                            ]
+                        );
+                    } elseif (in_array($benefitType, ['UANG_PERDIN', 'BANTUAN_LUMPSUM', 'BANTUAN_KOMUNIKASI', 'BANTUAN_PERUMAHAN'])) {
                         $salaryGradeId = null;
                         if (!empty($item['salary_grade_code'])) {
                             $salaryGradeId = \App\Models\SalaryGrade::where('code', $item['salary_grade_code'])->value('id');

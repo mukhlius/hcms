@@ -265,10 +265,10 @@ const ENTITY_CATALOG: EntityMeta[] = [
     id: 'tunjangan-lapangan',
     name: 'Tunjangan Lapangan',
     category: 'Benefit & Plafon',
-    description: 'Tunjangan penempatan kerja lapangan (pit tambang, hauling road, processing plant).',
+    description: 'Tunjangan penempatan kerja lapangan berdasarkan level jabatan.',
     icon: <HardHat className="h-5 w-5 text-amber-600" />,
     iconBg: 'bg-amber-50 dark:bg-amber-950/50',
-    columns: ['salary_grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
+    columns: ['grade_code', 'amount', 'period_type', 'status'],
   },
   {
     id: 'uang-perdin',

@@ -14,6 +14,7 @@ class BenefitPlafond extends Model
     protected $fillable = [
         'benefit_type',
         'salary_grade_id',
+        'grade_id',
         'lens_type',
         'frame_amount',
         'lens_amount',
@@ -36,6 +37,11 @@ class BenefitPlafond extends Model
     public function salaryGrade(): BelongsTo
     {
         return $this->belongsTo(SalaryGrade::class, 'salary_grade_id');
+    }
+
+    public function grade(): BelongsTo
+    {
+        return $this->belongsTo(Grade::class, 'grade_id');
     }
 
     public function maritalStatus(): BelongsTo
