@@ -13,6 +13,7 @@ use App\Models\OrganizationSection;
 use App\Models\OrganizationSite;
 use App\Models\OrganizationUnit;
 use App\Models\Position;
+use App\Models\MasterJenjang;
 use App\Models\SalaryGrade;
 use App\Models\SalaryGradeJenjang;
 use App\Models\StandardReference;
@@ -247,6 +248,7 @@ class CompanyController extends BaseApiController
             'grades' => Grade::count(),
             'salary_grades' => SalaryGrade::count(),
             'jenjang' => SalaryGradeJenjang::count(),
+            'master_jenjang' => MasterJenjang::count(),
             'poh' => StandardReference::where('category', 'POH')->where('status', 'ACTIVE')->count(),
             'work_area' => StandardReference::where('category', 'WORK_AREA')->where('status', 'ACTIVE')->count(),
             'employment_types' => EmploymentType::count(),

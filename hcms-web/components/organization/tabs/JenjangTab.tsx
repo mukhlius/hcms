@@ -14,11 +14,12 @@ import {
   ShieldCheck,
   Filter
 } from 'lucide-react';
-import { SalaryGradeJenjangItem, SalaryGradeItem, GradeItem } from '@/types';
+import { SalaryGradeJenjangItem, SalaryGradeItem, GradeItem, MasterJenjangItem } from '@/types';
 import { 
   jenjangService, 
   salaryGradeService, 
   jobGradeService, 
+  masterJenjangService,
   importExportService 
 } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
@@ -42,6 +43,7 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
   const [items, setItems] = useState<SalaryGradeJenjangItem[]>([]);
   const [salaryGrades, setSalaryGrades] = useState<SalaryGradeItem[]>([]);
   const [grades, setGrades] = useState<GradeItem[]>([]);
+  const [masterJenjangs, setMasterJenjangs] = useState<MasterJenjangItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   
   // Filters
@@ -60,6 +62,7 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
     id: 0,
     salary_grade_id: '',
     grade_id: '',
+    master_jenjang_id: '',
     name: '',
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
   });
@@ -67,12 +70,14 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
   // Load masters for dropdowns
   const loadDropdownMasters = async () => {
     try {
-      const [sgRes, gRes] = await Promise.all([
+      const [sgRes, gRes, mjRes] = await Promise.all([
         salaryGradeService.getSalaryGrades(),
         jobGradeService.getGrades(),
+        masterJenjangService.getMasterJenjangs(),
       ]);
       if (sgRes.success && sgRes.data) setSalaryGrades(sgRes.data);
       if (gRes.success && gRes.data) setGrades(gRes.data);
+      if (mjRes.success && mjRes.data) setMasterJenjangs(mjRes.data);
     } catch (err) {
       console.error('Failed to load dropdown masters:', err);
     }
@@ -129,6 +134,7 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
       id: 0,
       salary_grade_id: filterSalaryGradeId || (salaryGrades[0]?.id ? String(salaryGrades[0].id) : ''),
       grade_id: filterGradeId || (grades[0]?.id ? String(grades[0].id) : ''),
+      master_jenjang_id: '',
       name: '',
       status: 'ACTIVE',
     });
@@ -143,10 +149,17 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
 
   const handleOpenEdit = (item: SalaryGradeJenjangItem) => {
     setModalMode('edit');
+    const matchedMasterId = item.master_jenjang_id 
+      ? String(item.master_jenjang_id) 
+      : (masterJenjangs.find(m => m.name.toLowerCase() === item.name.toLowerCase())?.id 
+          ? String(masterJenjangs.find(m => m.name.toLowerCase() === item.name.toLowerCase())?.id) 
+          : '');
+
     setFormData({
       id: item.id,
       salary_grade_id: String(item.salary_grade_id),
       grade_id: String(item.grade_id),
+      master_jenjang_id: matchedMasterId,
       name: item.name,
       status: item.status,
     });
@@ -165,6 +178,7 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
       const payload: Partial<SalaryGradeJenjangItem> = {
         salary_grade_id: Number(formData.salary_grade_id),
         grade_id: Number(formData.grade_id),
+        master_jenjang_id: formData.master_jenjang_id ? Number(formData.master_jenjang_id) : undefined,
         name: formData.name.trim(),
         status: formData.status,
       };
@@ -379,9 +393,14 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
 
                       {/* 3. Nama Jenjang */}
                       <td className="px-4 py-3.5 font-semibold text-slate-900">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <GitMerge className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                           <span>{item.name}</span>
+                          {item.master_jenjang?.code && (
+                            <span className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                              {item.master_jenjang.code}
+                            </span>
+                          )}
                         </div>
                       </td>
 
@@ -491,20 +510,34 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
             </Select>
           </div>
 
-          {/* 3. Nama Jenjang */}
+          {/* 3. Nama Jenjang (Dropdown dari Master Jenjang) */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              3. Nama Jenjang Jabatan <span className="text-rose-500">*</span>
+              3. Nama Jenjang Jabatan (Katalog Master) <span className="text-rose-500">*</span>
             </label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Contoh: Senior Group Leader, Junior Supervisor, Senior Officer"
+            <Select
+              value={formData.master_jenjang_id}
+              onChange={(e) => {
+                const selId = e.target.value;
+                const found = masterJenjangs.find((m) => String(m.id) === selId);
+                setFormData({
+                  ...formData,
+                  master_jenjang_id: selId,
+                  name: found ? found.name : '',
+                });
+              }}
               required
               className="text-xs"
-            />
+            >
+              <option value="">-- Pilih Nama Jenjang dari Master Jenjang --</option>
+              {masterJenjangs.map((mj) => (
+                <option key={mj.id} value={mj.id}>
+                  [{mj.code}] {mj.name} {mj.status === 'INACTIVE' ? '(Non-Aktif)' : ''}
+                </option>
+              ))}
+            </Select>
             <p className="text-[11px] text-slate-400 mt-1">
-              Sebutan resmi jenjang karir untuk kombinasi golongan dan level jabatan ini.
+              Nama sebutan jenjang distandarisasi dari katalog <strong>Master Jenjang</strong> agar baku dan konsisten.
             </p>
           </div>
 

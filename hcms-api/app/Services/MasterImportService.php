@@ -422,13 +422,55 @@ class MasterImportService
 
                     $status = !empty($item['status']) ? strtoupper(trim($item['status'])) : 'ACTIVE';
 
+                    $masterJenjang = \App\Models\MasterJenjang::firstOrCreate(
+                        ['name' => $jenjangName],
+                        [
+                            'code' => \App\Models\MasterJenjang::generateCode(),
+                            'status' => 'ACTIVE',
+                        ]
+                    );
+
                     \App\Models\SalaryGradeJenjang::updateOrCreate(
                         [
                             'salary_grade_id' => $salaryGradeId,
                             'grade_id' => $gradeId,
                         ],
                         [
+                            'master_jenjang_id' => $masterJenjang->id,
                             'name' => $jenjangName,
+                            'status' => $status,
+                        ]
+                    );
+                    $importedCount++;
+                    continue;
+                }
+
+                // 6c. MasterJenjang (Katalog Master Jenjang)
+                if ($modelClass === \App\Models\MasterJenjang::class) {
+                    $name = trim($item['name'] ?? $item['nama'] ?? $item['nama_jenjang'] ?? '');
+                    if (empty($name)) {
+                        throw ValidationException::withMessages([
+                            'data' => ["Baris {$rowIdx}: Nama jenjang wajib diisi."],
+                        ]);
+                    }
+
+                    $code = !empty(trim($item['code'] ?? $item['kode'] ?? ''))
+                        ? strtoupper(trim($item['code'] ?? $item['kode']))
+                        : null;
+
+                    if (!$code) {
+                        $existing = \App\Models\MasterJenjang::where('name', $name)->first();
+                        $code = $existing ? $existing->code : \App\Models\MasterJenjang::generateCode();
+                    }
+
+                    $status = !empty($item['status']) ? strtoupper(trim($item['status'])) : 'ACTIVE';
+                    $description = !empty($item['description']) ? trim($item['description']) : null;
+
+                    \App\Models\MasterJenjang::updateOrCreate(
+                        ['code' => $code],
+                        [
+                            'name' => $name,
+                            'description' => $description,
                             'status' => $status,
                         ]
                     );
@@ -548,7 +590,62 @@ class MasterImportService
                                 'status' => $item['status'] ?? 'ACTIVE',
                             ]
                         );
-                    } elseif (in_array($benefitType, ['TUNJANGAN_LAPANGAN', 'UANG_PERDIN'])) {
+                    } elseif ($benefitType === 'UANG_PERDIN') {
+                        $jenjangName = $item['jenjang'] ?? $item['jenjang_name'] ?? $item['name'] ?? null;
+                        $salaryGradeCode = $item['salary_grade_code'] ?? null;
+                        $gradeCode = $item['grade_code'] ?? $item['level_code'] ?? null;
+
+                        $jenjangQuery = \App\Models\SalaryGradeJenjang::query();
+                        if (!empty($jenjangName)) {
+                            $jenjangQuery->where('name', $jenjangName);
+                        }
+                        if (!empty($salaryGradeCode)) {
+                            $jenjangQuery->whereHas('salaryGrade', function ($q) use ($salaryGradeCode) {
+                                $q->where('code', $salaryGradeCode)->orWhere('name', $salaryGradeCode);
+                            });
+                        }
+                        if (!empty($gradeCode)) {
+                            $jenjangQuery->whereHas('grade', function ($q) use ($gradeCode) {
+                                $q->where('code', $gradeCode)->orWhere('name', $gradeCode);
+                            });
+                        }
+
+                        $jenjangId = $jenjangQuery->value('id');
+                        if (!$jenjangId && !empty($item['salary_grade_jenjang_id'])) {
+                            $jenjangId = $item['salary_grade_jenjang_id'];
+                        }
+                        if (!$jenjangId && !empty($item['jenjang_id'])) {
+                            $jenjangId = $item['jenjang_id'];
+                        }
+
+                        if (!$jenjangId) {
+                            $display = $jenjangName ?? $gradeCode ?? '(kosong)';
+                            throw new \Exception("Jenjang Jabatan '{$display}' tidak ditemukan dalam master data Jenjang Jabatan. Pastikan menggunakan nama Jenjang Jabatan yang valid (contoh: Senior Group Leader, Junior Supervisor, Senior Officer).");
+                        }
+
+                        $amount = (float)($item['amount'] ?? 0);
+                        $periodType = $item['period_type'] ?? 'HARIAN';
+
+                        \App\Models\BenefitPlafond::updateOrCreate(
+                            [
+                                'benefit_type' => 'UANG_PERDIN',
+                                'salary_grade_jenjang_id' => $jenjangId,
+                            ],
+                            [
+                                'benefit_type' => 'UANG_PERDIN',
+                                'salary_grade_jenjang_id' => $jenjangId,
+                                'grade_id' => null,
+                                'salary_grade_id' => null,
+                                'category_name' => null,
+                                'zone_name' => null,
+                                'amount' => $amount,
+                                'marital_category' => 'SEMUA',
+                                'period_type' => $periodType,
+                                'description' => null,
+                                'status' => $item['status'] ?? 'ACTIVE',
+                            ]
+                        );
+                    } elseif ($benefitType === 'TUNJANGAN_LAPANGAN') {
                         $gradeId = null;
                         $gradeCode = $item['grade_code'] ?? $item['level_code'] ?? $item['job_level_code'] ?? $item['salary_grade_code'] ?? null;
                         if (!empty($gradeCode)) {
@@ -567,18 +664,18 @@ class MasterImportService
                         }
 
                         $amount = (float)($item['amount'] ?? 0);
-                        $defaultPeriod = $benefitType === 'UANG_PERDIN' ? 'HARIAN' : 'BULANAN';
-                        $periodType = $item['period_type'] ?? $defaultPeriod;
+                        $periodType = $item['period_type'] ?? 'BULANAN';
 
                         \App\Models\BenefitPlafond::updateOrCreate(
                             [
-                                'benefit_type' => $benefitType,
+                                'benefit_type' => 'TUNJANGAN_LAPANGAN',
                                 'grade_id' => $gradeId,
                             ],
                             [
-                                'benefit_type' => $benefitType,
+                                'benefit_type' => 'TUNJANGAN_LAPANGAN',
                                 'grade_id' => $gradeId,
                                 'salary_grade_id' => null,
+                                'salary_grade_jenjang_id' => null,
                                 'category_name' => null,
                                 'zone_name' => null,
                                 'amount' => $amount,

@@ -12,7 +12,7 @@ class BenefitPlafondController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
-        $query = BenefitPlafond::with(['salaryGrade', 'grade', 'maritalStatus']);
+        $query = BenefitPlafond::with(['salaryGrade', 'grade', 'jenjang.salaryGrade', 'jenjang.grade', 'maritalStatus']);
 
         if ($request->filled('benefit_type')) {
             $query->where('benefit_type', strtoupper($request->query('benefit_type')));
@@ -24,6 +24,12 @@ class BenefitPlafondController extends BaseApiController
 
         if ($request->filled('salary_grade_id')) {
             $query->where('salary_grade_id', $request->query('salary_grade_id'));
+        }
+
+        if ($request->filled('salary_grade_jenjang_id')) {
+            $query->where('salary_grade_jenjang_id', $request->query('salary_grade_jenjang_id'));
+        } elseif ($request->filled('jenjang_id')) {
+            $query->where('salary_grade_jenjang_id', $request->query('jenjang_id'));
         }
 
         if ($request->filled('marital_category')) {
@@ -65,6 +71,14 @@ class BenefitPlafondController extends BaseApiController
                     $gq->where('name', 'like', "%{$s}%")
                        ->orWhere('code', 'like', "%{$s}%")
                        ->orWhere('pangkat', 'like', "%{$s}%");
+                })->orWhereHas('jenjang', function ($jq) use ($s) {
+                    $jq->where('name', 'like', "%{$s}%")
+                       ->orWhereHas('salaryGrade', function ($sgq) use ($s) {
+                           $sgq->where('code', 'like', "%{$s}%")->orWhere('name', 'like', "%{$s}%");
+                       })
+                       ->orWhereHas('grade', function ($gq) use ($s) {
+                           $gq->where('code', 'like', "%{$s}%")->orWhere('name', 'like', "%{$s}%")->orWhere('pangkat', 'like', "%{$s}%");
+                       });
                 })->orWhere('description', 'like', "%{$s}%")
                   ->orWhere('marital_category', 'like', "%{$s}%")
                   ->orWhere('lens_type', 'like', "%{$s}%")
@@ -73,11 +87,12 @@ class BenefitPlafondController extends BaseApiController
             });
         }
 
-        // Left join with salary_grades and grades
+        // Left join with salary_grades, grades, and salary_grade_jenjang
         $query->leftJoin('salary_grades', 'benefit_plafonds.salary_grade_id', '=', 'salary_grades.id')
               ->leftJoin('grades', 'benefit_plafonds.grade_id', '=', 'grades.id')
+              ->leftJoin('salary_grade_jenjang', 'benefit_plafonds.salary_grade_jenjang_id', '=', 'salary_grade_jenjang.id')
               ->select('benefit_plafonds.*')
-              ->orderByRaw('COALESCE(grades.level, salary_grades.code, benefit_plafonds.lens_type, "") ASC')
+              ->orderByRaw('COALESCE(salary_grade_jenjang.name, grades.level, salary_grades.code, benefit_plafonds.lens_type, "") ASC')
               ->orderBy('benefit_plafonds.category_name', 'asc')
               ->orderBy('benefit_plafonds.zone_name', 'asc')
               ->orderBy('benefit_plafonds.marital_category', 'asc')
@@ -102,8 +117,11 @@ class BenefitPlafondController extends BaseApiController
         $isPersalinan = $benefitType === 'PERSALINAN';
         $isPengobatan = $benefitType === 'PENGOBATAN';
 
-        // Support level_id as grade_id for Tunjangan Lapangan and Uang Perdin
-        if ($isTunjanganLapangan || $isUangPerdin) {
+        if ($isUangPerdin) {
+            if (!$request->has('salary_grade_jenjang_id') && $request->has('jenjang_id')) {
+                $request->merge(['salary_grade_jenjang_id' => $request->input('jenjang_id')]);
+            }
+        } elseif ($isTunjanganLapangan) {
             if (!$request->has('grade_id') && $request->has('level_id')) {
                 $request->merge(['grade_id' => $request->input('level_id')]);
             }
@@ -132,9 +150,22 @@ class BenefitPlafondController extends BaseApiController
             $rules['grade_id'] = ['nullable', 'exists:grades,id'];
             $rules['marital_category'] = ['nullable', 'string'];
             $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
-        } elseif ($isTunjanganLapangan || $isUangPerdin) {
+        } elseif ($isUangPerdin) {
+            $rules['salary_grade_jenjang_id'] = ['required', 'exists:salary_grade_jenjang,id'];
+            $rules['grade_id'] = ['nullable'];
+            $rules['salary_grade_id'] = ['nullable'];
+            $rules['amount'] = ['required', 'numeric', 'min:0'];
+            $rules['marital_category'] = ['nullable', 'string'];
+            $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
+            $rules['category_name'] = ['nullable', 'string', 'max:100'];
+            $rules['zone_name'] = ['nullable', 'string', 'max:100'];
+            $rules['lens_type'] = ['nullable', 'string'];
+            $rules['frame_amount'] = ['nullable', 'numeric'];
+            $rules['lens_amount'] = ['nullable', 'numeric'];
+        } elseif ($isTunjanganLapangan) {
             $rules['grade_id'] = ['required', 'exists:grades,id'];
             $rules['salary_grade_id'] = ['nullable'];
+            $rules['salary_grade_jenjang_id'] = ['nullable'];
             $rules['category_name'] = ['nullable', 'string', 'max:100'];
             $rules['zone_name'] = ['nullable', 'string', 'max:100'];
             $rules['amount'] = ['required', 'numeric', 'min:0'];
@@ -170,16 +201,16 @@ class BenefitPlafondController extends BaseApiController
         }
 
         $item = BenefitPlafond::create($validated);
-        $item->load(['salaryGrade', 'grade', 'maritalStatus']);
+        $item->load(['salaryGrade', 'grade', 'jenjang.salaryGrade', 'jenjang.grade', 'maritalStatus']);
 
         AuditService::log('CREATE', 'BENEFIT_PLAFOND', BenefitPlafond::class, (string)$item->id, newValues: $item->toArray());
 
-        return $this->successResponse($item, 'Plafon manfaat berhasil ditambahkan.', 201);
+        return $this->createdResponse($item, 'Plafon manfaat berhasil ditambahkan.');
     }
 
     public function show(BenefitPlafond $benefitPlafond): JsonResponse
     {
-        $benefitPlafond->load(['salaryGrade', 'grade', 'maritalStatus']);
+        $benefitPlafond->load(['salaryGrade', 'grade', 'jenjang.salaryGrade', 'jenjang.grade', 'maritalStatus']);
         return $this->successResponse($benefitPlafond, 'Detail plafon manfaat berhasil diambil.');
     }
 
@@ -192,7 +223,11 @@ class BenefitPlafondController extends BaseApiController
         $isPersalinan = $benefitType === 'PERSALINAN';
         $isPengobatan = $benefitType === 'PENGOBATAN';
 
-        if ($isTunjanganLapangan || $isUangPerdin) {
+        if ($isUangPerdin) {
+            if (!$request->has('salary_grade_jenjang_id') && $request->has('jenjang_id')) {
+                $request->merge(['salary_grade_jenjang_id' => $request->input('jenjang_id')]);
+            }
+        } elseif ($isTunjanganLapangan) {
             if (!$request->has('grade_id') && $request->has('level_id')) {
                 $request->merge(['grade_id' => $request->input('level_id')]);
             }
@@ -220,9 +255,22 @@ class BenefitPlafondController extends BaseApiController
             $rules['grade_id'] = ['nullable', 'exists:grades,id'];
             $rules['marital_category'] = ['nullable', 'string'];
             $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
-        } elseif ($isTunjanganLapangan || $isUangPerdin) {
+        } elseif ($isUangPerdin) {
+            $rules['salary_grade_jenjang_id'] = ['sometimes', 'required', 'exists:salary_grade_jenjang,id'];
+            $rules['grade_id'] = ['nullable'];
+            $rules['salary_grade_id'] = ['nullable'];
+            $rules['category_name'] = ['nullable', 'string', 'max:100'];
+            $rules['zone_name'] = ['nullable', 'string', 'max:100'];
+            $rules['amount'] = ['sometimes', 'required', 'numeric', 'min:0'];
+            $rules['marital_category'] = ['nullable', 'string'];
+            $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
+            $rules['lens_type'] = ['nullable', 'string'];
+            $rules['frame_amount'] = ['nullable', 'numeric'];
+            $rules['lens_amount'] = ['nullable', 'numeric'];
+        } elseif ($isTunjanganLapangan) {
             $rules['grade_id'] = ['sometimes', 'required', 'exists:grades,id'];
             $rules['salary_grade_id'] = ['nullable'];
+            $rules['salary_grade_jenjang_id'] = ['nullable'];
             $rules['category_name'] = ['nullable', 'string', 'max:100'];
             $rules['zone_name'] = ['nullable', 'string', 'max:100'];
             $rules['amount'] = ['sometimes', 'required', 'numeric', 'min:0'];
@@ -258,11 +306,11 @@ class BenefitPlafondController extends BaseApiController
 
         $oldValues = $benefitPlafond->toArray();
         $benefitPlafond->update($validated);
-        $benefitPlafond->load(['salaryGrade', 'grade', 'maritalStatus']);
+        $benefitPlafond->load(['salaryGrade', 'grade', 'jenjang.salaryGrade', 'jenjang.grade', 'maritalStatus']);
 
         AuditService::log('UPDATE', 'BENEFIT_PLAFOND', BenefitPlafond::class, (string)$benefitPlafond->id, oldValues: $oldValues, newValues: $benefitPlafond->fresh()->toArray());
 
-        return $this->successResponse($benefitPlafond->fresh(), 'Plafon manfaat berhasil diperbarui.');
+        return $this->successResponse($benefitPlafond->fresh(['salaryGrade', 'grade', 'jenjang.salaryGrade', 'jenjang.grade', 'maritalStatus']), 'Plafon manfaat berhasil diperbarui.');
     }
 
     public function destroy(BenefitPlafond $benefitPlafond): JsonResponse
