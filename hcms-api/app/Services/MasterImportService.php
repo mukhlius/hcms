@@ -567,6 +567,36 @@ class MasterImportService
                                 'status' => $item['status'] ?? 'ACTIVE',
                             ]
                         );
+                    } elseif ($benefitType === 'PERSALINAN') {
+                        $salaryGradeId = null;
+                        if (!empty($item['salary_grade_code'])) {
+                            $salaryGradeId = \App\Models\SalaryGrade::where('code', $item['salary_grade_code'])->value('id');
+                        }
+                        if (!$salaryGradeId && !empty($item['salary_grade_id'])) {
+                            $salaryGradeId = $item['salary_grade_id'];
+                        }
+
+                        $categoryName = $item['category_name'] ?? null;
+                        $amount = (float)($item['amount'] ?? 0);
+                        $periodType = $item['period_type'] ?? 'PER_KASUS';
+
+                        \App\Models\BenefitPlafond::updateOrCreate(
+                            [
+                                'benefit_type' => 'PERSALINAN',
+                                'salary_grade_id' => $salaryGradeId,
+                                'category_name' => $categoryName,
+                            ],
+                            [
+                                'benefit_type' => 'PERSALINAN',
+                                'salary_grade_id' => $salaryGradeId,
+                                'category_name' => $categoryName,
+                                'amount' => $amount,
+                                'marital_category' => 'SEMUA',
+                                'period_type' => $periodType,
+                                'description' => $item['description'] ?? null,
+                                'status' => $item['status'] ?? 'ACTIVE',
+                            ]
+                        );
                     } else {
                         $salaryGradeId = null;
                         if (!empty($item['salary_grade_code'])) {
@@ -578,7 +608,7 @@ class MasterImportService
 
                         $maritalCategory = $item['marital_category'] ?? 'SEMUA';
                         $amount = (float)($item['amount'] ?? 0);
-                        $periodType = $item['period_type'] ?? ($benefitType === 'PERSALINAN' ? 'PER_KASUS' : 'TAHUNAN');
+                        $periodType = $item['period_type'] ?? 'TAHUNAN';
 
                         \App\Models\BenefitPlafond::updateOrCreate(
                             [

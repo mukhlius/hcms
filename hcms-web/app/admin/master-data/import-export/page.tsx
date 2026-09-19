@@ -256,10 +256,10 @@ const ENTITY_CATALOG: EntityMeta[] = [
     id: 'plafon-persalinan',
     name: 'Plafon Persalinan',
     category: 'Benefit & Plafon',
-    description: 'Plafon bantuan biaya persalinan normal/caesar per golongan gaji dan status nikah.',
+    description: 'Plafon bantuan biaya persalinan (Bidan / Dokter) per golongan gaji.',
     icon: <Baby className="h-5 w-5 text-amber-600" />,
     iconBg: 'bg-amber-50 dark:bg-amber-950/50',
-    columns: ['salary_grade_code', 'marital_category', 'amount', 'period_type', 'description', 'status'],
+    columns: ['salary_grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
   },
   {
     id: 'tunjangan-lapangan',

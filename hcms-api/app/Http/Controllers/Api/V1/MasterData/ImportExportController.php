@@ -157,10 +157,17 @@ class ImportExportController extends BaseApiController
                 'category' => ['required', 'string', 'max:50'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
-            'plafon-pengobatan', 'plafon-persalinan' => [
+            'plafon-pengobatan' => [
                 'salary_grade_code' => ['required', 'string', 'max:50'],
                 'marital_category' => ['required', 'string', 'max:50'],
                 'amount' => ['required', 'numeric', 'min:0'],
+                'status' => ['nullable', 'string', 'max:50'],
+            ],
+            'plafon-persalinan' => [
+                'salary_grade_code' => ['required', 'string', 'max:50'],
+                'category_name' => ['required', 'string', 'max:100'],
+                'amount' => ['required', 'numeric', 'min:0'],
+                'period_type' => ['nullable', 'string', 'max:50'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
             'plafon-kacamata' => [
@@ -260,7 +267,7 @@ class ImportExportController extends BaseApiController
             'marital-statuses' => ['Kode Status', 'Nama Status', 'Kategori', 'Status', 'Tanggal Dibuat'],
             'plafon-pengobatan' => ['Kode Golongan', 'Nama Golongan', 'Kategori Pernikahan', 'Nominal Plafon', 'Periode', 'Ketentuan / Cakupan', 'Status', 'Tanggal Dibuat'],
             'plafon-kacamata' => ['Kriteria Lensa', 'Bantuan Frame', 'Bantuan Lensa', 'Total Plafon', 'Periode', 'Ketentuan / Keterangan', 'Status', 'Tanggal Dibuat'],
-            'plafon-persalinan' => ['Kode Golongan', 'Nama Golongan', 'Kategori Pernikahan', 'Nominal Plafon', 'Periode', 'Ketentuan / Cakupan', 'Status', 'Tanggal Dibuat'],
+            'plafon-persalinan' => ['Kode Golongan', 'Nama Golongan', 'Kriteria Persalinan', 'Nominal Plafon', 'Periode', 'Ketentuan / Cakupan', 'Status', 'Tanggal Dibuat'],
             'tunjangan-lapangan' => ['Kode Level Jabatan', 'Nama Level Jabatan', 'Pangkat', 'Nominal Tunjangan', 'Periode', 'Status', 'Tanggal Dibuat'],
             'uang-perdin' => ['Kode Golongan', 'Nama Golongan', 'Zona / Wilayah', 'Komponen Perdin', 'Nominal Per Hari', 'Periode', 'Ketentuan / Keterangan', 'Status', 'Tanggal Dibuat'],
             'bantuan-lumpsum' => ['Kode Golongan', 'Nama Golongan', 'Jenis Bantuan Lumpsum', 'Besaran Bantuan', 'Periode', 'Ketentuan / Syarat', 'Status', 'Tanggal Dibuat'],
@@ -413,7 +420,7 @@ class ImportExportController extends BaseApiController
                     'plafon-persalinan' => [
                         $item->salaryGrade?->code ?? '',
                         $item->salaryGrade?->name ?? '',
-                        $item->marital_category ?? 'SEMUA',
+                        $item->category_name ?? '',
                         (string) ($item->amount ?? 0),
                         $item->period_type ?? 'PER_KASUS',
                         $item->description ?? '',
@@ -627,10 +634,12 @@ class ImportExportController extends BaseApiController
                 ],
             ],
             'plafon-persalinan' => [
-                'headers' => ['salary_grade_code', 'marital_category', 'amount', 'period_type', 'description', 'status'],
+                'headers' => ['salary_grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
                 'samples' => [
-                    ['GOL-1A', 'Menikah', '8000000', 'PER_KASUS', 'Biaya persalinan normal maupun caesar per kelahiran', 'ACTIVE'],
-                    ['GOL-4A', 'Menikah', '15000000', 'PER_KASUS', 'Biaya persalinan normal maupun caesar per kelahiran', 'ACTIVE'],
+                    ['GOL-1A', 'Persalinan di Bidan', '3500000', 'PER_KASUS', 'Bantuan biaya persalinan normal di fasilitas Bidan terakreditasi', 'ACTIVE'],
+                    ['GOL-1A', 'Persalinan di Dokter', '8000000', 'PER_KASUS', 'Bantuan biaya persalinan normal maupun caesar di Dokter Spesialis / RS', 'ACTIVE'],
+                    ['GOL-4A', 'Persalinan di Bidan', '5000000', 'PER_KASUS', 'Bantuan biaya persalinan normal di fasilitas Bidan terakreditasi', 'ACTIVE'],
+                    ['GOL-4A', 'Persalinan di Dokter', '15000000', 'PER_KASUS', 'Bantuan biaya persalinan normal maupun caesar di Dokter Spesialis / RS', 'ACTIVE'],
                 ],
             ],
             'tunjangan-lapangan' => [

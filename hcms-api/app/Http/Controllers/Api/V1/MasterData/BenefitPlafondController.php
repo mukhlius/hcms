@@ -98,7 +98,8 @@ class BenefitPlafondController extends BaseApiController
         $benefitType = strtoupper($request->input('benefit_type', ''));
         $isKacamata = $benefitType === 'KACAMATA';
         $isTunjanganLapangan = $benefitType === 'TUNJANGAN_LAPANGAN';
-        $isMedical = in_array($benefitType, ['PENGOBATAN', 'PERSALINAN']);
+        $isPersalinan = $benefitType === 'PERSALINAN';
+        $isPengobatan = $benefitType === 'PENGOBATAN';
 
         // Support level_id as grade_id for Tunjangan Lapangan
         if ($isTunjanganLapangan) {
@@ -140,10 +141,16 @@ class BenefitPlafondController extends BaseApiController
             $rules['lens_type'] = ['nullable', 'string'];
             $rules['frame_amount'] = ['nullable', 'numeric'];
             $rules['lens_amount'] = ['nullable', 'numeric'];
+        } elseif ($isPersalinan) {
+            $rules['salary_grade_id'] = ['required', 'exists:salary_grades,id'];
+            $rules['category_name'] = ['required', 'string', 'max:100'];
+            $rules['amount'] = ['required', 'numeric', 'min:0'];
+            $rules['marital_category'] = ['nullable', 'string'];
+            $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
         } else {
             $rules['salary_grade_id'] = ['required', 'exists:salary_grades,id'];
             $rules['grade_id'] = ['nullable'];
-            $rules['marital_category'] = [$isMedical ? 'required' : 'nullable', 'string', 'in:Menikah,Tidak Menikah,SEMUA'];
+            $rules['marital_category'] = [$isPengobatan ? 'required' : 'nullable', 'string', 'in:Menikah,Tidak Menikah,SEMUA'];
             $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
             $rules['amount'] = ['required', 'numeric', 'min:0'];
             $rules['lens_type'] = ['nullable', 'string'];
@@ -179,7 +186,8 @@ class BenefitPlafondController extends BaseApiController
         $benefitType = strtoupper($request->input('benefit_type', $benefitPlafond->benefit_type));
         $isKacamata = $benefitType === 'KACAMATA';
         $isTunjanganLapangan = $benefitType === 'TUNJANGAN_LAPANGAN';
-        $isMedical = in_array($benefitType, ['PENGOBATAN', 'PERSALINAN']);
+        $isPersalinan = $benefitType === 'PERSALINAN';
+        $isPengobatan = $benefitType === 'PENGOBATAN';
 
         if ($isTunjanganLapangan) {
             if (!$request->has('grade_id') && $request->has('level_id')) {
@@ -219,6 +227,12 @@ class BenefitPlafondController extends BaseApiController
             $rules['lens_type'] = ['nullable', 'string'];
             $rules['frame_amount'] = ['nullable', 'numeric'];
             $rules['lens_amount'] = ['nullable', 'numeric'];
+        } elseif ($isPersalinan) {
+            $rules['salary_grade_id'] = ['sometimes', 'required', 'exists:salary_grades,id'];
+            $rules['category_name'] = ['sometimes', 'required', 'string', 'max:100'];
+            $rules['amount'] = ['sometimes', 'required', 'numeric', 'min:0'];
+            $rules['marital_category'] = ['nullable', 'string'];
+            $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
         } else {
             $rules['salary_grade_id'] = ['sometimes', 'required', 'exists:salary_grades,id'];
             $rules['grade_id'] = ['nullable'];
