@@ -31,6 +31,7 @@ import { PositionTab } from '@/components/organization/tabs/PositionTab';
 import { LevelTab } from '@/components/organization/tabs/LevelTab';
 import { GradeTab } from '@/components/organization/tabs/GradeTab';
 import { JenjangTab } from '@/components/organization/tabs/JenjangTab';
+import { MasterJenjangTab } from '@/components/organization/tabs/MasterJenjangTab';
 import { PohTab } from '@/components/organization/tabs/PohTab';
 import { WorkAreaTab } from '@/components/organization/tabs/WorkAreaTab';
 import { HubunganKerjaTab } from '@/components/organization/tabs/HubunganKerjaTab';
@@ -38,7 +39,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { Tabs } from '@/components/ui/Tabs';
 import { GitMerge } from 'lucide-react';
 
-type OrgTabType = 'company' | 'site' | 'department' | 'section' | 'position' | 'level' | 'grade' | 'jenjang' | 'hubungan_kerja' | 'poh' | 'work_area';
+type OrgTabType = 'company' | 'site' | 'department' | 'section' | 'position' | 'level' | 'grade' | 'master_jenjang' | 'jenjang' | 'hubungan_kerja' | 'poh' | 'work_area';
 
 function OrganizationReferencesContent() {
   const searchParams = useSearchParams();
@@ -46,7 +47,7 @@ function OrganizationReferencesContent() {
 
   const tabParam = searchParams.get('tab') as OrgTabType | null;
   const [activeTab, setActiveTab] = useState<OrgTabType>(
-    tabParam && ['company', 'site', 'department', 'section', 'position', 'level', 'grade', 'jenjang', 'hubungan_kerja', 'status_menikah', 'plafon_pengobatan', 'plafon_kacamata', 'plafon_persalinan', 'poh', 'work_area'].includes(tabParam)
+    tabParam && ['company', 'site', 'department', 'section', 'position', 'level', 'grade', 'master_jenjang', 'jenjang', 'hubungan_kerja', 'status_menikah', 'plafon_pengobatan', 'plafon_kacamata', 'plafon_persalinan', 'poh', 'work_area'].includes(tabParam)
       ? tabParam
       : 'company'
   );
@@ -71,6 +72,7 @@ function OrganizationReferencesContent() {
     grades: number;
     salary_grades: number;
     jenjang: number;
+    master_jenjang: number;
     employment_types: number;
     marital_statuses: number;
     plafond_pengobatan: number;
@@ -87,6 +89,7 @@ function OrganizationReferencesContent() {
     grades: 0,
     salary_grades: 0,
     jenjang: 0,
+    master_jenjang: 0,
     employment_types: 0,
     marital_statuses: 0,
     plafond_pengobatan: 0,
@@ -116,6 +119,7 @@ function OrganizationReferencesContent() {
         setCounts({
           ...res.data,
           jenjang: res.data.jenjang ?? 0,
+          master_jenjang: res.data.master_jenjang ?? 0,
           employment_types: res.data.employment_types ?? 0,
           marital_statuses: res.data.marital_statuses ?? 0,
           plafond_pengobatan: res.data.plafond_pengobatan ?? 0,
@@ -301,6 +305,13 @@ function OrganizationReferencesContent() {
       badgeColor: 'bg-cyan-100 text-cyan-800',
     },
     {
+      id: 'master_jenjang' as OrgTabType,
+      label: 'Master Jenjang',
+      icon: <Award className="h-4 w-4 shrink-0" />,
+      count: counts.master_jenjang,
+      badgeColor: 'bg-blue-100 text-blue-800',
+    },
+    {
       id: 'jenjang' as OrgTabType,
       label: 'Jenjang',
       icon: <GitMerge className="h-4 w-4 shrink-0" />,
@@ -348,6 +359,7 @@ function OrganizationReferencesContent() {
       case 'position': return 'Tambah Position';
       case 'level': return 'Tambah Level';
       case 'grade': return 'Tambah Grade';
+      case 'master_jenjang': return 'Tambah Master Jenjang';
       case 'jenjang': return 'Tambah Jenjang';
       case 'hubungan_kerja': return 'Tambah Hubungan Kerja';
       case 'poh': return 'Tambah POH';
@@ -458,6 +470,10 @@ function OrganizationReferencesContent() {
 
         {activeTab === 'grade' && (
           <GradeTab key="grade-tab" onRefreshAll={loadCounts} createTrigger={createTriggers['grade'] || 0} />
+        )}
+
+        {activeTab === 'master_jenjang' && (
+          <MasterJenjangTab key="master-jenjang-tab" onRefreshAll={loadCounts} createTrigger={createTriggers['master_jenjang'] || 0} />
         )}
 
         {activeTab === 'jenjang' && (

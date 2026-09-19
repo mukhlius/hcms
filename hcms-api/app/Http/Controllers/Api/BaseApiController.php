@@ -11,9 +11,14 @@ abstract class BaseApiController extends Controller
     protected function successResponse(
         mixed $data = null,
         string $message = 'Permintaan berhasil diproses',
-        array $meta = [],
+        array|int $meta = [],
         int $statusCode = 200
     ): JsonResponse {
+        if (is_int($meta)) {
+            $statusCode = $meta;
+            $meta = [];
+        }
+
         $response = [
             'success' => true,
             'message' => $message,

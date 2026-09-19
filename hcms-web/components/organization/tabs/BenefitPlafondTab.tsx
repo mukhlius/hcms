@@ -17,10 +17,11 @@ import {
   Smartphone,
   Home,
   ChevronDown,
-  Download
+  Download,
+  GitMerge
 } from 'lucide-react';
-import { BenefitPlafondItem, SalaryGradeItem, GradeItem } from '@/types';
-import { benefitPlafondService, salaryGradeService, jobGradeService, importExportService } from '@/services/masterDataService';
+import { BenefitPlafondItem, SalaryGradeItem, GradeItem, SalaryGradeJenjangItem } from '@/types';
+import { benefitPlafondService, salaryGradeService, jobGradeService, jenjangService, importExportService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -132,6 +133,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const [items, setItems] = useState<BenefitPlafondItem[]>([]);
   const [salaryGrades, setSalaryGrades] = useState<SalaryGradeItem[]>([]);
   const [jobGrades, setJobGrades] = useState<GradeItem[]>([]);
+  const [jenjangList, setJenjangList] = useState<SalaryGradeJenjangItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
 
@@ -152,6 +154,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     id: 0,
     salary_grade_id: 0,
     grade_id: 0,
+    salary_grade_jenjang_id: 0,
     lens_type: 'Monofokus',
     frame_amount: '',
     lens_amount: '',
@@ -172,7 +175,19 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         if (plafondRes.success && plafondRes.data) {
           setItems(plafondRes.data);
         }
-      } else if (isTunjanganLapangan || isUangPerdin) {
+      } else if (isUangPerdin) {
+        const [plafondRes, jenjangRes] = await Promise.all([
+          benefitPlafondService.getBenefitPlafonds({ benefit_type: benefitType }),
+          jenjangService.getJenjangs(),
+        ]);
+
+        if (plafondRes.success && plafondRes.data) {
+          setItems(plafondRes.data);
+        }
+        if (jenjangRes.success && jenjangRes.data) {
+          setJenjangList(jenjangRes.data);
+        }
+      } else if (isTunjanganLapangan) {
         const [plafondRes, jobGradeRes] = await Promise.all([
           benefitPlafondService.getBenefitPlafonds({ benefit_type: benefitType }),
           jobGradeService.getGrades(),
@@ -213,12 +228,14 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     setModalMode('create');
     const firstGradeId = salaryGrades.length > 0 ? salaryGrades[0].id : 0;
     const firstJobGradeId = jobGrades.length > 0 ? jobGrades[0].id : 0;
+    const firstJenjangId = jenjangList.length > 0 ? jenjangList[0].id : 0;
 
     if (isKacamata) {
       setFormData({
         id: 0,
         salary_grade_id: 0,
         grade_id: 0,
+        salary_grade_jenjang_id: 0,
         lens_type: LENS_PRESETS[0],
         frame_amount: '',
         lens_amount: '',
@@ -230,27 +247,12 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         description: '',
         status: 'ACTIVE',
       });
-    } else if (isTunjanganLapangan) {
-      setFormData({
-        id: 0,
-        salary_grade_id: 0,
-        grade_id: firstJobGradeId,
-        lens_type: '',
-        frame_amount: '',
-        lens_amount: '',
-        category_name: '',
-        zone_name: '',
-        marital_category: 'SEMUA',
-        amount: '',
-        period_type: 'BULANAN',
-        description: '',
-        status: 'ACTIVE',
-      });
     } else if (isUangPerdin) {
       setFormData({
         id: 0,
         salary_grade_id: 0,
-        grade_id: firstJobGradeId,
+        grade_id: 0,
+        salary_grade_jenjang_id: firstJenjangId,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -262,11 +264,29 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         description: '',
         status: 'ACTIVE',
       });
+    } else if (isTunjanganLapangan) {
+      setFormData({
+        id: 0,
+        salary_grade_id: 0,
+        grade_id: firstJobGradeId,
+        salary_grade_jenjang_id: 0,
+        lens_type: '',
+        frame_amount: '',
+        lens_amount: '',
+        category_name: '',
+        zone_name: '',
+        marital_category: 'SEMUA',
+        amount: '',
+        period_type: 'BULANAN',
+        description: '',
+        status: 'ACTIVE',
+      });
     } else if (isBantuanLumpsum) {
       setFormData({
         id: 0,
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        salary_grade_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -283,6 +303,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         id: 0,
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        salary_grade_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -299,6 +320,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         id: 0,
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        salary_grade_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -315,6 +337,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         id: 0,
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        salary_grade_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -331,6 +354,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         id: 0,
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        salary_grade_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -359,6 +383,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         id: item.id,
         salary_grade_id: 0,
         grade_id: 0,
+        salary_grade_jenjang_id: 0,
         lens_type: item.lens_type || LENS_PRESETS[0],
         frame_amount: item.frame_amount !== null && item.frame_amount !== undefined ? String(item.frame_amount) : '',
         lens_amount: item.lens_amount !== null && item.lens_amount !== undefined ? String(item.lens_amount) : '',
@@ -370,11 +395,12 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         description: item.description || '',
         status: item.status,
       });
-    } else if (isTunjanganLapangan || isUangPerdin) {
+    } else if (isUangPerdin) {
       setFormData({
         id: item.id,
         salary_grade_id: 0,
-        grade_id: item.grade_id || item.grade?.id || 0,
+        grade_id: 0,
+        salary_grade_jenjang_id: item.salary_grade_jenjang_id || item.jenjang?.id || 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -382,7 +408,24 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         zone_name: '',
         marital_category: 'SEMUA',
         amount: String(item.amount || ''),
-        period_type: (item.period_type as any) || (isUangPerdin ? 'HARIAN' : 'BULANAN'),
+        period_type: (item.period_type as any) || 'HARIAN',
+        description: '',
+        status: item.status,
+      });
+    } else if (isTunjanganLapangan) {
+      setFormData({
+        id: item.id,
+        salary_grade_id: 0,
+        grade_id: item.grade_id || item.grade?.id || 0,
+        salary_grade_jenjang_id: 0,
+        lens_type: '',
+        frame_amount: '',
+        lens_amount: '',
+        category_name: '',
+        zone_name: '',
+        marital_category: 'SEMUA',
+        amount: String(item.amount || ''),
+        period_type: (item.period_type as any) || 'BULANAN',
         description: '',
         status: item.status,
       });
@@ -391,6 +434,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         id: item.id,
         salary_grade_id: item.salary_grade_id || item.salary_grade?.id || 0,
         grade_id: 0,
+        salary_grade_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -407,6 +451,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         id: item.id,
         salary_grade_id: item.salary_grade_id || item.salary_grade?.id || 0,
         grade_id: 0,
+        salary_grade_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -438,13 +483,22 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         toast.warning('Nominal bantuan lensa harus diisi dengan angka valid.', 'Form Belum Lengkap');
         return;
       }
-    } else if (isTunjanganLapangan || isUangPerdin) {
+    } else if (isUangPerdin) {
+      if (!formData.salary_grade_jenjang_id || formData.salary_grade_jenjang_id === 0) {
+        toast.warning('Pilih Jenjang Jabatan terlebih dahulu.', 'Form Belum Lengkap');
+        return;
+      }
+      if (formData.amount === '' || isNaN(parseFloat(formData.amount))) {
+        toast.warning('Nominal uang perdin harus diisi dengan angka valid.', 'Form Belum Lengkap');
+        return;
+      }
+    } else if (isTunjanganLapangan) {
       if (!formData.grade_id || formData.grade_id === 0) {
         toast.warning('Pilih Level Jabatan terlebih dahulu.', 'Form Belum Lengkap');
         return;
       }
       if (formData.amount === '' || isNaN(parseFloat(formData.amount))) {
-        toast.warning(`Nominal ${isUangPerdin ? 'uang perdin' : 'tunjangan'} harus diisi dengan angka valid.`, 'Form Belum Lengkap');
+        toast.warning('Nominal tunjangan harus diisi dengan angka valid.', 'Form Belum Lengkap');
         return;
       }
     } else {
@@ -487,7 +541,19 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
           description: formData.description.trim() || undefined,
           status: formData.status,
         };
-      } else if (isTunjanganLapangan || isUangPerdin) {
+      } else if (isUangPerdin) {
+        payload = {
+          benefit_type: benefitType,
+          salary_grade_jenjang_id: Number(formData.salary_grade_jenjang_id),
+          category_name: null as any,
+          zone_name: null as any,
+          amount: parseFloat(formData.amount),
+          marital_category: 'SEMUA',
+          period_type: formData.period_type || 'HARIAN',
+          description: undefined,
+          status: formData.status,
+        };
+      } else if (isTunjanganLapangan) {
         payload = {
           benefit_type: benefitType,
           grade_id: Number(formData.grade_id),
@@ -495,7 +561,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
           zone_name: null as any,
           amount: parseFloat(formData.amount),
           marital_category: 'SEMUA',
-          period_type: formData.period_type || (isUangPerdin ? 'HARIAN' : 'BULANAN'),
+          period_type: formData.period_type || 'BULANAN',
           description: undefined,
           status: formData.status,
         };
@@ -558,8 +624,9 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     if (isKacamata) {
       confirmMsg = `Apakah Anda yakin ingin menghapus data plafon kacamata untuk kriteria "${item.lens_type}" dengan total bantuan ${formatRupiah(item.amount)}?`;
     } else if (isUangPerdin) {
-      const lvlName = item.grade?.name || item.grade?.code || `ID ${item.grade_id}`;
-      confirmMsg = `Apakah Anda yakin ingin menghapus tarif uang perdin Level Jabatan "${lvlName}" senilai ${formatRupiah(item.amount)}?`;
+      const jName = item.jenjang?.name || `ID ${item.salary_grade_jenjang_id}`;
+      const golCode = item.jenjang?.salary_grade?.code ? `(Golongan ${item.jenjang.salary_grade.code})` : '';
+      confirmMsg = `Apakah Anda yakin ingin menghapus tarif uang perdin untuk Jenjang Jabatan "${jName}" ${golCode} senilai ${formatRupiah(item.amount)}?`;
     } else if (isTunjanganLapangan) {
       const lvlName = item.grade?.name || item.grade?.code || `ID ${item.grade_id}`;
       confirmMsg = `Apakah Anda yakin ingin menghapus tunjangan lapangan Level Jabatan "${lvlName}" senilai ${formatRupiah(item.amount)}?`;
@@ -641,6 +708,30 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         return matchSearch && matchLens && matchStatus;
       }
 
+      if (isUangPerdin) {
+        const j = item.jenjang;
+        const jName = (j?.name || '').toLowerCase();
+        const jGolCode = (j?.salary_grade?.code || '').toLowerCase();
+        const jGolName = (j?.salary_grade?.name || '').toLowerCase();
+        const jLvlCode = (j?.grade?.code || '').toLowerCase();
+        const jLvlName = (j?.grade?.name || '').toLowerCase();
+        const jLvlPangkat = (j?.grade?.pangkat || '').toLowerCase();
+
+        const matchSearch =
+          !search ||
+          jName.includes(q) ||
+          jGolCode.includes(q) ||
+          jGolName.includes(q) ||
+          jLvlCode.includes(q) ||
+          jLvlName.includes(q) ||
+          jLvlPangkat.includes(q);
+
+        const targetId = item.salary_grade_jenjang_id || item.jenjang?.id;
+        const matchGolongan = filterGolongan === 'ALL' || String(targetId) === filterGolongan;
+
+        return matchSearch && matchGolongan && matchStatus;
+      }
+
       const gol = item.salary_grade;
       const lvl = item.grade as GradeItem | undefined;
       const golName = (gol?.name || '').toLowerCase();
@@ -665,13 +756,13 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         zone.includes(q) ||
         marital.includes(q);
 
-      const targetId = (isTunjanganLapangan || isUangPerdin) ? (item.grade_id || item.grade?.id) : (item.salary_grade_id || item.salary_grade?.id);
+      const targetId = isTunjanganLapangan ? (item.grade_id || item.grade?.id) : (item.salary_grade_id || item.salary_grade?.id);
       const matchGolongan = filterGolongan === 'ALL' || String(targetId) === filterGolongan;
 
       let matchCategory = true;
       if (isPengobatan) {
         matchCategory = filterCategory === 'ALL' || item.marital_category === filterCategory;
-      } else if (!isTunjanganLapangan && !isUangPerdin) {
+      } else if (!isTunjanganLapangan) {
         matchCategory = filterCategory === 'ALL' || item.category_name === filterCategory;
       }
 
@@ -703,7 +794,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     totalItems,
     paginatedData,
   } = useClientTable<BenefitPlafondItem>(filteredItems, {
-    defaultSortField: isKacamata ? 'lens_type' : (isTunjanganLapangan || isUangPerdin) ? 'grade.code' : 'salary_grade.code',
+    defaultSortField: isKacamata ? 'lens_type' : isUangPerdin ? 'jenjang.salary_grade.code' : isTunjanganLapangan ? 'grade.code' : 'salary_grade.code',
     defaultPerPage: 10,
   });
 
@@ -750,7 +841,8 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
   const getSearchPlaceholder = () => {
     if (isKacamata) return 'Cari jenis lensa atau ketentuan...';
-    if (isTunjanganLapangan || isUangPerdin) return 'Cari level jabatan, pangkat...';
+    if (isUangPerdin) return 'Cari jenjang jabatan, golongan, level...';
+    if (isTunjanganLapangan) return 'Cari level jabatan, pangkat...';
     if (isPersalinan) return 'Cari golongan, kriteria persalinan...';
     if (isBantuanLumpsum) return 'Cari golongan, jenis bantuan lumpsum...';
     if (isBantuanKomunikasi) return 'Cari golongan, paket komunikasi...';
@@ -784,8 +876,25 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
               )}
             </div>
 
-            {/* 2. Filter Golongan / Level Jabatan */}
-            {isTunjanganLapangan || isUangPerdin ? (
+            {/* 2. Filter Golongan / Level / Jenjang Jabatan */}
+            {isUangPerdin ? (
+              <div className="relative min-w-[200px] group">
+                <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover:text-slate-600 transition-colors" />
+                <select
+                  value={filterGolongan}
+                  onChange={(e) => setFilterGolongan(e.target.value)}
+                  className="w-full h-9 appearance-none pl-8 pr-8 text-xs font-medium bg-white border border-slate-200 rounded-lg shadow-2xs hover:border-slate-300 hover:bg-slate-50/50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-700 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
+                >
+                  <option value="ALL">Semua Jenjang Jabatan</option>
+                  {jenjangList.map((j) => (
+                    <option key={j.id} value={String(j.id)}>
+                      {j.name} (Gol: {j.salary_grade?.code || '-'})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+              </div>
+            ) : isTunjanganLapangan ? (
               <div className="relative min-w-[200px] group">
                 <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover:text-slate-600 transition-colors" />
                 <select
@@ -955,16 +1064,19 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
               ) : isUangPerdin ? (
                 <tr>
                   <th className="px-5 py-3.5">
-                    <SortableHeader label="Kode Level" field="grade.code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Golongan" field="jenjang.salary_grade.code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5">
-                    <SortableHeader label="Nama Level Jabatan" field="grade.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Level Jabatan" field="jenjang.grade.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                  </th>
+                  <th className="px-4 py-3.5">
+                    <SortableHeader label="Jenjang Jabatan" field="jenjang.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5 text-center">
-                    <SortableHeader label="Pangkat" field="grade.pangkat" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Pangkat" field="jenjang.grade.pangkat" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5 text-right">
-                    <SortableHeader label="Uang Perdin (Per Hari)" field="amount" align="right" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Besaran Uang Perdin" field="amount" align="right" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5 text-center">
                     <SortableHeader label="Periode" field="period_type" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
@@ -1197,65 +1309,75 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                   </tr>
                 ))
               ) : isUangPerdin ? (
-                /* Uang Perdin Rows (Berdasarkan Level Jabatan) */
-                paginatedData.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    <td className="px-5 py-3.5 font-mono font-bold text-slate-800 dark:text-slate-200">
-                      <Badge variant="outline" className="font-mono bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
-                        {item.grade?.code || '-'}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
-                      {item.grade?.name || '-'}
-                    </td>
-                    <td className="px-4 py-3.5 text-center">
-                      {(() => {
-                        const lvl = item.grade as GradeItem | undefined;
-                        return (
-                          <Badge variant={lvl?.pangkat === 'Staff' ? 'primary' : 'neutral'} className="text-[11px]">
-                            {lvl?.pangkat || '-'}
-                          </Badge>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                      {formatRupiah(item.amount)}
-                    </td>
-                    <td className="px-4 py-3.5 text-center text-slate-700 dark:text-slate-300">
-                      {getPeriodLabel(item.period_type)}
-                    </td>
-                    <td className="px-4 py-3.5 text-center">
-                      <Badge variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}>
-                        {item.status === 'ACTIVE' ? 'AKTIF' : 'NON-AKTIF'}
-                      </Badge>
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenEdit(item)}
-                          className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-800"
-                          title={`Edit ${title}`}
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(item)}
-                          className="h-8 w-8 p-0 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-slate-800"
-                          title={`Hapus ${title}`}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-rose-500" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                /* Uang Perdin Rows (Berdasarkan Jenjang Jabatan) */
+                paginatedData.map((item) => {
+                  const j = item.jenjang;
+                  return (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td className="px-5 py-3.5 font-mono font-bold text-slate-800 dark:text-slate-200">
+                        <Badge variant="outline" className="font-mono bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
+                          {j?.salary_grade?.code || '-'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3.5 font-medium text-slate-900 dark:text-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            {j?.grade?.code || '-'}
+                          </span>
+                          <span className="text-slate-400">-</span>
+                          <span>{j?.grade?.name || '-'}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <GitMerge className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                          <span>{j?.name || '-'}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        <Badge variant={j?.grade?.pangkat === 'Staff' ? 'primary' : 'neutral'} className="text-[11px]">
+                          {j?.grade?.pangkat || '-'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                        {formatRupiah(item.amount)}
+                      </td>
+                      <td className="px-4 py-3.5 text-center text-slate-700 dark:text-slate-300">
+                        {getPeriodLabel(item.period_type)}
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        <Badge variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}>
+                          {item.status === 'ACTIVE' ? 'AKTIF' : 'NON-AKTIF'}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenEdit(item)}
+                            className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-800"
+                            title={`Edit ${title}`}
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(item)}
+                            className="h-8 w-8 p-0 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-slate-800"
+                            title={`Hapus ${title}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : isTunjanganLapangan ? (
                 /* Tunjangan Lapangan Rows (Berdasarkan Level Jabatan) */
                 paginatedData.map((item) => (
@@ -1548,28 +1670,56 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
               </div>
             </>
           ) : isUangPerdin ? (
-            /* ================= FORM KHUSUS UANG PERDIN (LEVEL JABATAN) ================= */
+            /* ================= FORM KHUSUS UANG PERDIN (JENJANG JABATAN) ================= */
             <>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  1. Level Jabatan <span className="text-rose-500">*</span>
+                  1. Jenjang Jabatan <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative flex items-center group">
                   <select
-                    value={formData.grade_id}
-                    onChange={(e) => setFormData({ ...formData, grade_id: Number(e.target.value) })}
+                    value={formData.salary_grade_jenjang_id}
+                    onChange={(e) => setFormData({ ...formData, salary_grade_jenjang_id: Number(e.target.value) })}
                     required
                     className="w-full h-9.5 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50/40 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
                   >
-                    <option value="0" disabled>-- Pilih Level Jabatan --</option>
-                    {jobGrades.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.code} - {g.name}{g.pangkat ? ` (${g.pangkat})` : ''}
+                    <option value="0" disabled>-- Pilih Jenjang Jabatan --</option>
+                    {jenjangList.map((j) => (
+                      <option key={j.id} value={j.id}>
+                        {j.name} (Gol: {j.salary_grade?.code || '-'}, Level: {j.grade?.code || '-'} - {j.grade?.name || '-'})
                       </option>
                     ))}
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
                 </div>
+                {formData.salary_grade_jenjang_id > 0 && (() => {
+                  const selectedJ = jenjangList.find((j) => j.id === Number(formData.salary_grade_jenjang_id));
+                  if (!selectedJ) return null;
+                  return (
+                    <div className="mt-2 p-2.5 rounded-lg border border-blue-100 bg-blue-50/60 dark:border-blue-900/50 dark:bg-blue-950/20 text-xs flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                        <span className="text-slate-500">Golongan:</span>
+                        <Badge variant="outline" className="font-mono font-semibold bg-white dark:bg-slate-800">
+                          {selectedJ.salary_grade?.code} - {selectedJ.salary_grade?.name}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                        <span className="text-slate-500">Level:</span>
+                        <Badge variant="outline" className="font-mono font-semibold bg-white dark:bg-slate-800">
+                          {selectedJ.grade?.code} - {selectedJ.grade?.name}
+                        </Badge>
+                      </div>
+                      {selectedJ.grade?.pangkat && (
+                        <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                          <span className="text-slate-500">Pangkat:</span>
+                          <Badge variant={selectedJ.grade.pangkat === 'Staff' ? 'primary' : 'neutral'}>
+                            {selectedJ.grade.pangkat}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div>

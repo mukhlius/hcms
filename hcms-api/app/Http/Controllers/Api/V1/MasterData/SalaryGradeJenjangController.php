@@ -16,6 +16,7 @@ class SalaryGradeJenjangController extends BaseApiController
         $query = SalaryGradeJenjang::with([
             'salaryGrade:id,code,name',
             'grade:id,code,name,pangkat,level',
+            'masterJenjang:id,code,name',
         ]);
 
         if ($request->filled('salary_grade_id')) {
@@ -26,6 +27,10 @@ class SalaryGradeJenjangController extends BaseApiController
             $query->where('grade_id', $request->query('grade_id'));
         }
 
+        if ($request->filled('master_jenjang_id')) {
+            $query->where('master_jenjang_id', $request->query('master_jenjang_id'));
+        }
+
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
         }
@@ -34,6 +39,10 @@ class SalaryGradeJenjangController extends BaseApiController
             $s = trim($request->query('search'));
             $query->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
+                  ->orWhereHas('masterJenjang', function ($mjq) use ($s) {
+                      $mjq->where('name', 'like', "%{$s}%")
+                          ->orWhere('code', 'like', "%{$s}%");
+                  })
                   ->orWhereHas('salaryGrade', function ($sq) use ($s) {
                       $sq->where('code', 'like', "%{$s}%")
                          ->orWhere('name', 'like', "%{$s}%");
@@ -61,9 +70,27 @@ class SalaryGradeJenjangController extends BaseApiController
         $validated = $request->validate([
             'salary_grade_id' => ['required', 'exists:salary_grades,id'],
             'grade_id' => ['required', 'exists:grades,id'],
-            'name' => ['required', 'string', 'max:150'],
+            'master_jenjang_id' => ['nullable', 'exists:master_jenjangs,id'],
+            'name' => ['required_without:master_jenjang_id', 'nullable', 'string', 'max:150'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
         ]);
+
+        if (!empty($validated['master_jenjang_id'])) {
+            $master = \App\Models\MasterJenjang::find($validated['master_jenjang_id']);
+            if ($master) {
+                $validated['name'] = $master->name;
+            }
+        } elseif (!empty($validated['name'])) {
+            // Find or create master jenjang by name
+            $master = \App\Models\MasterJenjang::firstOrCreate(
+                ['name' => trim($validated['name'])],
+                [
+                    'code' => 'JNJ-' . str_pad((string)(\App\Models\MasterJenjang::withTrashed()->count() + 1), 3, '0', STR_PAD_LEFT),
+                    'status' => 'ACTIVE',
+                ]
+            );
+            $validated['master_jenjang_id'] = $master->id;
+        }
 
         // 1. Cek kombinasi unik salary_grade_id dan grade_id
         $exists = SalaryGradeJenjang::where('salary_grade_id', $validated['salary_grade_id'])
@@ -86,7 +113,7 @@ class SalaryGradeJenjangController extends BaseApiController
         AuditService::log('CREATE', 'SALARY_GRADE_JENJANG', SalaryGradeJenjang::class, (string)$item->id, newValues: $item->toArray());
 
         return $this->createdResponse(
-            $item->load(['salaryGrade:id,code,name', 'grade:id,code,name,pangkat,level']),
+            $item->load(['salaryGrade:id,code,name', 'grade:id,code,name,pangkat,level', 'masterJenjang:id,code,name']),
             'Jenjang jabatan berhasil ditambahkan.'
         );
     }
@@ -94,7 +121,7 @@ class SalaryGradeJenjangController extends BaseApiController
     public function show(SalaryGradeJenjang $jenjang): JsonResponse
     {
         return $this->successResponse(
-            $jenjang->load(['salaryGrade:id,code,name', 'grade:id,code,name,pangkat,level']),
+            $jenjang->load(['salaryGrade:id,code,name', 'grade:id,code,name,pangkat,level', 'masterJenjang:id,code,name']),
             'Detail jenjang jabatan berhasil diambil.'
         );
     }
@@ -104,9 +131,26 @@ class SalaryGradeJenjangController extends BaseApiController
         $validated = $request->validate([
             'salary_grade_id' => ['sometimes', 'required', 'exists:salary_grades,id'],
             'grade_id' => ['sometimes', 'required', 'exists:grades,id'],
-            'name' => ['sometimes', 'required', 'string', 'max:150'],
+            'master_jenjang_id' => ['nullable', 'exists:master_jenjangs,id'],
+            'name' => ['sometimes', 'nullable', 'string', 'max:150'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
         ]);
+
+        if (array_key_exists('master_jenjang_id', $validated) && !empty($validated['master_jenjang_id'])) {
+            $master = \App\Models\MasterJenjang::find($validated['master_jenjang_id']);
+            if ($master) {
+                $validated['name'] = $master->name;
+            }
+        } elseif (isset($validated['name']) && !empty($validated['name'])) {
+            $master = \App\Models\MasterJenjang::firstOrCreate(
+                ['name' => trim($validated['name'])],
+                [
+                    'code' => 'JNJ-' . str_pad((string)(\App\Models\MasterJenjang::withTrashed()->count() + 1), 3, '0', STR_PAD_LEFT),
+                    'status' => 'ACTIVE',
+                ]
+            );
+            $validated['master_jenjang_id'] = $master->id;
+        }
 
         $salaryGradeId = $validated['salary_grade_id'] ?? $jenjang->salary_grade_id;
         $gradeId = $validated['grade_id'] ?? $jenjang->grade_id;
@@ -126,7 +170,7 @@ class SalaryGradeJenjangController extends BaseApiController
         AuditService::log('UPDATE', 'SALARY_GRADE_JENJANG', SalaryGradeJenjang::class, (string)$jenjang->id, oldValues: $old, newValues: $jenjang->toArray());
 
         return $this->successResponse(
-            $jenjang->load(['salaryGrade:id,code,name', 'grade:id,code,name,pangkat,level']),
+            $jenjang->load(['salaryGrade:id,code,name', 'grade:id,code,name,pangkat,level', 'masterJenjang:id,code,name']),
             'Jenjang jabatan berhasil diperbarui.'
         );
     }

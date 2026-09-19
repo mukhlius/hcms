@@ -15,6 +15,7 @@ class SalaryGradeJenjang extends Model
     protected $fillable = [
         'salary_grade_id',
         'grade_id',
+        'master_jenjang_id',
         'name',
         'status',
     ];
@@ -22,6 +23,7 @@ class SalaryGradeJenjang extends Model
     protected $casts = [
         'salary_grade_id' => 'integer',
         'grade_id' => 'integer',
+        'master_jenjang_id' => 'integer',
     ];
 
     public function salaryGrade(): BelongsTo
@@ -32,5 +34,10 @@ class SalaryGradeJenjang extends Model
     public function grade(): BelongsTo
     {
         return $this->belongsTo(Grade::class, 'grade_id');
+    }
+
+    public function masterJenjang(): BelongsTo
+    {
+        return $this->belongsTo(MasterJenjang::class, 'master_jenjang_id');
     }
 }

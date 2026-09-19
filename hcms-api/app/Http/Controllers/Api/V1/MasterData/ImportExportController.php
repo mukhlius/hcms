@@ -9,6 +9,7 @@ use App\Models\CostCenter;
 use App\Models\EmploymentType;
 use App\Models\Grade;
 use App\Models\JobFamily;
+use App\Models\MasterJenjang;
 use App\Models\OrganizationCompany;
 use App\Models\OrganizationDepartment;
 use App\Models\OrganizationJob;
@@ -40,6 +41,7 @@ class ImportExportController extends BaseApiController
         'positions' => Position::class,
         'salary-grades' => SalaryGrade::class, // Golongan
         'jenjang' => SalaryGradeJenjang::class, // Jenjang Jabatan
+        'master-jenjang' => MasterJenjang::class, // Master Jenjang
         'grades' => Grade::class,              // Level Jabatan
         'levels' => Grade::class,              // Alias Level Jabatan
         'employment-types' => EmploymentType::class,
@@ -138,6 +140,12 @@ class ImportExportController extends BaseApiController
                 'name' => ['required', 'string', 'max:150'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
+            'master-jenjang' => [
+                'code' => ['nullable', 'string', 'max:50'],
+                'name' => ['required', 'string', 'max:150'],
+                'description' => ['nullable', 'string'],
+                'status' => ['nullable', 'string', 'max:50'],
+            ],
             'grades', 'levels' => [
                 'code' => ['required', 'string', 'max:50'],
                 'name' => ['required', 'string', 'max:150'],
@@ -184,9 +192,18 @@ class ImportExportController extends BaseApiController
                 'lens_amount' => ['required', 'numeric', 'min:0'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
-            'tunjangan-lapangan', 'uang-perdin' => [
+            'tunjangan-lapangan' => [
                 'grade_code' => ['required_without:salary_grade_code', 'nullable', 'string', 'max:50'],
                 'salary_grade_code' => ['nullable', 'string', 'max:50'],
+                'amount' => ['required', 'numeric', 'min:0'],
+                'period_type' => ['nullable', 'string', 'max:50'],
+                'status' => ['nullable', 'string', 'max:50'],
+            ],
+            'uang-perdin' => [
+                'jenjang' => ['required_without:name', 'nullable', 'string', 'max:150'],
+                'name' => ['nullable', 'string', 'max:150'],
+                'salary_grade_code' => ['nullable', 'string', 'max:50'],
+                'grade_code' => ['nullable', 'string', 'max:50'],
                 'amount' => ['required', 'numeric', 'min:0'],
                 'period_type' => ['nullable', 'string', 'max:50'],
                 'status' => ['nullable', 'string', 'max:50'],
@@ -268,6 +285,7 @@ class ImportExportController extends BaseApiController
             'positions' => ['Site Tambang', 'Departemen', 'Section (Seksi)', 'Level/Grade', 'Kode Posisi', 'Nama Posisi', 'Atasan Langsung', 'MPP', 'Status', 'Tanggal Dibuat'],
             'salary-grades' => ['Kode Golongan', 'Nama Golongan', 'Status', 'Tanggal Dibuat'],
             'jenjang' => ['Kode Golongan', 'Nama Golongan', 'Kode Level', 'Nama Level Jabatan', 'Pangkat', 'Nama Jenjang', 'Status', 'Tanggal Dibuat'],
+            'master-jenjang' => ['Kode Jenjang', 'Nama Jenjang', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'grades', 'levels' => ['Kode Level', 'Level', 'Pangkat', 'Nama Level Jabatan', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'employment-types' => ['Kode Hubungan Kerja', 'Nama Hubungan Kerja', 'Sifat Hubungan', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'work-locations', 'work-areas' => ['Kode Area', 'Nama Area Kerja', 'Fungsi / Keterangan', 'Risiko K3', 'Status', 'Tanggal Dibuat'],
@@ -277,17 +295,18 @@ class ImportExportController extends BaseApiController
             'plafon-kacamata' => ['Kriteria Lensa', 'Bantuan Frame', 'Bantuan Lensa', 'Total Plafon', 'Periode', 'Ketentuan / Keterangan', 'Status', 'Tanggal Dibuat'],
             'plafon-persalinan' => ['Kode Golongan', 'Nama Golongan', 'Kriteria Persalinan', 'Nominal Plafon', 'Periode', 'Ketentuan / Cakupan', 'Status', 'Tanggal Dibuat'],
             'tunjangan-lapangan' => ['Kode Level Jabatan', 'Nama Level Jabatan', 'Pangkat', 'Nominal Tunjangan', 'Periode', 'Status', 'Tanggal Dibuat'],
-            'uang-perdin' => ['Kode Level Jabatan', 'Nama Level Jabatan', 'Pangkat', 'Besaran Uang Perdin', 'Periode', 'Status', 'Tanggal Dibuat'],
+            'uang-perdin' => ['Kode Golongan', 'Nama Golongan', 'Kode Level', 'Nama Level Jabatan', 'Pangkat', 'Jenjang Jabatan', 'Besaran Uang Perdin', 'Periode', 'Status', 'Tanggal Dibuat'],
             'bantuan-lumpsum' => ['Kode Golongan', 'Nama Golongan', 'Jenis Bantuan Lumpsum', 'Besaran Bantuan', 'Periode', 'Ketentuan / Syarat', 'Status', 'Tanggal Dibuat'],
             'bantuan-komunikasi' => ['Kode Golongan', 'Nama Golongan', 'Kategori Komunikasi', 'Nominal Bantuan', 'Periode', 'Ketentuan / Fasilitas', 'Status', 'Tanggal Dibuat'],
             'bantuan-perumahan' => ['Kode Golongan', 'Nama Golongan', 'Kategori Perumahan', 'Nominal Bantuan', 'Periode', 'Ketentuan / Keterangan', 'Status', 'Tanggal Dibuat'],
-            'shifts' => ['Kode Shift', 'Nama Shift', 'Jam Masuk', 'Jam Pulang', 'Istirahat (Menit)', 'Status', 'Tanggal Dibuat'],
-            'users' => ['Username', 'Nama Lengkap', 'Email', 'Status Akun', 'Cakupan Akses', 'Tanggal Dibuat'],
+            'shifts' => ['Kode Shift', 'Nama Shift', 'Jam Mulai', 'Jam Selesai', 'Durasi Istirahat (Menit)', 'Status', 'Tanggal Dibuat'],
+            'users' => ['Username', 'Nama Lengkap', 'Email', 'Status Akun', 'Data Scope', 'Tanggal Terdaftar'],
             default => ['Kode', 'Nama', 'Status', 'Tanggal Dibuat'],
         };
 
-        $generator = function () use ($modelClass, $entity) {
+        $generator = function () use ($entity, $modelClass) {
             $query = match ($entity) {
+                'companies' => OrganizationCompany::orderBy('code'),
                 'work-locations', 'work-areas' => StandardReference::where('category', 'WORK_AREA')->orderBy('code'),
                 'poh' => StandardReference::where('category', 'POH')->orderBy('code'),
                 'marital-statuses' => StandardReference::where('category', 'MARITAL_STATUS')->orderBy('code'),
@@ -295,7 +314,7 @@ class ImportExportController extends BaseApiController
                 'plafon-kacamata' => BenefitPlafond::where('benefit_type', 'KACAMATA')->orderBy('id'),
                 'plafon-persalinan' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'PERSALINAN')->orderBy('id'),
                 'tunjangan-lapangan' => BenefitPlafond::with('grade')->where('benefit_type', 'TUNJANGAN_LAPANGAN')->orderBy('id'),
-                'uang-perdin' => BenefitPlafond::with('grade')->where('benefit_type', 'UANG_PERDIN')->orderBy('id'),
+                'uang-perdin' => BenefitPlafond::with(['jenjang.salaryGrade', 'jenjang.grade'])->where('benefit_type', 'UANG_PERDIN')->orderBy('id'),
                 'bantuan-lumpsum' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'BANTUAN_LUMPSUM')->orderBy('id'),
                 'bantuan-komunikasi' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'BANTUAN_KOMUNIKASI')->orderBy('id'),
                 'bantuan-perumahan' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'BANTUAN_PERUMAHAN')->orderBy('id'),
@@ -305,6 +324,7 @@ class ImportExportController extends BaseApiController
                 'positions' => Position::with(['site', 'department', 'section', 'grade', 'reportsTo'])->orderBy('code'),
                 'salary-grades' => SalaryGrade::orderBy('code'),
                 'jenjang' => SalaryGradeJenjang::with(['salaryGrade', 'grade'])->orderBy('salary_grade_id')->orderBy('name'),
+                'master-jenjang' => MasterJenjang::orderBy('code'),
                 'grades', 'levels' => Grade::orderBy('level'),
                 default => $modelClass::query(),
             };
@@ -456,9 +476,12 @@ class ImportExportController extends BaseApiController
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     ],
                     'uang-perdin' => [
-                        $item->grade?->code ?? '',
-                        $item->grade?->name ?? '',
-                        $item->grade?->pangkat ?? '',
+                        $item->jenjang?->salaryGrade?->code ?? '',
+                        $item->jenjang?->salaryGrade?->name ?? '',
+                        $item->jenjang?->grade?->code ?? '',
+                        $item->jenjang?->grade?->name ?? '',
+                        $item->jenjang?->grade?->pangkat ?? '',
+                        $item->jenjang?->name ?? '',
                         (string) ($item->amount ?? 0),
                         $item->period_type ?? 'HARIAN',
                         $item->status ?? 'ACTIVE',
@@ -509,6 +532,13 @@ class ImportExportController extends BaseApiController
                         $item->email ?? '',
                         $item->status ?? 'ACTIVE',
                         $item->data_scope ?? 'SELF',
+                        $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
+                    ],
+                    'master-jenjang' => [
+                        $item->code ?? '',
+                        $item->name ?? '',
+                        $item->description ?? '',
+                        $item->status ?? 'ACTIVE',
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     ],
                     default => [
@@ -584,6 +614,14 @@ class ImportExportController extends BaseApiController
                     ['4B', 'GL', 'Senior Group Leader', 'ACTIVE'],
                     ['4B', 'SH', 'Junior Supervisor', 'ACTIVE'],
                     ['4B', 'OFF', 'Senior Officer', 'ACTIVE'],
+                ],
+            ],
+            'master-jenjang' => [
+                'headers' => ['code', 'name', 'description', 'status'],
+                'samples' => [
+                    ['JNJ-001', 'Senior Group Leader', 'Jenjang Senior Group Leader', 'ACTIVE'],
+                    ['JNJ-002', 'Junior Supervisor', 'Jenjang Junior Supervisor', 'ACTIVE'],
+                    ['JNJ-003', 'Senior Officer', 'Jenjang Senior Officer', 'ACTIVE'],
                 ],
             ],
             'grades' => [
@@ -675,11 +713,11 @@ class ImportExportController extends BaseApiController
                 ],
             ],
             'uang-perdin' => [
-                'headers' => ['grade_code', 'amount', 'period_type', 'status'],
+                'headers' => ['jenjang', 'amount', 'period_type', 'status'],
                 'samples' => [
-                    ['PM', '500000', 'HARIAN', 'ACTIVE'],
-                    ['SH', '350000', 'HARIAN', 'ACTIVE'],
-                    ['OFF', '250000', 'HARIAN', 'ACTIVE'],
+                    ['Senior Group Leader', '500000', 'HARIAN', 'ACTIVE'],
+                    ['Junior Supervisor', '400000', 'HARIAN', 'ACTIVE'],
+                    ['Senior Officer', '300000', 'HARIAN', 'ACTIVE'],
                 ],
             ],
             'bantuan-lumpsum' => [

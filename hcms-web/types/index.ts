@@ -358,12 +358,25 @@ export interface SalaryGradeItem {
   updated_at?: string;
 }
 
+export interface MasterJenjangItem {
+  id: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  salary_grade_jenjangs_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface SalaryGradeJenjangItem {
   id: number;
   salary_grade_id: number;
   salary_grade?: SalaryGradeItem | null;
   grade_id: number;
   grade?: GradeItem | null;
+  master_jenjang_id?: number | null;
+  master_jenjang?: MasterJenjangItem | null;
   name: string;
   status: 'ACTIVE' | 'INACTIVE';
   created_at?: string;
@@ -396,6 +409,7 @@ export interface BenefitPlafondItem {
   benefit_type: 'PENGOBATAN' | 'KACAMATA' | 'PERSALINAN' | 'TUNJANGAN_LAPANGAN' | 'UANG_PERDIN' | 'BANTUAN_LUMPSUM' | 'BANTUAN_KOMUNIKASI' | 'BANTUAN_PERUMAHAN';
   salary_grade_id?: number | null;
   grade_id?: number | null;
+  salary_grade_jenjang_id?: number | null;
   lens_type?: string | null;
   frame_amount?: number | null;
   lens_amount?: number | null;
@@ -409,6 +423,7 @@ export interface BenefitPlafondItem {
   status: 'ACTIVE' | 'INACTIVE';
   salary_grade?: SalaryGradeItem | null;
   grade?: SalaryGradeItem | GradeItem | null;
+  jenjang?: SalaryGradeJenjangItem | null;
   marital_status?: ReferenceItem | null;
   created_at?: string;
   updated_at?: string;
