@@ -46,11 +46,10 @@ class SalaryGradeJenjangController extends BaseApiController
             });
         }
 
-        // Join to sort by salary_grade code then order_index
+        // Join to sort by salary_grade code then name
         $items = $query->join('salary_grades', 'salary_grade_jenjang.salary_grade_id', '=', 'salary_grades.id')
             ->select('salary_grade_jenjang.*')
             ->orderBy('salary_grades.code', 'asc')
-            ->orderBy('salary_grade_jenjang.order_index', 'asc')
             ->orderBy('salary_grade_jenjang.name', 'asc')
             ->get();
 
@@ -63,7 +62,6 @@ class SalaryGradeJenjangController extends BaseApiController
             'salary_grade_id' => ['required', 'exists:salary_grades,id'],
             'grade_id' => ['required', 'exists:grades,id'],
             'name' => ['required', 'string', 'max:150'],
-            'order_index' => ['nullable', 'integer', 'min:1', 'max:4'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
         ]);
 
@@ -80,10 +78,6 @@ class SalaryGradeJenjangController extends BaseApiController
         $currentCount = SalaryGradeJenjang::where('salary_grade_id', $validated['salary_grade_id'])->count();
         if ($currentCount >= 4) {
             return $this->errorResponse('Maksimal 4 jenjang dalam 1 golongan yang sama.', 422);
-        }
-
-        if (empty($validated['order_index'])) {
-            $validated['order_index'] = $currentCount + 1;
         }
 
         $validated['status'] = $validated['status'] ?? 'ACTIVE';
@@ -111,7 +105,6 @@ class SalaryGradeJenjangController extends BaseApiController
             'salary_grade_id' => ['sometimes', 'required', 'exists:salary_grades,id'],
             'grade_id' => ['sometimes', 'required', 'exists:grades,id'],
             'name' => ['sometimes', 'required', 'string', 'max:150'],
-            'order_index' => ['nullable', 'integer', 'min:1', 'max:4'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
         ]);
 

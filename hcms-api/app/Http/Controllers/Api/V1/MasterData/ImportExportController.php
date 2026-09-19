@@ -136,7 +136,6 @@ class ImportExportController extends BaseApiController
                 'salary_grade_code' => ['required', 'string', 'max:50'],
                 'grade_code' => ['required', 'string', 'max:50'],
                 'name' => ['required', 'string', 'max:150'],
-                'order_index' => ['nullable', 'integer', 'min:1', 'max:4'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
             'grades', 'levels' => [
@@ -268,7 +267,7 @@ class ImportExportController extends BaseApiController
             'sections' => ['Perusahaan Induk', 'Departemen Induk', 'Site Tambang/Fasilitas', 'Kode Seksi', 'Nama Seksi', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'positions' => ['Site Tambang', 'Departemen', 'Section (Seksi)', 'Level/Grade', 'Kode Posisi', 'Nama Posisi', 'Atasan Langsung', 'MPP', 'Status', 'Tanggal Dibuat'],
             'salary-grades' => ['Kode Golongan', 'Nama Golongan', 'Status', 'Tanggal Dibuat'],
-            'jenjang' => ['Kode Golongan', 'Nama Golongan', 'Kode Level', 'Nama Level Jabatan', 'Pangkat', 'Nama Jenjang', 'Urutan', 'Status', 'Tanggal Dibuat'],
+            'jenjang' => ['Kode Golongan', 'Nama Golongan', 'Kode Level', 'Nama Level Jabatan', 'Pangkat', 'Nama Jenjang', 'Status', 'Tanggal Dibuat'],
             'grades', 'levels' => ['Kode Level', 'Level', 'Pangkat', 'Nama Level Jabatan', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'employment-types' => ['Kode Hubungan Kerja', 'Nama Hubungan Kerja', 'Sifat Hubungan', 'Deskripsi', 'Status', 'Tanggal Dibuat'],
             'work-locations', 'work-areas' => ['Kode Area', 'Nama Area Kerja', 'Fungsi / Keterangan', 'Risiko K3', 'Status', 'Tanggal Dibuat'],
@@ -305,7 +304,7 @@ class ImportExportController extends BaseApiController
                 'sites' => OrganizationSite::with('company')->orderBy('code'),
                 'positions' => Position::with(['site', 'department', 'section', 'grade', 'reportsTo'])->orderBy('code'),
                 'salary-grades' => SalaryGrade::orderBy('code'),
-                'jenjang' => SalaryGradeJenjang::with(['salaryGrade', 'grade'])->orderBy('salary_grade_id')->orderBy('order_index'),
+                'jenjang' => SalaryGradeJenjang::with(['salaryGrade', 'grade'])->orderBy('salary_grade_id')->orderBy('name'),
                 'grades', 'levels' => Grade::orderBy('level'),
                 default => $modelClass::query(),
             };
@@ -374,7 +373,6 @@ class ImportExportController extends BaseApiController
                         $item->grade?->name ?? '',
                         $item->grade?->pangkat ?? '',
                         $item->name ?? '',
-                        (string) ($item->order_index ?? 1),
                         $item->status ?? 'ACTIVE',
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     ],
@@ -581,11 +579,11 @@ class ImportExportController extends BaseApiController
                 ],
             ],
             'jenjang' => [
-                'headers' => ['salary_grade_code', 'grade_code', 'name', 'order_index', 'status'],
+                'headers' => ['salary_grade_code', 'grade_code', 'name', 'status'],
                 'samples' => [
-                    ['4B', 'GL', 'Senior Group Leader', '1', 'ACTIVE'],
-                    ['4B', 'SH', 'Junior Supervisor', '2', 'ACTIVE'],
-                    ['4B', 'OFF', 'Senior Officer', '3', 'ACTIVE'],
+                    ['4B', 'GL', 'Senior Group Leader', 'ACTIVE'],
+                    ['4B', 'SH', 'Junior Supervisor', 'ACTIVE'],
+                    ['4B', 'OFF', 'Senior Officer', 'ACTIVE'],
                 ],
             ],
             'grades' => [

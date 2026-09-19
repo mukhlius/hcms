@@ -420,7 +420,6 @@ class MasterImportService
                         ]);
                     }
 
-                    $orderIndex = isset($item['order_index']) ? (int) $item['order_index'] : 1;
                     $status = !empty($item['status']) ? strtoupper(trim($item['status'])) : 'ACTIVE';
 
                     \App\Models\SalaryGradeJenjang::updateOrCreate(
@@ -430,7 +429,6 @@ class MasterImportService
                         ],
                         [
                             'name' => $jenjangName,
-                            'order_index' => $orderIndex,
                             'status' => $status,
                         ]
                     );

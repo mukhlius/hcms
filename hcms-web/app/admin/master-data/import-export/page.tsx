@@ -196,7 +196,7 @@ const ENTITY_CATALOG: EntityMeta[] = [
     description: 'Master pemetaan jenjang karir berdasarkan kombinasi Golongan dan Level Jabatan.',
     icon: <ShieldCheck className="h-5 w-5 text-indigo-600" />,
     iconBg: 'bg-indigo-50 dark:bg-indigo-950/50',
-    columns: ['salary_grade_code', 'grade_code', 'name', 'order_index', 'status'],
+    columns: ['salary_grade_code', 'grade_code', 'name', 'status'],
   },
   {
     id: 'levels',

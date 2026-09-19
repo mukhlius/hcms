@@ -41,6 +41,6 @@ class SalaryGrade extends Model
 
     public function jenjangs(): HasMany
     {
-        return $this->hasMany(SalaryGradeJenjang::class, 'salary_grade_id')->orderBy('order_index');
+        return $this->hasMany(SalaryGradeJenjang::class, 'salary_grade_id')->orderBy('name');
     }
 }

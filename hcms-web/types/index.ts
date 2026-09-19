@@ -365,7 +365,6 @@ export interface SalaryGradeJenjangItem {
   grade_id: number;
   grade?: GradeItem | null;
   name: string;
-  order_index?: number;
   status: 'ACTIVE' | 'INACTIVE';
   created_at?: string;
   updated_at?: string;

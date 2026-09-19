@@ -61,7 +61,6 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
     salary_grade_id: '',
     grade_id: '',
     name: '',
-    order_index: 1,
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
   });
 
@@ -131,7 +130,6 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
       salary_grade_id: filterSalaryGradeId || (salaryGrades[0]?.id ? String(salaryGrades[0].id) : ''),
       grade_id: filterGradeId || (grades[0]?.id ? String(grades[0].id) : ''),
       name: '',
-      order_index: 1,
       status: 'ACTIVE',
     });
     setIsModalOpen(true);
@@ -150,7 +148,6 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
       salary_grade_id: String(item.salary_grade_id),
       grade_id: String(item.grade_id),
       name: item.name,
-      order_index: item.order_index || 1,
       status: item.status,
     });
     setIsModalOpen(true);
@@ -169,7 +166,6 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
         salary_grade_id: Number(formData.salary_grade_id),
         grade_id: Number(formData.grade_id),
         name: formData.name.trim(),
-        order_index: Number(formData.order_index),
         status: formData.status,
       };
 
@@ -331,9 +327,6 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
                 </th>
                 <th className="px-4 py-3.5 text-center">Pangkat</th>
                 <th className="px-4 py-3.5 text-center">
-                  <SortableHeader label="Urutan" field="order_index" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
-                </th>
-                <th className="px-4 py-3.5 text-center">
                   <SortableHeader label="Status" field="status" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
                 <th className="px-5 py-3.5 text-right">Aksi</th>
@@ -347,14 +340,13 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
                     <td className="px-4 py-4"><Skeleton className="h-4 w-36" /></td>
                     <td className="px-4 py-4"><Skeleton className="h-4 w-44" /></td>
                     <td className="px-4 py-4 text-center"><Skeleton className="h-4 w-16 mx-auto" /></td>
-                    <td className="px-4 py-4 text-center"><Skeleton className="h-4 w-10 mx-auto" /></td>
                     <td className="px-4 py-4 text-center"><Skeleton className="h-5 w-16 mx-auto rounded-full" /></td>
                     <td className="px-5 py-4 text-right"><Skeleton className="h-6 w-14 ml-auto" /></td>
                   </tr>
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-slate-400">
+                  <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
                     <GitMerge className="h-10 w-10 mx-auto text-slate-300 mb-2" />
                     <p className="font-semibold text-slate-600">Tidak ada data Jenjang Jabatan ditemukan</p>
                     <p className="text-xs text-slate-400 mt-0.5">
@@ -400,14 +392,7 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
                         </Badge>
                       </td>
 
-                      {/* 5. Urutan */}
-                      <td className="px-4 py-3.5 text-center">
-                        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px]">
-                          {item.order_index ?? 1}
-                        </span>
-                      </td>
-
-                      {/* 6. Status */}
+                      {/* 5. Status */}
                       <td className="px-4 py-3.5 text-center">
                         <Badge variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}>
                           {item.status === 'ACTIVE' ? 'AKTIF' : 'NON-AKTIF'}
@@ -523,27 +508,10 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
             </p>
           </div>
 
-          {/* 4. Urutan Jenjang */}
+          {/* 4. Status */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              4. Urutan Jenjang (1 - 4)
-            </label>
-            <Select
-              value={String(formData.order_index)}
-              onChange={(e) => setFormData({ ...formData, order_index: Number(e.target.value) })}
-              className="text-xs"
-            >
-              <option value="1">Tingkat / Urutan ke-1</option>
-              <option value="2">Tingkat / Urutan ke-2</option>
-              <option value="3">Tingkat / Urutan ke-3</option>
-              <option value="4">Tingkat / Urutan ke-4</option>
-            </Select>
-          </div>
-
-          {/* 5. Status */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              5. Status Jenjang
+              4. Status Jenjang
             </label>
             <div className="flex items-center gap-4 pt-0.5">
               <label className="inline-flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer">

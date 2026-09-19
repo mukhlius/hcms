@@ -16,14 +16,12 @@ class SalaryGradeJenjang extends Model
         'salary_grade_id',
         'grade_id',
         'name',
-        'order_index',
         'status',
     ];
 
     protected $casts = [
         'salary_grade_id' => 'integer',
         'grade_id' => 'integer',
-        'order_index' => 'integer',
     ];
 
     public function salaryGrade(): BelongsTo
