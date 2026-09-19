@@ -510,6 +510,11 @@ class MasterImportService
                             $gradeId = $item['level_id'];
                         }
 
+                        if (!$gradeId) {
+                            $codeDisplay = $gradeCode ?? '(kosong)';
+                            throw new \Exception("Level Jabatan '{$codeDisplay}' tidak ditemukan dalam master data Level / Grade. Pastikan menggunakan kode Level Jabatan yang valid (contoh: PM, DPM, DH, SH, GL, OFF, ADM, SEC, OPT, MEC).");
+                        }
+
                         $amount = (float)($item['amount'] ?? 0);
                         $periodType = $item['period_type'] ?? 'BULANAN';
 

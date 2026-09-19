@@ -94,7 +94,7 @@ export const FIELD_DEFINITIONS: Record<string, { label: string; required?: boole
   // Departemen & Seksi & Posisi
   department_code: { label: 'Kode Departemen (department_code)', required: false, aliases: ['departemen', 'department_code', 'kode departemen', 'departemen induk'] },
   section_code: { label: 'Kode Seksi Lapangan (section_code)', required: false, aliases: ['seksi', 'section_code', 'kode seksi', 'section', 'section (seksi)'] },
-  grade_code: { label: 'Kode Level/Grade (grade_code)', required: false, aliases: ['level', 'grade', 'grade_code', 'level/grade', 'level grade'] },
+  grade_code: { label: 'Kode Level/Grade (grade_code)', required: true, aliases: ['level', 'grade', 'grade_code', 'level/grade', 'level grade', 'kode level', 'level jabatan', 'kode level jabatan', 'kode grade', 'salary_grade_code', 'kode golongan'] },
   title: { label: 'Nama / Judul Posisi (title)', required: true, aliases: ['judul', 'title', 'nama posisi', 'nama jabatan', 'posisi'] },
   reports_to_code: { label: 'Kode Posisi Atasan (reports_to_code)', required: false, aliases: ['atasan', 'reports_to', 'reports_to_code', 'atasan langsung', 'posisi atasan'] },
   approved_headcount: { label: 'Kuota MPP / Headcount (approved_headcount)', required: false, aliases: ['mpp', 'headcount', 'approved_headcount', 'kuota'] },

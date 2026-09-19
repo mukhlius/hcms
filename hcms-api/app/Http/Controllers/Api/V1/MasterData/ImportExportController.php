@@ -176,7 +176,14 @@ class ImportExportController extends BaseApiController
                 'lens_amount' => ['required', 'numeric', 'min:0'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
-            'tunjangan-lapangan', 'bantuan-lumpsum', 'bantuan-komunikasi', 'bantuan-perumahan' => [
+            'tunjangan-lapangan' => [
+                'grade_code' => ['required_without:salary_grade_code', 'nullable', 'string', 'max:50'],
+                'salary_grade_code' => ['nullable', 'string', 'max:50'],
+                'amount' => ['required', 'numeric', 'min:0'],
+                'period_type' => ['nullable', 'string', 'max:50'],
+                'status' => ['nullable', 'string', 'max:50'],
+            ],
+            'bantuan-lumpsum', 'bantuan-komunikasi', 'bantuan-perumahan' => [
                 'salary_grade_code' => ['required', 'string', 'max:50'],
                 'category_name' => ['nullable', 'string', 'max:100'],
                 'amount' => ['required', 'numeric', 'min:0'],
