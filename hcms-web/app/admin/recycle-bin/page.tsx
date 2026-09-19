@@ -20,7 +20,8 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Shield
+  Shield,
+  X
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -417,11 +418,11 @@ export default function RecycleBinPage() {
       />
 
       {/* Info Banner */}
-      <div className="flex items-start gap-3.5 p-4 rounded-xl border border-amber-200/80 bg-amber-50/60 text-amber-900 text-sm">
+      <div className="flex items-start gap-3.5 p-4 rounded-xl border border-amber-200/80 bg-amber-50/60 text-amber-900 text-sm dark:bg-amber-950/20 dark:border-amber-900/40 dark:text-amber-200">
         <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
         <div className="flex-1">
           <p className="font-medium">Kebijakan Retensi & Pemulihan Data</p>
-          <p className="text-xs text-amber-800/90 mt-0.5 leading-relaxed">
+          <p className="text-xs text-amber-800/90 dark:text-amber-300/80 mt-0.5 leading-relaxed">
             Data yang berada di tempat sampah tidak lagi aktif dalam transaksi harian atau laporan operasional. 
             Anda dapat memulihkan entri kembali ke sistem kapan saja, atau menghapusnya secara permanen untuk mematuhi regulasi privasi data.
           </p>
@@ -429,7 +430,7 @@ export default function RecycleBinPage() {
       </div>
 
       {/* Modern Navigation Tabs with Animated Sliding Underline */}
-      <div className="border-b border-slate-200/90 bg-white rounded-t-xl px-3 pt-1 shadow-xs">
+      <div className="border-b border-slate-200/90 bg-white rounded-t-xl px-3 pt-1 shadow-xs dark:bg-slate-900 dark:border-slate-800">
         <Tabs
           tabs={tabs}
           activeTab={selectedEntity}
@@ -440,8 +441,9 @@ export default function RecycleBinPage() {
       </div>
 
       {/* Filter Toolbar */}
-      <Card className="p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full sm:w-80">
+      <Card className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-slate-200/80 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder={`Cari dalam ${getEntityLabel(selectedEntity).toLowerCase()}...`}
             value={search}
@@ -449,14 +451,27 @@ export default function RecycleBinPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            leftIcon={<Search className="h-4 w-4 text-slate-400" />}
+            className="pl-9 pr-9 text-xs h-9"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('');
+                setPage(1);
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              title="Hapus pencarian"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
+            leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />}
             onClick={() => {
               loadSummary();
               loadItems();
@@ -470,17 +485,18 @@ export default function RecycleBinPage() {
 
       {/* Selection / Bulk Action Bar */}
       {selectedIds.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-blue-50/90 border border-blue-200 rounded-xl shadow-xs animate-in fade-in slide-in-from-top-1 duration-200">
-          <div className="flex items-center gap-3">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl shadow-xs dark:bg-blue-950/30 dark:border-blue-800/60 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-5.5 px-2 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-2xs">
               {selectedIds.length}
             </span>
-            <span className="text-sm font-medium text-blue-950">
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
               data {getEntityLabel(selectedEntity).toLowerCase()} ditandai
             </span>
+            <span className="text-slate-300 dark:text-slate-600">|</span>
             <button
               type="button"
-              className="text-xs text-blue-700 hover:text-blue-900 underline font-medium cursor-pointer ml-1"
+              className="text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer"
               onClick={() => setSelectedIds([])}
             >
               Batal tandai
@@ -490,8 +506,8 @@ export default function RecycleBinPage() {
             <Button
               size="sm"
               variant="outline"
-              className="bg-white border-blue-300 text-blue-700 hover:bg-blue-50 text-xs h-8 px-3"
-              leftIcon={<RotateCcw className="h-3.5 w-3.5 text-blue-700" />}
+              className="h-8 text-xs bg-white text-blue-700 border-blue-300 hover:bg-blue-50 dark:bg-slate-800 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950/40"
+              leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
               disabled={isBulkLoading}
               isLoading={isBulkLoading}
               onClick={handleBulkRestore}
@@ -501,7 +517,7 @@ export default function RecycleBinPage() {
             <Button
               size="sm"
               variant="danger"
-              className="text-xs h-8 px-3"
+              className="h-8 text-xs shadow-2xs"
               leftIcon={<Trash2 className="h-3.5 w-3.5" />}
               disabled={isBulkLoading}
               isLoading={isBulkLoading}
@@ -514,15 +530,15 @@ export default function RecycleBinPage() {
       )}
 
       {/* Trashed Data Table */}
-      <Card className="overflow-hidden shadow-xs border border-slate-200/80">
+      <Card className="p-0 overflow-hidden border-slate-200/80 shadow-xs dark:border-slate-800">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-700 uppercase tracking-wider">
+          <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+            <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
-                <th className="w-12 px-4 py-3.5 text-center">
+                <th className="w-10 px-3 py-3.5 text-center">
                   <input
                     type="checkbox"
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer"
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer dark:border-slate-700 dark:bg-slate-800"
                     checked={isAllCurrentPageSelected}
                     ref={(el) => {
                       if (el) {
@@ -534,44 +550,44 @@ export default function RecycleBinPage() {
                     aria-label="Pilih semua baris"
                   />
                 </th>
-                <th className="px-6 py-3.5">
-                  <SortableHeader label="Identitas / Kode" field="code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Kode / Identitas" field="code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="px-6 py-3.5">
+                <th className="px-4 py-3.5">
                   <SortableHeader label="Nama / Judul" field="name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="px-6 py-3.5">Asosiasi / Organisasi</th>
-                <th className="px-6 py-3.5">
+                <th className="px-4 py-3.5 font-semibold">Asosiasi / Organisasi</th>
+                <th className="px-4 py-3.5">
                   <SortableHeader label="Waktu Penghapusan" field="deleted_at" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="px-6 py-3.5">Status</th>
-                <th className="px-6 py-3.5 text-right">Aksi Tindakan</th>
+                <th className="px-4 py-3.5 text-center font-semibold">Status</th>
+                <th className="px-5 py-3.5 pr-4 text-right font-semibold">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200/70 bg-white">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {loading ? (
-                Array.from({ length: 4 }).map((_, idx) => (
+                Array.from({ length: 5 }).map((_, idx) => (
                   <tr key={idx} className="animate-pulse">
-                    <td className="w-12 px-4 py-4 text-center"><Skeleton className="h-4 w-4 mx-auto" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-40" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-32" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-28" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-5 w-20 rounded-full" /></td>
-                    <td className="px-6 py-4 text-right"><Skeleton className="h-8 w-36 ml-auto" /></td>
+                    <td className="w-10 px-3 py-3.5 text-center"><Skeleton className="h-4 w-4 mx-auto" /></td>
+                    <td className="px-4 py-3.5"><Skeleton className="h-5 w-20" /></td>
+                    <td className="px-4 py-3.5"><Skeleton className="h-5 w-40" /></td>
+                    <td className="px-4 py-3.5"><Skeleton className="h-5 w-32" /></td>
+                    <td className="px-4 py-3.5"><Skeleton className="h-5 w-28" /></td>
+                    <td className="px-4 py-3.5 text-center"><Skeleton className="h-5 w-16 mx-auto rounded-full" /></td>
+                    <td className="px-5 py-3.5 pr-4 text-right"><Skeleton className="h-7 w-16 ml-auto" /></td>
                   </tr>
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-16 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-3">
-                      <CheckCircle2 className="h-7 w-7 text-emerald-500" />
-                    </div>
-                    <p className="text-base font-semibold text-slate-800">
+                  <td colSpan={7} className="py-14 text-center">
+                    <Trash2 className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
+                    <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-300">
                       Tempat Sampah Bersih
                     </p>
-                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                      Tidak ada data {getEntityLabel(selectedEntity).toLowerCase()} yang sedang berada dalam status terhapus.
+                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
+                      {search
+                        ? 'Tidak ada data terhapus yang cocok dengan pencarian Anda.'
+                        : `Tidak ada data ${getEntityLabel(selectedEntity).toLowerCase()} yang sedang berada dalam status terhapus.`}
                     </p>
                   </td>
                 </tr>
@@ -582,15 +598,17 @@ export default function RecycleBinPage() {
                   return (
                     <tr
                       key={item.id}
-                      className={`transition-colors ${
-                        isSelected ? 'bg-blue-50/50 hover:bg-blue-50/70' : 'hover:bg-slate-50/70'
+                      className={`group transition-colors ${
+                        isSelected
+                          ? 'bg-blue-50/60 hover:bg-blue-50/80 dark:bg-blue-950/40 dark:hover:bg-blue-950/60'
+                          : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/30'
                       }`}
                     >
                       {/* Checkbox */}
-                      <td className="w-12 px-4 py-4 text-center">
+                      <td className="w-10 px-3 py-3.5 text-center">
                         <input
                           type="checkbox"
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer"
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer dark:border-slate-700 dark:bg-slate-800"
                           checked={isSelected}
                           onChange={() => handleToggleSelect(item.id)}
                           aria-label={`Pilih ${item.name || item.code || item.id}`}
@@ -598,32 +616,34 @@ export default function RecycleBinPage() {
                       </td>
 
                       {/* Identitas / Kode */}
-                      <td className="px-6 py-4 font-mono text-xs font-semibold text-slate-900">
-                        {item.code || item.username || (item.benefit_type ? `${item.benefit_type}` : `#${item.id}`)}
+                      <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
+                        <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 font-mono text-xs font-bold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
+                          {item.code || item.username || (item.benefit_type ? `${item.benefit_type}` : `#${item.id}`)}
+                        </span>
                       </td>
 
                       {/* Nama / Judul */}
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-slate-900">
+                      <td className="px-4 py-3.5">
+                        <div className="font-medium text-slate-800 dark:text-slate-200">
                           {selectedEntity === 'benefit-plafonds'
                             ? (item.description || item.category_name || item.lens_type || item.benefit_type || '-')
                             : (item.name || item.title || '-')}
                         </div>
                         {item.email && (
-                          <div className="text-xs text-slate-500 mt-0.5">{item.email}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.email}</div>
                         )}
                         {item.short_title && (
-                          <div className="text-xs text-slate-500 mt-0.5">{item.short_title}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.short_title}</div>
                         )}
                         {selectedEntity === 'benefit-plafonds' && item.amount !== undefined && item.amount !== null && (
-                          <div className="text-xs font-mono font-semibold text-emerald-600 mt-0.5">
+                          <div className="text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
                             Nominal: {Number(item.amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 })}
                           </div>
                         )}
                       </td>
 
                       {/* Asosiasi / Organisasi */}
-                      <td className="px-6 py-4 text-xs text-slate-600">
+                      <td className="px-4 py-3.5 text-xs text-slate-600 dark:text-slate-400">
                         {selectedEntity === 'users' && (
                           <div className="space-y-1">
                             {item.roles && item.roles.length > 0 ? (
@@ -637,7 +657,7 @@ export default function RecycleBinPage() {
                             ) : (
                               <span className="text-slate-400">-</span>
                             )}
-                            <div className="text-slate-500">
+                            <div className="text-slate-500 dark:text-slate-400">
                               {[item.company?.name, item.site?.name, item.department?.name].filter(Boolean).join(' • ') || '-'}
                             </div>
                           </div>
@@ -645,22 +665,22 @@ export default function RecycleBinPage() {
 
                         {selectedEntity === 'companies' && (
                           <div>
-                            <span className="font-medium">{item.legal_name || item.name}</span>
+                            <span className="font-medium text-slate-800 dark:text-slate-200">{item.legal_name || item.name}</span>
                             {item.country && <span className="text-slate-400 ml-1.5">({item.country})</span>}
                           </div>
                         )}
 
                         {selectedEntity === 'sites' && (
                           <div>
-                            <span className="text-slate-500">Perusahaan: </span>
-                            <span className="font-medium">{item.company?.name || '-'}</span>
+                            <span className="text-slate-500 dark:text-slate-400">Perusahaan: </span>
+                            <span className="font-medium text-slate-800 dark:text-slate-200">{item.company?.name || '-'}</span>
                           </div>
                         )}
 
                         {selectedEntity === 'departments' && (
                           <div>
-                            <span className="text-slate-500">Perusahaan / Site: </span>
-                            <span className="font-medium">
+                            <span className="text-slate-500 dark:text-slate-400">Perusahaan / Site: </span>
+                            <span className="font-medium text-slate-800 dark:text-slate-200">
                               {[item.company?.name, item.site?.name].filter(Boolean).join(' • ') || '-'}
                             </span>
                             {item.leader?.name && (
@@ -671,37 +691,32 @@ export default function RecycleBinPage() {
 
                         {selectedEntity === 'sections' && (
                           <div>
-                            <span className="text-slate-500">Departemen: </span>
-                            <span className="font-medium">{item.department?.name || '-'}</span>
-                            {item.site?.name && (
-                              <div className="text-slate-400 text-[11px] mt-0.5">{item.site.name}</div>
+                            <span className="text-slate-500 dark:text-slate-400">Departemen: </span>
+                            <span className="font-medium text-slate-800 dark:text-slate-200">{item.department?.name || '-'}</span>
+                            {item.leader?.name && (
+                              <div className="text-slate-400 text-[11px] mt-0.5">Pimpinan: {item.leader.name}</div>
                             )}
-                          </div>
-                        )}
-
-                        {selectedEntity === 'units' && (
-                          <div>
-                            <Badge variant="outline" className="text-[10px] uppercase mr-1.5">
-                              {item.unit_type || 'UNIT'}
-                            </Badge>
-                            <span className="text-slate-600">{item.site?.name || item.company?.name || '-'}</span>
                           </div>
                         )}
 
                         {selectedEntity === 'positions' && (
                           <div>
-                            <span className="text-slate-500">Departemen / Site: </span>
-                            <span className="font-medium">
-                              {[item.department?.name, item.site?.name, item.section?.name].filter(Boolean).join(' • ') || item.organization_unit?.name || '-'}
-                            </span>
+                            <div className="font-medium text-slate-800 dark:text-slate-200">{item.department?.name || '-'}</div>
+                            <div className="text-slate-400 text-[11px] mt-0.5">
+                              {[item.job_level?.name, item.company?.name].filter(Boolean).join(' • ')}
+                            </div>
                           </div>
                         )}
 
                         {selectedEntity === 'employment-types' && (
                           <div>
-                            <Badge variant="outline" className={item.is_permanent ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'}>
-                              {item.is_permanent ? 'Permanen / PKWTT' : 'Kontrak / PKWT'}
-                            </Badge>
+                            <span className="text-slate-500 dark:text-slate-400">Sifat Kerja: </span>
+                            <span className="font-medium text-slate-800 dark:text-slate-200">
+                              {item.is_permanent ? 'Tetap (PKWTT)' : 'Kontrak (PKWT)'}
+                            </span>
+                            {item.description && (
+                              <div className="text-slate-400 text-[11px] mt-0.5 truncate max-w-xs">{item.description}</div>
+                            )}
                           </div>
                         )}
 
@@ -709,18 +724,18 @@ export default function RecycleBinPage() {
                           <div className="space-y-0.5">
                             {(item.salary_grade || item.salaryGrade) && (
                               <div>
-                                <span className="text-slate-500">Golongan: </span>
-                                <span className="font-semibold text-slate-800">
+                                <span className="text-slate-500 dark:text-slate-400">Golongan: </span>
+                                <span className="font-semibold text-slate-800 dark:text-slate-200">
                                   {(item.salary_grade || item.salaryGrade)?.code} - {(item.salary_grade || item.salaryGrade)?.name}
                                 </span>
                               </div>
                             )}
                             <div className="flex items-center gap-1.5 pt-0.5">
-                              <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                              <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
                                 {item.period_type || 'TAHUNAN'}
                               </Badge>
                               {item.marital_category && (
-                                <span className="text-slate-500 text-[11px]">({item.marital_category})</span>
+                                <span className="text-slate-500 dark:text-slate-400 text-[11px]">({item.marital_category})</span>
                               )}
                             </div>
                           </div>
@@ -728,43 +743,43 @@ export default function RecycleBinPage() {
                       </td>
 
                       {/* Waktu Penghapusan */}
-                      <td className="px-6 py-4 text-xs text-slate-600">
-                        <div className="flex items-center gap-1.5 text-slate-700 font-medium">
-                          <Clock className="h-3.5 w-3.5 text-slate-400" />
-                          {formatDate(item.deleted_at)}
+                      <td className="px-4 py-3.5 text-xs text-slate-600 dark:text-slate-400">
+                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                          <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <span>{formatDate(item.deleted_at)}</span>
                         </div>
                       </td>
 
                       {/* Status */}
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3.5 text-center">
                         <Badge variant="danger" className="text-[11px] font-semibold">
                           TERHAPUS
                         </Badge>
                       </td>
 
                       {/* Aksi */}
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-5 py-3.5 pr-4 text-right">
+                        <div className="flex items-center justify-end gap-1 opacity-90 group-hover:opacity-100">
                           <Button
+                            variant="ghost"
                             size="sm"
-                            variant="outline"
-                            className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 text-xs h-8 px-2.5"
-                            leftIcon={<RotateCcw className="h-3.5 w-3.5 text-blue-600" />}
+                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                            title="Pulihkan Data"
                             disabled={isActionLoading}
                             isLoading={isActionLoading}
                             onClick={() => handleRestore(item)}
                           >
-                            Pulihkan
+                            <RotateCcw className="h-4 w-4" />
                           </Button>
                           <Button
+                            variant="ghost"
                             size="sm"
-                            variant="danger"
-                            className="text-xs h-8 px-2.5"
-                            leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                            className="h-8 w-8 p-0 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/30"
+                            title="Hapus Permanen"
                             disabled={isActionLoading}
                             onClick={() => handleForceDelete(item)}
                           >
-                            Hapus Permanen
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </td>
