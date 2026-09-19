@@ -14,6 +14,7 @@ use App\Models\OrganizationSite;
 use App\Models\OrganizationUnit;
 use App\Models\Position;
 use App\Models\SalaryGrade;
+use App\Models\SalaryGradeJenjang;
 use App\Models\StandardReference;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
@@ -245,6 +246,7 @@ class CompanyController extends BaseApiController
             'positions' => Position::count(),
             'grades' => Grade::count(),
             'salary_grades' => SalaryGrade::count(),
+            'jenjang' => SalaryGradeJenjang::count(),
             'poh' => StandardReference::where('category', 'POH')->where('status', 'ACTIVE')->count(),
             'work_area' => StandardReference::where('category', 'WORK_AREA')->where('status', 'ACTIVE')->count(),
             'employment_types' => EmploymentType::count(),

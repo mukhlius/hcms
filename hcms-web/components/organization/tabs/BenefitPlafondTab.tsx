@@ -127,7 +127,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const isBantuanPerumahan = benefitType === 'BANTUAN_PERUMAHAN';
   const isPersalinan = benefitType === 'PERSALINAN';
   const isPengobatan = benefitType === 'PENGOBATAN';
-  const isSalaryGradeBased = !isKacamata && !isTunjanganLapangan;
+  const isSalaryGradeBased = !isKacamata && !isTunjanganLapangan && !isUangPerdin;
 
   const [items, setItems] = useState<BenefitPlafondItem[]>([]);
   const [salaryGrades, setSalaryGrades] = useState<SalaryGradeItem[]>([]);
@@ -172,7 +172,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         if (plafondRes.success && plafondRes.data) {
           setItems(plafondRes.data);
         }
-      } else if (isTunjanganLapangan) {
+      } else if (isTunjanganLapangan || isUangPerdin) {
         const [plafondRes, jobGradeRes] = await Promise.all([
           benefitPlafondService.getBenefitPlafonds({ benefit_type: benefitType }),
           jobGradeService.getGrades(),
@@ -203,7 +203,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [benefitType, isKacamata, isTunjanganLapangan, title]);
+  }, [benefitType, isKacamata, isTunjanganLapangan, isUangPerdin, title]);
 
   useEffect(() => {
     loadData();
@@ -212,6 +212,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const handleOpenCreate = () => {
     setModalMode('create');
     const firstGradeId = salaryGrades.length > 0 ? salaryGrades[0].id : 0;
+    const firstJobGradeId = jobGrades.length > 0 ? jobGrades[0].id : 0;
 
     if (isKacamata) {
       setFormData({
@@ -230,7 +231,6 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         status: 'ACTIVE',
       });
     } else if (isTunjanganLapangan) {
-      const firstJobGradeId = jobGrades.length > 0 ? jobGrades[0].id : 0;
       setFormData({
         id: 0,
         salary_grade_id: 0,
@@ -249,13 +249,13 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isUangPerdin) {
       setFormData({
         id: 0,
-        salary_grade_id: firstGradeId,
-        grade_id: 0,
+        salary_grade_id: 0,
+        grade_id: firstJobGradeId,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
-        category_name: PERDIN_CATEGORIES[0],
-        zone_name: PERDIN_ZONES[0],
+        category_name: '',
+        zone_name: '',
         marital_category: 'SEMUA',
         amount: '',
         period_type: 'HARIAN',
@@ -370,7 +370,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         description: item.description || '',
         status: item.status,
       });
-    } else if (isTunjanganLapangan) {
+    } else if (isTunjanganLapangan || isUangPerdin) {
       setFormData({
         id: item.id,
         salary_grade_id: 0,
@@ -382,7 +382,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         zone_name: '',
         marital_category: 'SEMUA',
         amount: String(item.amount || ''),
-        period_type: (item.period_type as any) || 'BULANAN',
+        period_type: (item.period_type as any) || (isUangPerdin ? 'HARIAN' : 'BULANAN'),
         description: '',
         status: item.status,
       });
@@ -438,13 +438,13 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         toast.warning('Nominal bantuan lensa harus diisi dengan angka valid.', 'Form Belum Lengkap');
         return;
       }
-    } else if (isTunjanganLapangan) {
+    } else if (isTunjanganLapangan || isUangPerdin) {
       if (!formData.grade_id || formData.grade_id === 0) {
         toast.warning('Pilih Level Jabatan terlebih dahulu.', 'Form Belum Lengkap');
         return;
       }
       if (formData.amount === '' || isNaN(parseFloat(formData.amount))) {
-        toast.warning('Nominal tunjangan harus diisi dengan angka valid.', 'Form Belum Lengkap');
+        toast.warning(`Nominal ${isUangPerdin ? 'uang perdin' : 'tunjangan'} harus diisi dengan angka valid.`, 'Form Belum Lengkap');
         return;
       }
     } else {
@@ -456,16 +456,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         toast.warning('Nominal plafon / tunjangan harus diisi dengan angka valid.', 'Form Belum Lengkap');
         return;
       }
-      if (isUangPerdin) {
-        if (!formData.zone_name || !formData.zone_name.trim()) {
-          toast.warning('Zona / Wilayah Perdin harus diisi.', 'Form Belum Lengkap');
-          return;
-        }
-        if (!formData.category_name || !formData.category_name.trim()) {
-          toast.warning('Komponen Perdin harus diisi.', 'Form Belum Lengkap');
-          return;
-        }
-      } else if (isPersalinan) {
+      if (isPersalinan) {
         if (!formData.category_name || !formData.category_name.trim()) {
           toast.warning('Kriteria persalinan harus diisi.', 'Form Belum Lengkap');
           return;
@@ -496,27 +487,16 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
           description: formData.description.trim() || undefined,
           status: formData.status,
         };
-      } else if (isTunjanganLapangan) {
+      } else if (isTunjanganLapangan || isUangPerdin) {
         payload = {
           benefit_type: benefitType,
           grade_id: Number(formData.grade_id),
           category_name: null as any,
+          zone_name: null as any,
           amount: parseFloat(formData.amount),
           marital_category: 'SEMUA',
-          period_type: formData.period_type,
+          period_type: formData.period_type || (isUangPerdin ? 'HARIAN' : 'BULANAN'),
           description: undefined,
-          status: formData.status,
-        };
-      } else if (isUangPerdin) {
-        payload = {
-          benefit_type: benefitType,
-          salary_grade_id: Number(formData.salary_grade_id),
-          zone_name: formData.zone_name.trim(),
-          category_name: formData.category_name.trim(),
-          amount: parseFloat(formData.amount),
-          marital_category: 'SEMUA',
-          period_type: formData.period_type,
-          description: formData.description.trim() || undefined,
           status: formData.status,
         };
       } else if (isBantuanLumpsum || isBantuanKomunikasi || isBantuanPerumahan || isPersalinan) {
@@ -578,9 +558,11 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     if (isKacamata) {
       confirmMsg = `Apakah Anda yakin ingin menghapus data plafon kacamata untuk kriteria "${item.lens_type}" dengan total bantuan ${formatRupiah(item.amount)}?`;
     } else if (isUangPerdin) {
-      confirmMsg = `Apakah Anda yakin ingin menghapus tarif uang perdin Golongan "${golName}" (${item.zone_name} - ${item.category_name}) senilai ${formatRupiah(item.amount)}?`;
+      const lvlName = item.grade?.name || item.grade?.code || `ID ${item.grade_id}`;
+      confirmMsg = `Apakah Anda yakin ingin menghapus tarif uang perdin Level Jabatan "${lvlName}" senilai ${formatRupiah(item.amount)}?`;
     } else if (isTunjanganLapangan) {
-      confirmMsg = `Apakah Anda yakin ingin menghapus tunjangan lapangan Golongan "${golName}" (${item.category_name}) senilai ${formatRupiah(item.amount)}?`;
+      const lvlName = item.grade?.name || item.grade?.code || `ID ${item.grade_id}`;
+      confirmMsg = `Apakah Anda yakin ingin menghapus tunjangan lapangan Level Jabatan "${lvlName}" senilai ${formatRupiah(item.amount)}?`;
     } else if (isBantuanLumpsum) {
       confirmMsg = `Apakah Anda yakin ingin menghapus bantuan lumpsum Golongan "${golName}" (${item.category_name}) senilai ${formatRupiah(item.amount)}?`;
     } else if (isBantuanKomunikasi) {
@@ -623,11 +605,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     return Array.from(set);
   }, [items]);
 
-  // Distinct category names for Persalinan, Lumpsum, Komunikasi, Perumahan, Perdin
+  // Distinct category names for Persalinan, Lumpsum, Komunikasi, Perumahan
   const availableCategories = useMemo(() => {
     const set = new Set<string>();
     if (isPersalinan) PERSALINAN_CATEGORIES.forEach((c) => set.add(c));
-    if (isUangPerdin) PERDIN_CATEGORIES.forEach((c) => set.add(c));
     if (isBantuanLumpsum) LUMPSUM_CATEGORIES.forEach((c) => set.add(c));
     if (isBantuanKomunikasi) KOMUNIKASI_CATEGORIES.forEach((c) => set.add(c));
     if (isBantuanPerumahan) PERUMAHAN_CATEGORIES.forEach((c) => set.add(c));
@@ -635,17 +616,16 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
       if (item.category_name) set.add(item.category_name);
     });
     return Array.from(set);
-  }, [items, isPersalinan, isUangPerdin, isBantuanLumpsum, isBantuanKomunikasi, isBantuanPerumahan]);
+  }, [items, isPersalinan, isBantuanLumpsum, isBantuanKomunikasi, isBantuanPerumahan]);
 
-  // Distinct zones for Uang Perdin
+  // Distinct zones
   const availableZones = useMemo(() => {
     const set = new Set<string>();
-    if (isUangPerdin) PERDIN_ZONES.forEach((z) => set.add(z));
     items.forEach((item) => {
       if (item.zone_name) set.add(item.zone_name);
     });
     return Array.from(set);
-  }, [items, isUangPerdin]);
+  }, [items]);
 
   // Filtered dataset
   const filteredItems = useMemo(() => {
@@ -685,19 +665,17 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         zone.includes(q) ||
         marital.includes(q);
 
-      const targetId = isTunjanganLapangan ? (item.grade_id || item.grade?.id) : (item.salary_grade_id || item.salary_grade?.id);
+      const targetId = (isTunjanganLapangan || isUangPerdin) ? (item.grade_id || item.grade?.id) : (item.salary_grade_id || item.salary_grade?.id);
       const matchGolongan = filterGolongan === 'ALL' || String(targetId) === filterGolongan;
 
       let matchCategory = true;
       if (isPengobatan) {
         matchCategory = filterCategory === 'ALL' || item.marital_category === filterCategory;
-      } else if (!isTunjanganLapangan) {
+      } else if (!isTunjanganLapangan && !isUangPerdin) {
         matchCategory = filterCategory === 'ALL' || item.category_name === filterCategory;
       }
 
-      const matchZone = !isUangPerdin || filterZone === 'ALL' || item.zone_name === filterZone;
-
-      return matchSearch && matchGolongan && matchCategory && matchZone && matchStatus;
+      return matchSearch && matchGolongan && matchCategory && matchStatus;
     });
   }, [
     items,
@@ -710,7 +688,6 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     filterLensType,
     filterGolongan,
     filterCategory,
-    filterZone,
     filterStatus,
   ]);
 
@@ -726,7 +703,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     totalItems,
     paginatedData,
   } = useClientTable<BenefitPlafondItem>(filteredItems, {
-    defaultSortField: isKacamata ? 'lens_type' : 'salary_grade.code',
+    defaultSortField: isKacamata ? 'lens_type' : (isTunjanganLapangan || isUangPerdin) ? 'grade.code' : 'salary_grade.code',
     defaultPerPage: 10,
   });
 
@@ -744,11 +721,9 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
   const isAnyFilterActive = isKacamata
     ? Boolean(search || filterLensType !== 'ALL' || filterStatus !== 'ALL')
-    : isTunjanganLapangan
+    : isTunjanganLapangan || isUangPerdin
       ? Boolean(search || filterGolongan !== 'ALL' || filterStatus !== 'ALL')
-      : isUangPerdin
-        ? Boolean(search || filterGolongan !== 'ALL' || filterZone !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL')
-        : Boolean(search || filterGolongan !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL');
+      : Boolean(search || filterGolongan !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL');
 
   const handleResetFilter = () => {
     setSearch('');
@@ -775,8 +750,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
   const getSearchPlaceholder = () => {
     if (isKacamata) return 'Cari jenis lensa atau ketentuan...';
-    if (isUangPerdin) return 'Cari golongan, zona, komponen perdin...';
-    if (isTunjanganLapangan) return 'Cari level jabatan, pangkat...';
+    if (isTunjanganLapangan || isUangPerdin) return 'Cari level jabatan, pangkat...';
     if (isPersalinan) return 'Cari golongan, kriteria persalinan...';
     if (isBantuanLumpsum) return 'Cari golongan, jenis bantuan lumpsum...';
     if (isBantuanKomunikasi) return 'Cari golongan, paket komunikasi...';
@@ -811,7 +785,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
             </div>
 
             {/* 2. Filter Golongan / Level Jabatan */}
-            {isTunjanganLapangan ? (
+            {isTunjanganLapangan || isUangPerdin ? (
               <div className="relative min-w-[200px] group">
                 <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover:text-slate-600 transition-colors" />
                 <select
@@ -879,41 +853,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
               </div>
-            ) : isUangPerdin ? (
-              <>
-                {/* Filter Zona / Wilayah */}
-                <div className="relative min-w-[180px] group">
-                  <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover:text-slate-600 transition-colors" />
-                  <select
-                    value={filterZone}
-                    onChange={(e) => setFilterZone(e.target.value)}
-                    className="w-full h-9 appearance-none pl-8 pr-8 text-xs font-medium bg-white border border-slate-200 rounded-lg shadow-2xs hover:border-slate-300 hover:bg-slate-50/50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-700 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
-                  >
-                    <option value="ALL">Semua Zona Wilayah</option>
-                    {availableZones.map((z) => (
-                      <option key={z} value={z}>{z}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
-                </div>
-
-                {/* Filter Komponen Perdin */}
-                <div className="relative min-w-[170px] group">
-                  <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover:text-slate-600 transition-colors" />
-                  <select
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                    className="w-full h-9 appearance-none pl-8 pr-8 text-xs font-medium bg-white border border-slate-200 rounded-lg shadow-2xs hover:border-slate-300 hover:bg-slate-50/50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-700 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
-                  >
-                    <option value="ALL">Semua Komponen</option>
-                    {availableCategories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
-                </div>
-              </>
-            ) : isTunjanganLapangan ? null : (
+            ) : isTunjanganLapangan || isUangPerdin ? null : (
               /* Filter Kategori / Jenis Bantuan / Kriteria Persalinan */
               <div className="relative min-w-[190px] group">
                 <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover:text-slate-600 transition-colors" />
@@ -1015,24 +955,20 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
               ) : isUangPerdin ? (
                 <tr>
                   <th className="px-5 py-3.5">
-                    <SortableHeader label="Kode" field="salary_grade.code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Kode Level" field="grade.code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5">
-                    <SortableHeader label="Nama Golongan" field="salary_grade.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Nama Level Jabatan" field="grade.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
-                  <th className="px-4 py-3.5">
-                    <SortableHeader label="Zona / Wilayah" field="zone_name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
-                  </th>
-                  <th className="px-4 py-3.5">
-                    <SortableHeader label="Komponen Perdin" field="category_name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                  <th className="px-4 py-3.5 text-center">
+                    <SortableHeader label="Pangkat" field="grade.pangkat" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5 text-right">
-                    <SortableHeader label="Nominal Per Hari" field="amount" align="right" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Uang Perdin (Per Hari)" field="amount" align="right" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5 text-center">
                     <SortableHeader label="Periode" field="period_type" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
-                  <th className="px-4 py-3.5">Ketentuan / Keterangan</th>
                   <th className="px-4 py-3.5 text-center">
                     <SortableHeader label="Status" field="status" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
@@ -1195,7 +1131,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={isUangPerdin ? 9 : isTunjanganLapangan ? 7 : 8} className="px-5 py-12 text-center text-slate-400">
+                  <td colSpan={isTunjanganLapangan || isUangPerdin ? 7 : 8} className="px-5 py-12 text-center text-slate-400">
                     <ShieldCheck className="h-10 w-10 mx-auto text-slate-300 mb-2" />
                     <p className="font-semibold text-slate-600 dark:text-slate-300">Tidak ada data {title.toLowerCase()} ditemukan</p>
                     <p className="text-xs text-slate-400 mt-0.5">Silakan tambahkan data baru atau bersihkan filter pencarian.</p>
@@ -1261,71 +1197,65 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                   </tr>
                 ))
               ) : isUangPerdin ? (
-                /* Uang Perdin Rows */
-                paginatedData.map((item) => {
-                  const gol = item.salary_grade || (item.grade as any);
-                  return (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
-                    >
-                      <td className="px-5 py-3.5 font-mono font-bold text-slate-800 dark:text-slate-200">
-                        <Badge variant="outline" className="font-mono bg-cyan-50 text-cyan-800 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800">
-                          {gol?.code || '-'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
-                        <div className="flex items-center gap-1.5">
-                          <span>{gol?.name || '-'}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800 font-medium">
-                          {item.zone_name || '-'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3.5 font-medium text-slate-700 dark:text-slate-300">
-                        {item.category_name || '-'}
-                      </td>
-                      <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                        {formatRupiah(item.amount)}
-                      </td>
-                      <td className="px-4 py-3.5 text-center text-slate-700 dark:text-slate-300">
-                        {getPeriodLabel(item.period_type)}
-                      </td>
-                      <td className="px-4 py-3.5 text-slate-500 dark:text-slate-400 max-w-xs truncate">
-                        {item.description || '-'}
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <Badge variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}>
-                          {item.status === 'ACTIVE' ? 'AKTIF' : 'NON-AKTIF'}
-                        </Badge>
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenEdit(item)}
-                            className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-800"
-                            title={`Edit ${title}`}
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(item)}
-                            className="h-8 w-8 p-0 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-slate-800"
-                            title={`Hapus ${title}`}
-                          >
-                            <Trash2 className="h-3.5 w-3.5 text-rose-500" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+                /* Uang Perdin Rows (Berdasarkan Level Jabatan) */
+                paginatedData.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="px-5 py-3.5 font-mono font-bold text-slate-800 dark:text-slate-200">
+                      <Badge variant="outline" className="font-mono bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
+                        {item.grade?.code || '-'}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
+                      {item.grade?.name || '-'}
+                    </td>
+                    <td className="px-4 py-3.5 text-center">
+                      {(() => {
+                        const lvl = item.grade as GradeItem | undefined;
+                        return (
+                          <Badge variant={lvl?.pangkat === 'Staff' ? 'primary' : 'neutral'} className="text-[11px]">
+                            {lvl?.pangkat || '-'}
+                          </Badge>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                      {formatRupiah(item.amount)}
+                    </td>
+                    <td className="px-4 py-3.5 text-center text-slate-700 dark:text-slate-300">
+                      {getPeriodLabel(item.period_type)}
+                    </td>
+                    <td className="px-4 py-3.5 text-center">
+                      <Badge variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}>
+                        {item.status === 'ACTIVE' ? 'AKTIF' : 'NON-AKTIF'}
+                      </Badge>
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenEdit(item)}
+                          className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-800"
+                          title={`Edit ${title}`}
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(item)}
+                          className="h-8 w-8 p-0 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-slate-800"
+                          title={`Hapus ${title}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : isTunjanganLapangan ? (
                 /* Tunjangan Lapangan Rows (Berdasarkan Level Jabatan) */
                 paginatedData.map((item) => (
@@ -1618,23 +1548,23 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
               </div>
             </>
           ) : isUangPerdin ? (
-            /* ================= FORM KHUSUS UANG PERDIN ================= */
+            /* ================= FORM KHUSUS UANG PERDIN (LEVEL JABATAN) ================= */
             <>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  1. Golongan <span className="text-rose-500">*</span>
+                  1. Level Jabatan <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative flex items-center group">
                   <select
-                    value={formData.salary_grade_id}
-                    onChange={(e) => setFormData({ ...formData, salary_grade_id: Number(e.target.value) })}
+                    value={formData.grade_id}
+                    onChange={(e) => setFormData({ ...formData, grade_id: Number(e.target.value) })}
                     required
                     className="w-full h-9.5 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50/40 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
                   >
-                    <option value="0" disabled>-- Pilih Golongan --</option>
-                    {salaryGrades.map((g) => (
+                    <option value="0" disabled>-- Pilih Level Jabatan --</option>
+                    {jobGrades.map((g) => (
                       <option key={g.id} value={g.id}>
-                        {g.code} - {g.name}
+                        {g.code} - {g.name}{g.pangkat ? ` (${g.pangkat})` : ''}
                       </option>
                     ))}
                   </select>
@@ -1644,81 +1574,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  2. Zona / Wilayah Perdin <span className="text-rose-500">*</span>
-                </label>
-                <div className="space-y-2">
-                  <div className="relative flex items-center group">
-                    <select
-                      value={PERDIN_ZONES.includes(formData.zone_name) ? formData.zone_name : 'CUSTOM'}
-                      onChange={(e) => {
-                        if (e.target.value === 'CUSTOM') {
-                          setFormData({ ...formData, zone_name: '' });
-                        } else {
-                          setFormData({ ...formData, zone_name: e.target.value });
-                        }
-                      }}
-                      className="w-full h-9.5 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50/40 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
-                    >
-                      {PERDIN_ZONES.map((z) => (
-                        <option key={z} value={z}>{z}</option>
-                      ))}
-                      <option value="CUSTOM">-- Zona Lainnya (Ketik Manual) --</option>
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
-                  </div>
-
-                  {(!PERDIN_ZONES.includes(formData.zone_name) || formData.zone_name === '') && (
-                    <Input
-                      placeholder="Ketik nama zona perdin..."
-                      value={formData.zone_name}
-                      onChange={(e) => setFormData({ ...formData, zone_name: e.target.value })}
-                      required
-                      className="h-9.5 text-xs"
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  3. Komponen Perdin <span className="text-rose-500">*</span>
-                </label>
-                <div className="space-y-2">
-                  <div className="relative flex items-center group">
-                    <select
-                      value={PERDIN_CATEGORIES.includes(formData.category_name) ? formData.category_name : 'CUSTOM'}
-                      onChange={(e) => {
-                        if (e.target.value === 'CUSTOM') {
-                          setFormData({ ...formData, category_name: '' });
-                        } else {
-                          setFormData({ ...formData, category_name: e.target.value });
-                        }
-                      }}
-                      className="w-full h-9.5 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50/40 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
-                    >
-                      {PERDIN_CATEGORIES.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                      <option value="CUSTOM">-- Komponen Lainnya (Ketik Manual) --</option>
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
-                  </div>
-
-                  {(!PERDIN_CATEGORIES.includes(formData.category_name) || formData.category_name === '') && (
-                    <Input
-                      placeholder="Ketik nama komponen perdin..."
-                      value={formData.category_name}
-                      onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
-                      required
-                      className="h-9.5 text-xs"
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  4. Nominal Per Hari (Rp) <span className="text-rose-500">*</span>
+                  2. Besaran Uang Perdin (Per Hari) <span className="text-rose-500">*</span>
                 </label>
                 <Input
                   type="number"
@@ -1739,7 +1595,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  5. Periode / Frekuensi <span className="text-rose-500">*</span>
+                  3. Periode / Frekuensi <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative flex items-center group">
                   <select
@@ -2141,7 +1997,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
           )}
 
           {/* Ketentuan Tambahan / Keterangan (Common) */}
-          {!isTunjanganLapangan && (
+          {!isTunjanganLapangan && !isUangPerdin && (
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Ketentuan Tambahan / Keterangan

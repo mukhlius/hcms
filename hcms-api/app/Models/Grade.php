@@ -41,4 +41,9 @@ class Grade extends Model
     {
         return $this->hasMany(Position::class, 'grade_id');
     }
+
+    public function salaryGradeJenjangs(): HasMany
+    {
+        return $this->hasMany(SalaryGradeJenjang::class, 'grade_id');
+    }
 }

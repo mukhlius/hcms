@@ -101,6 +101,8 @@ export const FIELD_DEFINITIONS: Record<string, { label: string; required?: boole
 
   // Golongan & Level & Hubungan Kerja
   housing_allowance: { label: 'Bantuan Perumahan (housing_allowance)', required: false, aliases: ['perumahan', 'housing_allowance', 'bantuan perumahan'] },
+  jenjang: { label: 'Nama Jenjang (name/jenjang)', required: true, aliases: ['jenjang', 'nama jenjang', 'jenjang jabatan', 'nama jenjang jabatan'] },
+  order_index: { label: 'Urutan Jenjang (order_index)', required: false, aliases: ['urutan', 'order_index', 'urutan jenjang', 'no urut'] },
   level: { label: 'Tingkat Level (level)', required: true, aliases: ['tingkat level', 'level', 'tingkatan'] },
   pangkat: { label: 'Pangkat Pegawai (pangkat)', required: false, aliases: ['pangkat', 'golongan pangkat', 'staff/non staff'] },
   is_permanent: { label: 'Sifat Hubungan / Permanen (is_permanent)', required: false, aliases: ['sifat', 'is_permanent', 'permanent', 'tetap', 'sifat hubungan'] },
@@ -186,6 +188,15 @@ const ENTITY_CATALOG: EntityMeta[] = [
     icon: <Table className="h-5 w-5 text-amber-600" />,
     iconBg: 'bg-amber-50 dark:bg-amber-950/50',
     columns: ['code', 'name', 'status'],
+  },
+  {
+    id: 'jenjang',
+    name: 'Jenjang Jabatan',
+    category: 'Organisasi',
+    description: 'Master pemetaan jenjang karir berdasarkan kombinasi Golongan dan Level Jabatan.',
+    icon: <ShieldCheck className="h-5 w-5 text-indigo-600" />,
+    iconBg: 'bg-indigo-50 dark:bg-indigo-950/50',
+    columns: ['salary_grade_code', 'grade_code', 'name', 'order_index', 'status'],
   },
   {
     id: 'levels',
@@ -274,10 +285,10 @@ const ENTITY_CATALOG: EntityMeta[] = [
     id: 'uang-perdin',
     name: 'Uang Perdin',
     category: 'Benefit & Plafon',
-    description: 'Tarif uang saku, makan, dan transport dinas per zona wilayah & golongan.',
+    description: 'Tarif uang perjalanan dinas (perdin) harian berdasarkan level jabatan.',
     icon: <PlaneTakeoff className="h-5 w-5 text-blue-600" />,
     iconBg: 'bg-blue-50 dark:bg-blue-950/50',
-    columns: ['salary_grade_code', 'zone_name', 'category_name', 'amount', 'period_type', 'description', 'status'],
+    columns: ['grade_code', 'amount', 'period_type', 'status'],
   },
   {
     id: 'bantuan-lumpsum',

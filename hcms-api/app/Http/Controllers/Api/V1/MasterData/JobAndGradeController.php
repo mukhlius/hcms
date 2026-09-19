@@ -248,6 +248,7 @@ class JobAndGradeController extends BaseApiController
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:50', 'unique:salary_grades,code'],
             'name' => ['required', 'string', 'max:255'],
+            'jenjang' => ['nullable', 'string', 'max:100'],
             'housing_allowance' => ['nullable', 'numeric', 'min:0'],
             'level_id' => ['nullable', 'exists:grades,id'],
             'min_salary' => ['nullable', 'numeric', 'min:0'],
@@ -272,6 +273,7 @@ class JobAndGradeController extends BaseApiController
         $validated = $request->validate([
             'code' => ['sometimes', 'required', 'string', 'max:50', 'unique:salary_grades,code,' . $salaryGrade->id],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'jenjang' => ['nullable', 'string', 'max:100'],
             'housing_allowance' => ['nullable', 'numeric', 'min:0'],
             'level_id' => ['nullable', 'exists:grades,id'],
             'min_salary' => ['nullable', 'numeric', 'min:0'],
