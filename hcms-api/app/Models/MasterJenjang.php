@@ -16,8 +16,13 @@ class MasterJenjang extends Model
     protected $fillable = [
         'code',
         'name',
+        'level',
         'description',
         'status',
+    ];
+
+    protected $casts = [
+        'level' => 'integer',
     ];
 
     public function salaryGradeJenjangs(): HasMany

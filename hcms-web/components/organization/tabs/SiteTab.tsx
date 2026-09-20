@@ -10,7 +10,6 @@ import {
   Edit, 
   Power, 
   Trash2, 
-  ArrowRight,
   Network,
   Building2
 } from 'lucide-react';
@@ -31,7 +30,7 @@ import { toast, confirmDialog } from '@/stores/alertStore';
 interface SiteTabProps {
   companies: MasterCompany[];
   selectedCompanyId: string;
-  onDrillDownToDepartment: (siteId: number) => void;
+  onDrillDownToDepartment?: (siteId: number) => void;
   onRefreshAll?: () => void;
   createTrigger?: number;
 }
@@ -299,7 +298,9 @@ export const SiteTab: React.FC<SiteTabProps> = ({
                   <th className="px-4 py-3.5">
                     <SortableHeader label="Status" field="status" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
-                  <th className="px-4 py-3.5 text-center">Navigasi Departemen</th>
+                  <th className="px-4 py-3.5 text-center">
+                    <SortableHeader label="Total Departemen" field="departments_count" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                  </th>
                   <th className="px-5 py-3.5 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -329,16 +330,15 @@ export const SiteTab: React.FC<SiteTabProps> = ({
                       </Badge>
                     </td>
                     <td className="px-4 py-3.5 text-center">
-                      <button
-                        type="button"
-                        onClick={() => onDrillDownToDepartment(s.id)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-md transition-colors cursor-pointer"
-                        title={`Buka daftar Departemen untuk ${s.name}`}
-                      >
-                        <Network className="h-3 w-3" />
-                        <span>Lihat Departemen</span>
-                        <ArrowRight className="h-3 w-3" />
-                      </button>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        (s.departments_count ?? 0) > 0
+                          ? 'bg-purple-50 text-purple-700 border border-purple-200/60'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        <Network className="h-3 w-3 text-purple-500" />
+                        <span className="font-semibold">{s.departments_count ?? 0}</span>
+                        <span>Departemen</span>
+                      </span>
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">

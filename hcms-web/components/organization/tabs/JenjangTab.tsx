@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  GitMerge, 
-  Search, 
-  Plus, 
-  RefreshCw, 
-  Edit, 
-  Trash2, 
+import {
+  GitMerge,
+  Search,
+  Plus,
+  RefreshCw,
+  Edit,
+  Trash2,
   Download,
   Award,
   Layers,
@@ -15,12 +15,12 @@ import {
   Filter
 } from 'lucide-react';
 import { SalaryGradeJenjangItem, SalaryGradeItem, GradeItem, MasterJenjangItem } from '@/types';
-import { 
-  jenjangService, 
-  salaryGradeService, 
-  jobGradeService, 
+import {
+  jenjangService,
+  salaryGradeService,
+  jobGradeService,
   masterJenjangService,
-  importExportService 
+  importExportService
 } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -45,7 +45,7 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
   const [grades, setGrades] = useState<GradeItem[]>([]);
   const [masterJenjangs, setMasterJenjangs] = useState<MasterJenjangItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  
+
   // Filters
   const [search, setSearch] = useState<string>('');
   const [filterSalaryGradeId, setFilterSalaryGradeId] = useState<string>('');
@@ -149,11 +149,11 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
 
   const handleOpenEdit = (item: SalaryGradeJenjangItem) => {
     setModalMode('edit');
-    const matchedMasterId = item.master_jenjang_id 
-      ? String(item.master_jenjang_id) 
-      : (masterJenjangs.find(m => m.name.toLowerCase() === item.name.toLowerCase())?.id 
-          ? String(masterJenjangs.find(m => m.name.toLowerCase() === item.name.toLowerCase())?.id) 
-          : '');
+    const matchedMasterId = item.master_jenjang_id
+      ? String(item.master_jenjang_id)
+      : (masterJenjangs.find(m => m.name.toLowerCase() === item.name.toLowerCase())?.id
+        ? String(masterJenjangs.find(m => m.name.toLowerCase() === item.name.toLowerCase())?.id)
+        : '');
 
     setFormData({
       id: item.id,
@@ -312,13 +312,6 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
               leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
             >
               Segarkan
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleOpenCreate}
-              leftIcon={<Plus className="h-3.5 w-3.5" />}
-            >
-              Tambah Jenjang
             </Button>
           </div>
         </div>
@@ -532,7 +525,7 @@ export const JenjangTab: React.FC<JenjangTabProps> = ({ onRefreshAll, createTrig
               <option value="">-- Pilih Nama Jenjang dari Master Jenjang --</option>
               {masterJenjangs.map((mj) => (
                 <option key={mj.id} value={mj.id}>
-                  [{mj.code}] {mj.name} {mj.status === 'INACTIVE' ? '(Non-Aktif)' : ''}
+                  [{mj.code}] {mj.name} {mj.level ? `(Level ${mj.level})` : ''} {mj.status === 'INACTIVE' ? '(Non-Aktif)' : ''}
                 </option>
               ))}
             </Select>

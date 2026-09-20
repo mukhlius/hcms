@@ -9,9 +9,7 @@ import {
   Edit, 
   Power, 
   Trash2, 
-  ArrowRight,
   Layers,
-  Briefcase,
   Building2,
   MapPin,
   UserCheck,
@@ -36,8 +34,8 @@ interface DepartmentTabProps {
   sites: MasterSite[];
   selectedCompanyId: string;
   selectedSiteId: string;
-  onDrillDownToSection: (departmentId: number) => void;
-  onDrillDownToPosition: (departmentId: number) => void;
+  onDrillDownToSection?: (departmentId: number) => void;
+  onDrillDownToPosition?: (departmentId: number) => void;
   onRefreshAll?: () => void;
   createTrigger?: number;
 }
@@ -290,7 +288,9 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
                   <th className="px-4 py-3.5">
                     <SortableHeader label="Status" field="status" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
-                  <th className="px-4 py-3.5 text-center">Navigasi Lanjut</th>
+                  <th className="px-4 py-3.5 text-center">
+                    <SortableHeader label="Total Section" field="sections_count" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                  </th>
                   <th className="px-5 py-3.5 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -333,27 +333,15 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
                         </Badge>
                       </td>
                       <td className="px-4 py-3.5 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => onDrillDownToSection(dept.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md transition-colors cursor-pointer"
-                            title={`Buka Seksi untuk ${dept.name}`}
-                          >
-                            <Layers className="h-3 w-3" />
-                            <span>Lihat Seksi</span>
-                            <ArrowRight className="h-3 w-3" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onDrillDownToPosition(dept.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors cursor-pointer"
-                            title={`Buka Jabatan untuk ${dept.name}`}
-                          >
-                            <Briefcase className="h-3 w-3" />
-                            <span>Jabatan</span>
-                          </button>
-                        </div>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          (dept.sections_count ?? 0) > 0
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                            : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          <Layers className="h-3 w-3 text-amber-500" />
+                          <span className="font-semibold">{dept.sections_count ?? 0}</span>
+                          <span>Section</span>
+                        </span>
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1">

@@ -48,6 +48,11 @@ class OrganizationSection extends Model
         return $this->hasMany(User::class, 'section_id');
     }
 
+    public function positions(): HasMany
+    {
+        return $this->hasMany(Position::class, 'section_id');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'ACTIVE');
