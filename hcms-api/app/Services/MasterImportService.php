@@ -675,7 +675,50 @@ class MasterImportService
                                 'status' => $item['status'] ?? 'ACTIVE',
                             ]
                         );
-                    } elseif (in_array($benefitType, ['BANTUAN_LUMPSUM', 'BANTUAN_KOMUNIKASI', 'BANTUAN_PERUMAHAN'])) {
+                    } elseif ($benefitType === 'BANTUAN_LUMPSUM') {
+                        $gradeId = null;
+                        $gradeCode = $item['grade_code'] ?? $item['level_code'] ?? $item['job_level_code'] ?? $item['kode_level'] ?? null;
+                        if (!empty($gradeCode)) {
+                            $gradeId = \App\Models\Grade::where('code', $gradeCode)->orWhere('name', $gradeCode)->value('id');
+                        }
+                        if (!$gradeId && !empty($item['grade_id'])) {
+                            $gradeId = $item['grade_id'];
+                        }
+                        if (!$gradeId && !empty($item['level_id'])) {
+                            $gradeId = $item['level_id'];
+                        }
+
+                        if (!$gradeId) {
+                            $codeDisplay = $gradeCode ?? '(kosong)';
+                            throw new \Exception("Level Jabatan '{$codeDisplay}' tidak ditemukan dalam master data Level / Grade. Pastikan menggunakan kode Level Jabatan yang valid (contoh: PM, DPM, DH, SH, GL, OFF, ADM, SEC, OPT, MEC).");
+                        }
+
+                        $categoryName = $item['category_name'] ?? null;
+                        $amount = (float)($item['amount'] ?? 0);
+                        $periodType = $item['period_type'] ?? 'PER_KASUS';
+
+                        \App\Models\BenefitPlafond::updateOrCreate(
+                            [
+                                'benefit_type' => 'BANTUAN_LUMPSUM',
+                                'grade_id' => $gradeId,
+                                'category_name' => $categoryName,
+                            ],
+                            [
+                                'benefit_type' => 'BANTUAN_LUMPSUM',
+                                'grade_id' => $gradeId,
+                                'salary_grade_id' => null,
+                                'salary_grade_jenjang_id' => null,
+                                'master_jenjang_id' => null,
+                                'category_name' => $categoryName,
+                                'zone_name' => null,
+                                'amount' => $amount,
+                                'marital_category' => 'SEMUA',
+                                'period_type' => $periodType,
+                                'description' => $item['description'] ?? null,
+                                'status' => $item['status'] ?? 'ACTIVE',
+                            ]
+                        );
+                    } elseif (in_array($benefitType, ['BANTUAN_KOMUNIKASI', 'BANTUAN_PERUMAHAN'])) {
                         $salaryGradeId = null;
                         if (!empty($item['salary_grade_code'])) {
                             $salaryGradeId = \App\Models\SalaryGrade::where('code', $item['salary_grade_code'])->value('id');
@@ -689,7 +732,6 @@ class MasterImportService
                         $amount = (float)($item['amount'] ?? 0);
                         $defaultPeriod = match ($benefitType) {
                             'UANG_PERDIN' => 'HARIAN',
-                            'BANTUAN_LUMPSUM' => 'PER_KASUS',
                             default => 'BULANAN',
                         };
                         $periodType = $item['period_type'] ?? $defaultPeriod;

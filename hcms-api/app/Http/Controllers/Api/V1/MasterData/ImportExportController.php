@@ -208,7 +208,14 @@ class ImportExportController extends BaseApiController
                 'period_type' => ['nullable', 'string', 'max:50'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
-            'bantuan-lumpsum', 'bantuan-komunikasi', 'bantuan-perumahan' => [
+            'bantuan-lumpsum' => [
+                'grade_code' => ['required', 'string', 'max:50'],
+                'category_name' => ['required', 'string', 'max:100'],
+                'amount' => ['required', 'numeric', 'min:0'],
+                'period_type' => ['nullable', 'string', 'max:50'],
+                'status' => ['nullable', 'string', 'max:50'],
+            ],
+            'bantuan-komunikasi', 'bantuan-perumahan' => [
                 'salary_grade_code' => ['required', 'string', 'max:50'],
                 'category_name' => ['nullable', 'string', 'max:100'],
                 'amount' => ['required', 'numeric', 'min:0'],
@@ -296,7 +303,7 @@ class ImportExportController extends BaseApiController
             'plafon-persalinan' => ['Kode Golongan', 'Nama Golongan', 'Kriteria Persalinan', 'Nominal Plafon', 'Periode', 'Ketentuan / Cakupan', 'Status', 'Tanggal Dibuat'],
             'tunjangan-lapangan' => ['Kode Level Jabatan', 'Nama Level Jabatan', 'Pangkat', 'Nominal Tunjangan', 'Periode', 'Status', 'Tanggal Dibuat'],
             'uang-perdin' => ['Kode Master Jenjang', 'Nama Master Jenjang', 'Level Jenjang', 'Besaran Uang Perdin', 'Periode', 'Status', 'Tanggal Dibuat'],
-            'bantuan-lumpsum' => ['Kode Golongan', 'Nama Golongan', 'Jenis Bantuan Lumpsum', 'Besaran Bantuan', 'Periode', 'Ketentuan / Syarat', 'Status', 'Tanggal Dibuat'],
+            'bantuan-lumpsum' => ['Kode Level Jabatan', 'Nama Level Jabatan', 'Pangkat', 'Jenis Bantuan Lumpsum', 'Besaran Bantuan', 'Periode', 'Ketentuan / Syarat', 'Status', 'Tanggal Dibuat'],
             'bantuan-komunikasi' => ['Kode Golongan', 'Nama Golongan', 'Kategori Komunikasi', 'Nominal Bantuan', 'Periode', 'Ketentuan / Fasilitas', 'Status', 'Tanggal Dibuat'],
             'bantuan-perumahan' => ['Kode Golongan', 'Nama Golongan', 'Kategori Perumahan', 'Nominal Bantuan', 'Periode', 'Ketentuan / Keterangan', 'Status', 'Tanggal Dibuat'],
             'shifts' => ['Kode Shift', 'Nama Shift', 'Jam Mulai', 'Jam Selesai', 'Durasi Istirahat (Menit)', 'Status', 'Tanggal Dibuat'],
@@ -315,7 +322,7 @@ class ImportExportController extends BaseApiController
                 'plafon-persalinan' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'PERSALINAN')->orderBy('id'),
                 'tunjangan-lapangan' => BenefitPlafond::with('grade')->where('benefit_type', 'TUNJANGAN_LAPANGAN')->orderBy('id'),
                 'uang-perdin' => BenefitPlafond::with(['masterJenjang'])->where('benefit_type', 'UANG_PERDIN')->orderBy('id'),
-                'bantuan-lumpsum' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'BANTUAN_LUMPSUM')->orderBy('id'),
+                'bantuan-lumpsum' => BenefitPlafond::with('grade')->where('benefit_type', 'BANTUAN_LUMPSUM')->orderBy('id'),
                 'bantuan-komunikasi' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'BANTUAN_KOMUNIKASI')->orderBy('id'),
                 'bantuan-perumahan' => BenefitPlafond::with('salaryGrade')->where('benefit_type', 'BANTUAN_PERUMAHAN')->orderBy('id'),
                 'departments' => OrganizationDepartment::with(['company', 'site'])->orderBy('code'),
@@ -485,8 +492,9 @@ class ImportExportController extends BaseApiController
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     ],
                     'bantuan-lumpsum' => [
-                        $item->salaryGrade?->code ?? '',
-                        $item->salaryGrade?->name ?? '',
+                        $item->grade?->code ?? '',
+                        $item->grade?->name ?? '',
+                        $item->grade?->pangkat ?? '',
                         $item->category_name ?? '',
                         (string) ($item->amount ?? 0),
                         $item->period_type ?? 'PER_KASUS',
@@ -718,10 +726,11 @@ class ImportExportController extends BaseApiController
                 ],
             ],
             'bantuan-lumpsum' => [
-                'headers' => ['salary_grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
+                'headers' => ['grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
                 'samples' => [
-                    ['GOL-1A', 'Relokasi Site Tambang', '7500000', 'PER_KASUS', 'Bantuan lumpsum relokasi domisili karyawan ke site', 'ACTIVE'],
-                    ['GOL-4A', 'Relokasi Site Tambang', '15000000', 'PER_KASUS', 'Bantuan lumpsum relokasi domisili karyawan ke site', 'ACTIVE'],
+                    ['PM', 'Relokasi Site Tambang', '15000000', 'PER_KASUS', 'Bantuan lumpsum relokasi domisili karyawan ke site', 'ACTIVE'],
+                    ['SPV', 'Relokasi Site Tambang', '7500000', 'PER_KASUS', 'Bantuan lumpsum relokasi domisili karyawan ke site', 'ACTIVE'],
+                    ['OFF', 'Bantuan Duka Cita', '5000000', 'PER_KASUS', 'Santunan kedukaan keluarga inti', 'ACTIVE'],
                 ],
             ],
             'bantuan-komunikasi' => [

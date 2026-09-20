@@ -126,6 +126,7 @@ class BenefitPlafondController extends BaseApiController
         $isKacamata = $benefitType === 'KACAMATA';
         $isTunjanganLapangan = $benefitType === 'TUNJANGAN_LAPANGAN';
         $isUangPerdin = $benefitType === 'UANG_PERDIN';
+        $isBantuanLumpsum = $benefitType === 'BANTUAN_LUMPSUM';
         $isPersalinan = $benefitType === 'PERSALINAN';
         $isPengobatan = $benefitType === 'PENGOBATAN';
 
@@ -133,7 +134,7 @@ class BenefitPlafondController extends BaseApiController
             if (!$request->has('master_jenjang_id') && $request->has('jenjang_id')) {
                 $request->merge(['master_jenjang_id' => $request->input('jenjang_id')]);
             }
-        } elseif ($isTunjanganLapangan) {
+        } elseif ($isTunjanganLapangan || $isBantuanLumpsum) {
             if (!$request->has('grade_id') && $request->has('level_id')) {
                 $request->merge(['grade_id' => $request->input('level_id')]);
             }
@@ -187,6 +188,18 @@ class BenefitPlafondController extends BaseApiController
             $rules['lens_type'] = ['nullable', 'string'];
             $rules['frame_amount'] = ['nullable', 'numeric'];
             $rules['lens_amount'] = ['nullable', 'numeric'];
+        } elseif ($isBantuanLumpsum) {
+            $rules['grade_id'] = ['required', 'exists:grades,id'];
+            $rules['category_name'] = ['required', 'string', 'max:100'];
+            $rules['amount'] = ['required', 'numeric', 'min:0'];
+            $rules['salary_grade_id'] = ['nullable'];
+            $rules['salary_grade_jenjang_id'] = ['nullable'];
+            $rules['master_jenjang_id'] = ['nullable'];
+            $rules['marital_category'] = ['nullable', 'string'];
+            $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
+            $rules['lens_type'] = ['nullable', 'string'];
+            $rules['frame_amount'] = ['nullable', 'numeric'];
+            $rules['lens_amount'] = ['nullable', 'numeric'];
         } elseif ($isPersalinan) {
             $rules['salary_grade_id'] = ['required', 'exists:salary_grades,id'];
             $rules['category_name'] = ['required', 'string', 'max:100'];
@@ -233,6 +246,7 @@ class BenefitPlafondController extends BaseApiController
         $isKacamata = $benefitType === 'KACAMATA';
         $isTunjanganLapangan = $benefitType === 'TUNJANGAN_LAPANGAN';
         $isUangPerdin = $benefitType === 'UANG_PERDIN';
+        $isBantuanLumpsum = $benefitType === 'BANTUAN_LUMPSUM';
         $isPersalinan = $benefitType === 'PERSALINAN';
         $isPengobatan = $benefitType === 'PENGOBATAN';
 
@@ -240,7 +254,7 @@ class BenefitPlafondController extends BaseApiController
             if (!$request->has('master_jenjang_id') && $request->has('jenjang_id')) {
                 $request->merge(['master_jenjang_id' => $request->input('jenjang_id')]);
             }
-        } elseif ($isTunjanganLapangan) {
+        } elseif ($isTunjanganLapangan || $isBantuanLumpsum) {
             if (!$request->has('grade_id') && $request->has('level_id')) {
                 $request->merge(['grade_id' => $request->input('level_id')]);
             }
@@ -288,6 +302,18 @@ class BenefitPlafondController extends BaseApiController
             $rules['category_name'] = ['nullable', 'string', 'max:100'];
             $rules['zone_name'] = ['nullable', 'string', 'max:100'];
             $rules['amount'] = ['sometimes', 'required', 'numeric', 'min:0'];
+            $rules['marital_category'] = ['nullable', 'string'];
+            $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
+            $rules['lens_type'] = ['nullable', 'string'];
+            $rules['frame_amount'] = ['nullable', 'numeric'];
+            $rules['lens_amount'] = ['nullable', 'numeric'];
+        } elseif ($isBantuanLumpsum) {
+            $rules['grade_id'] = ['sometimes', 'required', 'exists:grades,id'];
+            $rules['category_name'] = ['sometimes', 'required', 'string', 'max:100'];
+            $rules['amount'] = ['sometimes', 'required', 'numeric', 'min:0'];
+            $rules['salary_grade_id'] = ['nullable'];
+            $rules['salary_grade_jenjang_id'] = ['nullable'];
+            $rules['master_jenjang_id'] = ['nullable'];
             $rules['marital_category'] = ['nullable', 'string'];
             $rules['marital_status_id'] = ['nullable', 'exists:standard_references,id'];
             $rules['lens_type'] = ['nullable', 'string'];
