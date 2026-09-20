@@ -414,6 +414,7 @@ export interface BenefitPlafondItem {
   grade_id?: number | null;
   salary_grade_jenjang_id?: number | null;
   master_jenjang_id?: number | null;
+  position_id?: number | null;
   lens_type?: string | null;
   frame_amount?: number | null;
   lens_amount?: number | null;
@@ -429,6 +430,7 @@ export interface BenefitPlafondItem {
   grade?: SalaryGradeItem | GradeItem | null;
   jenjang?: SalaryGradeJenjangItem | null;
   master_jenjang?: MasterJenjangItem | null;
+  position?: PositionItem | null;
   marital_status?: ReferenceItem | null;
   created_at?: string;
   updated_at?: string;

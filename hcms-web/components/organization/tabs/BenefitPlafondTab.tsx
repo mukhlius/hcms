@@ -18,10 +18,12 @@ import {
   Home,
   ChevronDown,
   Download,
-  GitMerge
+  GitMerge,
+  Briefcase,
+  UserCheck
 } from 'lucide-react';
-import { BenefitPlafondItem, SalaryGradeItem, GradeItem, SalaryGradeJenjangItem, MasterJenjangItem } from '@/types';
-import { benefitPlafondService, salaryGradeService, jobGradeService, jenjangService, masterJenjangService, importExportService } from '@/services/masterDataService';
+import { BenefitPlafondItem, SalaryGradeItem, GradeItem, SalaryGradeJenjangItem, MasterJenjangItem, PositionItem } from '@/types';
+import { benefitPlafondService, salaryGradeService, jobGradeService, positionService, jenjangService, masterJenjangService, importExportService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -89,9 +91,6 @@ const LUMPSUM_CATEGORIES = [
 
 const KOMUNIKASI_CATEGORIES = [
   'Paket Data & Komunikasi Lapangan',
-  'Tunjangan Pulsa On-Call & Radio',
-  'Paket Data Operasional Heavy Equipment',
-  'Executive Communication Allowance',
 ];
 
 const PERUMAHAN_CATEGORIES = [
@@ -128,11 +127,12 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const isBantuanPerumahan = benefitType === 'BANTUAN_PERUMAHAN';
   const isPersalinan = benefitType === 'PERSALINAN';
   const isPengobatan = benefitType === 'PENGOBATAN';
-  const isSalaryGradeBased = !isKacamata && !isTunjanganLapangan && !isUangPerdin;
+  const isSalaryGradeBased = !isKacamata && !isTunjanganLapangan && !isUangPerdin && !isBantuanKomunikasi;
 
   const [items, setItems] = useState<BenefitPlafondItem[]>([]);
   const [salaryGrades, setSalaryGrades] = useState<SalaryGradeItem[]>([]);
   const [jobGrades, setJobGrades] = useState<GradeItem[]>([]);
+  const [positions, setPositions] = useState<PositionItem[]>([]);
   const [jenjangList, setJenjangList] = useState<SalaryGradeJenjangItem[]>([]);
   const [masterJenjangList, setMasterJenjangList] = useState<MasterJenjangItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -140,6 +140,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
   // Filters
   const [filterGolongan, setFilterGolongan] = useState<string>('ALL');
+  const [filterBasis, setFilterBasis] = useState<'ALL' | 'LEVEL_JABATAN' | 'POSITION'>('ALL');
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
   const [filterZone, setFilterZone] = useState<string>('ALL');
   const [filterLensType, setFilterLensType] = useState<string>('ALL');
@@ -153,8 +154,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   // Form Data
   const [formData, setFormData] = useState({
     id: 0,
+    basis: 'LEVEL_JABATAN' as 'LEVEL_JABATAN' | 'POSITION',
     salary_grade_id: 0,
     grade_id: 0,
+    position_id: 0,
     salary_grade_jenjang_id: 0,
     master_jenjang_id: 0,
     lens_type: 'Monofokus',
@@ -201,6 +204,22 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         if (jobGradeRes.success && jobGradeRes.data) {
           setJobGrades(jobGradeRes.data);
         }
+      } else if (isBantuanKomunikasi) {
+        const [plafondRes, jobGradeRes, posRes] = await Promise.all([
+          benefitPlafondService.getBenefitPlafonds({ benefit_type: benefitType }),
+          jobGradeService.getGrades(),
+          positionService.getPositions({ per_page: 500 }),
+        ]);
+
+        if (plafondRes.success && plafondRes.data) {
+          setItems(plafondRes.data);
+        }
+        if (jobGradeRes.success && jobGradeRes.data) {
+          setJobGrades(jobGradeRes.data);
+        }
+        if (posRes.success && posRes.data) {
+          setPositions(Array.isArray(posRes.data) ? posRes.data : (posRes.data as any).data || []);
+        }
       } else {
         const [plafondRes, salaryGradeRes] = await Promise.all([
           benefitPlafondService.getBenefitPlafonds({ benefit_type: benefitType }),
@@ -220,7 +239,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [benefitType, isKacamata, isTunjanganLapangan, isUangPerdin, title]);
+  }, [benefitType, isKacamata, isTunjanganLapangan, isUangPerdin, isBantuanKomunikasi, title]);
 
   useEffect(() => {
     loadData();
@@ -236,8 +255,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     if (isKacamata) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: LENS_PRESETS[0],
@@ -254,8 +275,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isUangPerdin) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: firstMasterJenjangId,
         lens_type: '',
@@ -272,8 +295,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isTunjanganLapangan) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: firstJobGradeId,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -290,8 +315,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isBantuanLumpsum) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -308,8 +335,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isBantuanKomunikasi) {
       setFormData({
         id: 0,
-        salary_grade_id: firstGradeId,
-        grade_id: 0,
+        basis: 'LEVEL_JABATAN',
+        salary_grade_id: 0,
+        grade_id: firstJobGradeId,
+        position_id: positions.length > 0 ? positions[0].id : 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -326,8 +355,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isBantuanPerumahan) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -344,8 +375,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isPersalinan) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -362,8 +395,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -392,8 +427,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     if (isKacamata) {
       setFormData({
         id: item.id,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: item.lens_type || LENS_PRESETS[0],
@@ -410,8 +447,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isUangPerdin) {
       setFormData({
         id: item.id,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: item.salary_grade_jenjang_id || item.jenjang?.id || 0,
         master_jenjang_id: item.master_jenjang_id || item.master_jenjang?.id || 0,
         lens_type: '',
@@ -428,8 +467,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isTunjanganLapangan) {
       setFormData({
         id: item.id,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: item.grade_id || item.grade?.id || 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -443,11 +484,34 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         description: '',
         status: item.status,
       });
+    } else if (isBantuanKomunikasi) {
+      const isPos = Boolean(item.position_id || item.position);
+      setFormData({
+        id: item.id,
+        basis: isPos ? 'POSITION' : 'LEVEL_JABATAN',
+        salary_grade_id: 0,
+        grade_id: item.grade_id || (item.grade as any)?.id || (jobGrades[0]?.id || 0),
+        position_id: item.position_id || item.position?.id || (positions[0]?.id || 0),
+        salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
+        lens_type: '',
+        frame_amount: '',
+        lens_amount: '',
+        category_name: item.category_name || KOMUNIKASI_CATEGORIES[0],
+        zone_name: '',
+        marital_category: 'SEMUA',
+        amount: String(item.amount || ''),
+        period_type: (item.period_type as any) || 'BULANAN',
+        description: item.description || '',
+        status: item.status,
+      });
     } else if (isPersalinan) {
       setFormData({
         id: item.id,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: item.salary_grade_id || item.salary_grade?.id || 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -464,8 +528,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else {
       setFormData({
         id: item.id,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: item.salary_grade_id || item.salary_grade?.id || 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -517,6 +583,26 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         toast.warning('Nominal tunjangan harus diisi dengan angka valid.', 'Form Belum Lengkap');
         return;
       }
+    } else if (isBantuanKomunikasi) {
+      if (formData.basis === 'LEVEL_JABATAN') {
+        if (!formData.grade_id || formData.grade_id === 0) {
+          toast.warning('Pilih Level Jabatan terlebih dahulu.', 'Form Belum Lengkap');
+          return;
+        }
+      } else {
+        if (!formData.position_id || formData.position_id === 0) {
+          toast.warning('Pilih Posisi / Jabatan Spesifik terlebih dahulu.', 'Form Belum Lengkap');
+          return;
+        }
+      }
+      if (!formData.category_name || !formData.category_name.trim()) {
+        toast.warning('Kategori bantuan komunikasi harus diisi.', 'Form Belum Lengkap');
+        return;
+      }
+      if (formData.amount === '' || isNaN(parseFloat(formData.amount))) {
+        toast.warning('Nominal bantuan komunikasi harus diisi dengan angka valid.', 'Form Belum Lengkap');
+        return;
+      }
     } else {
       if (!formData.salary_grade_id || formData.salary_grade_id === 0) {
         toast.warning('Pilih Golongan terlebih dahulu.', 'Form Belum Lengkap');
@@ -531,7 +617,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
           toast.warning('Kriteria persalinan harus diisi.', 'Form Belum Lengkap');
           return;
         }
-      } else if (isBantuanLumpsum || isBantuanKomunikasi || isBantuanPerumahan) {
+      } else if (isBantuanLumpsum || isBantuanPerumahan) {
         if (!formData.category_name || !formData.category_name.trim()) {
           toast.warning('Kategori / Jenis bantuan harus diisi.', 'Form Belum Lengkap');
           return;
@@ -582,7 +668,20 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
           description: undefined,
           status: formData.status,
         };
-      } else if (isBantuanLumpsum || isBantuanKomunikasi || isBantuanPerumahan || isPersalinan) {
+      } else if (isBantuanKomunikasi) {
+        payload = {
+          benefit_type: benefitType,
+          grade_id: formData.basis === 'LEVEL_JABATAN' ? Number(formData.grade_id) : undefined,
+          position_id: formData.basis === 'POSITION' ? Number(formData.position_id) : undefined,
+          salary_grade_id: undefined,
+          category_name: formData.category_name.trim(),
+          amount: parseFloat(formData.amount),
+          marital_category: 'SEMUA',
+          period_type: formData.period_type,
+          description: formData.description.trim() || undefined,
+          status: formData.status,
+        };
+      } else if (isBantuanLumpsum || isBantuanPerumahan || isPersalinan) {
         payload = {
           benefit_type: benefitType,
           salary_grade_id: Number(formData.salary_grade_id),
@@ -650,7 +749,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isBantuanLumpsum) {
       confirmMsg = `Apakah Anda yakin ingin menghapus bantuan lumpsum Golongan "${golName}" (${item.category_name}) senilai ${formatRupiah(item.amount)}?`;
     } else if (isBantuanKomunikasi) {
-      confirmMsg = `Apakah Anda yakin ingin menghapus bantuan komunikasi Golongan "${golName}" (${item.category_name}) senilai ${formatRupiah(item.amount)}?`;
+      const criteriaName = item.position_id || item.position
+        ? `Posisi "${item.position?.title || item.position?.code || 'ID ' + item.position_id}"`
+        : `Level Jabatan "${(item.grade as GradeItem)?.name || item.grade?.code || 'ID ' + item.grade_id}"`;
+      confirmMsg = `Apakah Anda yakin ingin menghapus bantuan komunikasi untuk ${criteriaName} (${item.category_name}) senilai ${formatRupiah(item.amount)}?`;
     } else if (isBantuanPerumahan) {
       confirmMsg = `Apakah Anda yakin ingin menghapus bantuan perumahan Golongan "${golName}" (${item.category_name}) senilai ${formatRupiah(item.amount)}?`;
     } else {
@@ -744,6 +846,39 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         return matchSearch && matchGolongan && matchStatus;
       }
 
+      if (isBantuanKomunikasi) {
+        const isPos = Boolean(item.position_id || item.position);
+        const posTitle = (item.position?.title || '').toLowerCase();
+        const posCode = (item.position?.code || '').toLowerCase();
+        const posDept = (item.position?.department?.name || '').toLowerCase();
+        const lvl = item.grade as GradeItem | undefined;
+        const lvlName = (lvl?.name || '').toLowerCase();
+        const lvlCode = (lvl?.code || '').toLowerCase();
+        const lvlPangkat = (lvl?.pangkat || '').toLowerCase();
+        const desc = (item.description || '').toLowerCase();
+        const cat = (item.category_name || '').toLowerCase();
+
+        const matchSearch =
+          !search ||
+          posTitle.includes(q) ||
+          posCode.includes(q) ||
+          posDept.includes(q) ||
+          lvlName.includes(q) ||
+          lvlCode.includes(q) ||
+          lvlPangkat.includes(q) ||
+          desc.includes(q) ||
+          cat.includes(q);
+
+        const matchBasis =
+          filterBasis === 'ALL' ||
+          (filterBasis === 'POSITION' && isPos) ||
+          (filterBasis === 'LEVEL_JABATAN' && !isPos);
+
+        const matchCategory = filterCategory === 'ALL' || item.category_name === filterCategory;
+
+        return matchSearch && matchBasis && matchCategory && matchStatus;
+      }
+
       const gol = item.salary_grade;
       const lvl = item.grade as GradeItem | undefined;
       const golName = (gol?.name || '').toLowerCase();
@@ -785,11 +920,13 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     search,
     isKacamata,
     isTunjanganLapangan,
+    isBantuanKomunikasi,
     isPersalinan,
     isPengobatan,
     isUangPerdin,
     filterLensType,
     filterGolongan,
+    filterBasis,
     filterCategory,
     filterStatus,
   ]);
@@ -806,7 +943,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     totalItems,
     paginatedData,
   } = useClientTable<BenefitPlafondItem>(filteredItems, {
-    defaultSortField: isKacamata ? 'lens_type' : isUangPerdin ? 'master_jenjang.level' : isTunjanganLapangan ? 'grade.code' : 'salary_grade.code',
+    defaultSortField: isKacamata ? 'lens_type' : isUangPerdin ? 'master_jenjang.level' : isTunjanganLapangan ? 'grade.code' : isBantuanKomunikasi ? 'category_name' : 'salary_grade.code',
     defaultPerPage: 10,
   });
 
@@ -824,14 +961,17 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
   const isAnyFilterActive = isKacamata
     ? Boolean(search || filterLensType !== 'ALL' || filterStatus !== 'ALL')
-    : isTunjanganLapangan || isUangPerdin
-      ? Boolean(search || filterGolongan !== 'ALL' || filterStatus !== 'ALL')
-      : Boolean(search || filterGolongan !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL');
+    : isBantuanKomunikasi
+      ? Boolean(search || filterBasis !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL')
+      : isTunjanganLapangan || isUangPerdin
+        ? Boolean(search || filterGolongan !== 'ALL' || filterStatus !== 'ALL')
+        : Boolean(search || filterGolongan !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL');
 
   const handleResetFilter = () => {
     setSearch('');
     setFilterStatus('ALL');
     setFilterLensType('ALL');
+    setFilterBasis('ALL');
     setFilterGolongan('ALL');
     setFilterCategory('ALL');
     setFilterZone('ALL');
@@ -857,7 +997,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     if (isTunjanganLapangan) return 'Cari level jabatan, pangkat...';
     if (isPersalinan) return 'Cari golongan, kriteria persalinan...';
     if (isBantuanLumpsum) return 'Cari golongan, jenis bantuan lumpsum...';
-    if (isBantuanKomunikasi) return 'Cari golongan, paket komunikasi...';
+    if (isBantuanKomunikasi) return 'Cari level jabatan, posisi spesifik, paket data...';
     if (isBantuanPerumahan) return 'Cari golongan, kategori perumahan...';
     return 'Cari kode, nama golongan, atau ketentuan...';
   };
@@ -920,6 +1060,20 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                       {g.code} - {g.name}{g.pangkat ? ` (${g.pangkat})` : ''}
                     </option>
                   ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+              </div>
+            ) : isBantuanKomunikasi ? (
+              <div className="relative min-w-[210px] group">
+                <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover:text-slate-600 transition-colors" />
+                <select
+                  value={filterBasis}
+                  onChange={(e) => setFilterBasis(e.target.value as any)}
+                  className="w-full h-9 appearance-none pl-8 pr-8 text-xs font-medium bg-white border border-slate-200 rounded-lg shadow-2xs hover:border-slate-300 hover:bg-slate-50/50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-700 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
+                >
+                  <option value="ALL">Semua Basis (Level & Posisi)</option>
+                  <option value="LEVEL_JABATAN">Basis Level Jabatan</option>
+                  <option value="POSITION">Basis Posisi Spesifik</option>
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
               </div>
@@ -1142,12 +1296,13 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                 </tr>
               ) : isBantuanKomunikasi ? (
                 <tr>
-                  <th className="px-5 py-3.5">
-                    <SortableHeader label="Kode" field="salary_grade.code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                  <th className="px-5 py-3.5 text-center">
+                    <SortableHeader label="Basis" field="position_id" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5">
-                    <SortableHeader label="Nama Golongan" field="salary_grade.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Kriteria (Level / Posisi)" field="grade.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
+                  <th className="px-4 py-3.5">Detail / Departemen</th>
                   <th className="px-4 py-3.5">
                     <SortableHeader label="Kategori Komunikasi" field="category_name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
@@ -1442,8 +1597,107 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                     </td>
                   </tr>
                 ))
+              ) : isBantuanKomunikasi ? (
+                /* Bantuan Komunikasi Rows (Dual Kriteria: Level Jabatan vs Posisi) */
+                paginatedData.map((item) => {
+                  const isPos = Boolean(item.position_id || item.position);
+                  const lvl = item.grade as GradeItem | undefined;
+                  return (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td className="px-5 py-3.5 text-center">
+                        {isPos ? (
+                          <Badge variant="outline" className="bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800 font-semibold inline-flex items-center gap-1">
+                            <Briefcase className="w-3 h-3" />
+                            Posisi
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800 font-semibold inline-flex items-center gap-1">
+                            <UserCheck className="w-3 h-3" />
+                            Level Jabatan
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        {isPos ? (
+                          <div>
+                            <div className="font-semibold text-slate-900 dark:text-slate-100">
+                              {item.position?.title || '-'}
+                            </div>
+                            <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                              {item.position?.code}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="font-semibold text-slate-900 dark:text-slate-100">
+                              {lvl?.name || item.grade?.name || '-'}
+                            </div>
+                            <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                              {lvl?.code || item.grade?.code}
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        {isPos ? (
+                          <div className="text-xs text-slate-700 dark:text-slate-300">
+                            <span>{item.position?.department?.name || item.position?.site?.name || '-'}</span>
+                          </div>
+                        ) : (
+                          <Badge variant={lvl?.pangkat === 'Staff' ? 'primary' : 'neutral'}>
+                            {lvl?.pangkat || '-'}
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <Badge variant="outline" className="bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800 font-medium">
+                          {item.category_name || '-'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                        {formatRupiah(item.amount)}
+                      </td>
+                      <td className="px-4 py-3.5 text-center text-slate-700 dark:text-slate-300">
+                        {getPeriodLabel(item.period_type)}
+                      </td>
+                      <td className="px-4 py-3.5 text-slate-500 dark:text-slate-400 max-w-xs truncate">
+                        {item.description || '-'}
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        <Badge variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}>
+                          {item.status === 'ACTIVE' ? 'AKTIF' : 'NON-AKTIF'}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenEdit(item)}
+                            className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-800"
+                            title={`Edit ${title}`}
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(item)}
+                            className="h-8 w-8 p-0 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-slate-800"
+                            title={`Hapus ${title}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
-                /* Lumpsum, Komunikasi, Perumahan, Pengobatan, Persalinan */
+                /* Lumpsum, Perumahan, Pengobatan, Persalinan */
                 paginatedData.map((item) => {
                   const gol = item.salary_grade || (item.grade as any);
                   return (
@@ -1828,8 +2082,196 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                 </div>
               </div>
             </>
-          ) : isBantuanLumpsum || isBantuanKomunikasi || isBantuanPerumahan ? (
-            /* ================= FORM KHUSUS LUMPSUM, KOMUNIKASI, PERUMAHAN ================= */
+          ) : isBantuanKomunikasi ? (
+            /* ================= FORM KHUSUS BANTUAN KOMUNIKASI (DUAL KRITERIA: LEVEL VS POSISI) ================= */
+            <>
+              {/* Selector Basis Penentuan */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  1. Pilih Basis Penentuan Bantuan Komunikasi <span className="text-rose-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        basis: 'LEVEL_JABATAN',
+                        grade_id: prev.grade_id || (jobGrades[0]?.id || 0),
+                      }));
+                    }}
+                    className={`p-3 rounded-lg border text-left transition-all flex flex-col gap-1 ${formData.basis === 'LEVEL_JABATAN'
+                      ? 'border-blue-500 bg-blue-50/60 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 ring-2 ring-blue-500/20'
+                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300'
+                      }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-semibold text-xs">
+                      <UserCheck className={`h-4 w-4 ${formData.basis === 'LEVEL_JABATAN' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />
+                      <span>Berdasarkan Level Jabatan</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Berlaku umum untuk seluruh karyawan di level jabatan ini (e.g. Manager, Supervisor).
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        basis: 'POSITION',
+                        position_id: prev.position_id || (positions[0]?.id || 0),
+                      }));
+                    }}
+                    className={`p-3 rounded-lg border text-left transition-all flex flex-col gap-1 ${formData.basis === 'POSITION'
+                      ? 'border-purple-500 bg-purple-50/60 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200 ring-2 ring-purple-500/20'
+                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300'
+                      }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-semibold text-xs">
+                      <Briefcase className={`h-4 w-4 ${formData.basis === 'POSITION' ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400'}`} />
+                      <span>Berdasarkan Posisi Spesifik</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Berlaku khusus untuk posisi tertentu (e.g. Kepala Teknik Tambang, Superintendent).
+                    </p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Kriteria Input (Level atau Posisi) */}
+              {formData.basis === 'LEVEL_JABATAN' ? (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    2. Level Jabatan <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative flex items-center group">
+                    <select
+                      value={formData.grade_id}
+                      onChange={(e) => setFormData({ ...formData, grade_id: Number(e.target.value) })}
+                      required
+                      className="w-full h-9.5 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50/40 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
+                    >
+                      <option value="0" disabled>-- Pilih Level Jabatan --</option>
+                      {jobGrades.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.code} - {g.name}{g.pangkat ? ` (${g.pangkat})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    2. Posisi / Jabatan Spesifik <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative flex items-center group">
+                    <select
+                      value={formData.position_id}
+                      onChange={(e) => setFormData({ ...formData, position_id: Number(e.target.value) })}
+                      required
+                      className="w-full h-9.5 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50/40 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
+                    >
+                      <option value="0" disabled>-- Pilih Posisi Spesifik --</option>
+                      {positions.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.code} - {p.title}{p.department?.name ? ` [${p.department.name}]` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+                  </div>
+                </div>
+              )}
+
+              {/* Kategori Komunikasi */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  3. Kategori Bantuan Komunikasi <span className="text-rose-500">*</span>
+                </label>
+                <div className="space-y-2">
+                  <div className="relative flex items-center group">
+                    <select
+                      value={
+                        KOMUNIKASI_CATEGORIES.includes(formData.category_name)
+                          ? formData.category_name
+                          : 'CUSTOM'
+                      }
+                      onChange={(e) => {
+                        if (e.target.value === 'CUSTOM') {
+                          setFormData({ ...formData, category_name: '' });
+                        } else {
+                          setFormData({ ...formData, category_name: e.target.value });
+                        }
+                      }}
+                      className="w-full h-9.5 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50/40 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
+                    >
+                      {KOMUNIKASI_CATEGORIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                      <option value="CUSTOM">-- Kategori Lainnya (Ketik Manual) --</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+                  </div>
+
+                  {(!KOMUNIKASI_CATEGORIES.includes(formData.category_name) || formData.category_name === '') && (
+                    <Input
+                      placeholder="Ketik kategori / jenis paket komunikasi..."
+                      value={formData.category_name}
+                      onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
+                      required
+                      className="h-9.5 text-xs"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Nominal Bantuan */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  4. Nominal Bantuan Komunikasi (Rp) <span className="text-rose-500">*</span>
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  placeholder="Contoh: 500000"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  required
+                  className="h-9.5 text-xs font-mono"
+                />
+                {formData.amount && !isNaN(parseFloat(formData.amount)) && (
+                  <p className="mt-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                    Terbaca: {formatRupiah(formData.amount)}
+                  </p>
+                )}
+              </div>
+
+              {/* Periode / Frekuensi */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  5. Periode / Frekuensi <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative flex items-center group">
+                  <select
+                    value={formData.period_type}
+                    onChange={(e) => setFormData({ ...formData, period_type: e.target.value as any })}
+                    required
+                    className="w-full h-9.5 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50/40 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
+                  >
+                    <option value="BULANAN">Per Bulan (Bulanan)</option>
+                    <option value="TAHUNAN">Per Tahun (Tahunan)</option>
+                    <option value="PER_KASUS">Per Kasus / Insidental</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+                </div>
+              </div>
+            </>
+          ) : isBantuanLumpsum || isBantuanPerumahan ? (
+            /* ================= FORM KHUSUS LUMPSUM & PERUMAHAN ================= */
             <>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -1855,14 +2297,13 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  2. {isBantuanLumpsum ? 'Jenis Bantuan Lumpsum' : isBantuanKomunikasi ? 'Kategori Komunikasi' : 'Kategori Bantuan Perumahan'} <span className="text-rose-500">*</span>
+                  2. {isBantuanLumpsum ? 'Jenis Bantuan Lumpsum' : 'Kategori Bantuan Perumahan'} <span className="text-rose-500">*</span>
                 </label>
                 <div className="space-y-2">
                   <div className="relative flex items-center group">
                     <select
                       value={
                         (isBantuanLumpsum && LUMPSUM_CATEGORIES.includes(formData.category_name)) ||
-                          (isBantuanKomunikasi && KOMUNIKASI_CATEGORIES.includes(formData.category_name)) ||
                           (isBantuanPerumahan && PERUMAHAN_CATEGORIES.includes(formData.category_name))
                           ? formData.category_name
                           : 'CUSTOM'
@@ -1877,9 +2318,6 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                       className="w-full h-9.5 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50/40 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
                     >
                       {isBantuanLumpsum && LUMPSUM_CATEGORIES.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                      {isBantuanKomunikasi && KOMUNIKASI_CATEGORIES.map((c) => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                       {isBantuanPerumahan && PERUMAHAN_CATEGORIES.map((c) => (
@@ -1904,7 +2342,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  3. {isBantuanLumpsum ? 'Besaran Bantuan' : isBantuanKomunikasi ? 'Nominal Bantuan' : 'Nominal Bantuan Perumahan'} (Rp) <span className="text-rose-500">*</span>
+                  3. {isBantuanLumpsum ? 'Besaran Bantuan' : 'Nominal Bantuan Perumahan'} (Rp) <span className="text-rose-500">*</span>
                 </label>
                 <Input
                   type="number"
@@ -1938,12 +2376,6 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                       <>
                         <option value="PER_KASUS">Per Kasus / Kejadian</option>
                         <option value="SEUMUR_HIDUP">Seumur Hidup (Sekali Saja)</option>
-                        <option value="TAHUNAN">Per Tahun</option>
-                      </>
-                    )}
-                    {isBantuanKomunikasi && (
-                      <>
-                        <option value="BULANAN">Per Bulan (Bulanan)</option>
                         <option value="TAHUNAN">Per Tahun</option>
                       </>
                     )}
