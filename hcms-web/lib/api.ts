@@ -23,6 +23,12 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
       config.headers['X-Request-ID'] = crypto.randomUUID();
     }
   }
+
+  // Allow browser to set multipart boundary automatically for FormData
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+
   return config;
 });
 

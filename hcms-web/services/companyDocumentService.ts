@@ -30,10 +30,7 @@ export const companyDocumentService = {
   createAdminDocument: async (formData: FormData) => {
     const res = await apiClient.post<ApiResponse<CompanyDocumentItem>>(
       '/admin/master-data/company-documents',
-      formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }
+      formData
     );
     return res.data;
   },
@@ -43,10 +40,7 @@ export const companyDocumentService = {
     formData.append('_method', 'PUT');
     const res = await apiClient.post<ApiResponse<CompanyDocumentItem>>(
       `/admin/master-data/company-documents/${id}`,
-      formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }
+      formData
     );
     return res.data;
   },

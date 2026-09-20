@@ -15,31 +15,61 @@ class EssDocumentController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $user = auth()->user();
-        $deptId = $user->department_id;
-        $sectionId = $user->section_id;
+        $user->loadMissing(['position:id,department_id,section_id', 'roles']);
+        $isPrivileged = $user->hasRole('SUPER_ADMIN') || $user->hasRole('ADMIN');
+
+        $deptId = $user->department_id ?: $user->position?->department_id;
+        $sectionId = $user->section_id ?: $user->position?->section_id;
         $positionId = $user->position_id;
 
-        // Base query: Only PUBLISHED documents targeted to this user or ALL
-        $query = CompanyDocument::where('status', 'PUBLISHED')
-            ->where(function ($q) use ($deptId, $sectionId, $positionId) {
+        // Base query: Only PUBLISHED documents
+        $baseAuthorizedQuery = CompanyDocument::where('status', 'PUBLISHED');
+
+        if (!$isPrivileged) {
+            $baseAuthorizedQuery->where(function ($q) use ($deptId, $sectionId, $positionId) {
                 $q->where('audience_type', 'ALL')
                     ->orWhereHas('targets', function ($tQuery) use ($deptId, $sectionId, $positionId) {
-                        $tQuery->where(function ($sub) use ($deptId) {
+                        $tQuery->where(function ($sub) use ($deptId, $sectionId, $positionId) {
+                            $hasCondition = false;
                             if ($deptId) {
-                                $sub->where('target_type', 'DEPARTMENT')->where('target_id', $deptId);
+                                $sub->where(function ($d) use ($deptId) {
+                                    $d->where('target_type', 'DEPARTMENT')->where('target_id', $deptId);
+                                });
+                                $hasCondition = true;
                             }
-                        })->orWhere(function ($sub) use ($sectionId) {
                             if ($sectionId) {
-                                $sub->where('target_type', 'SECTION')->where('target_id', $sectionId);
+                                if ($hasCondition) {
+                                    $sub->orWhere(function ($s) use ($sectionId) {
+                                        $s->where('target_type', 'SECTION')->where('target_id', $sectionId);
+                                    });
+                                } else {
+                                    $sub->where(function ($s) use ($sectionId) {
+                                        $s->where('target_type', 'SECTION')->where('target_id', $sectionId);
+                                    });
+                                    $hasCondition = true;
+                                }
                             }
-                        })->orWhere(function ($sub) use ($positionId) {
                             if ($positionId) {
-                                $sub->where('target_type', 'POSITION')->where('target_id', $positionId);
+                                if ($hasCondition) {
+                                    $sub->orWhere(function ($p) use ($positionId) {
+                                        $p->where('target_type', 'POSITION')->where('target_id', $positionId);
+                                    });
+                                } else {
+                                    $sub->where(function ($p) use ($positionId) {
+                                        $p->where('target_type', 'POSITION')->where('target_id', $positionId);
+                                    });
+                                    $hasCondition = true;
+                                }
+                            }
+                            if (!$hasCondition) {
+                                $sub->whereRaw('1 = 0');
                             }
                         });
                     });
-            })
-            ->with(['targets']);
+            });
+        }
+
+        $query = (clone $baseAuthorizedQuery)->with(['targets']);
 
         // Filter by category
         if ($request->filled('category')) {
@@ -74,13 +104,13 @@ class EssDocumentController extends BaseApiController
             return $doc;
         });
 
-        // Compute summary counts per category
+        // Compute summary counts per category based on authorized access
         $counts = [
-            'ALL' => CompanyDocument::where('status', 'PUBLISHED')->count(),
-            'REGULATION' => CompanyDocument::where('status', 'PUBLISHED')->where('category', 'REGULATION')->count(),
-            'POLICY_SOP' => CompanyDocument::where('status', 'PUBLISHED')->where('category', 'POLICY_SOP')->count(),
-            'INTERNAL_MEMO' => CompanyDocument::where('status', 'PUBLISHED')->where('category', 'INTERNAL_MEMO')->count(),
-            'FORM_TEMPLATE' => CompanyDocument::where('status', 'PUBLISHED')->where('category', 'FORM_TEMPLATE')->count(),
+            'ALL' => (clone $baseAuthorizedQuery)->count(),
+            'REGULATION' => (clone $baseAuthorizedQuery)->where('category', 'REGULATION')->count(),
+            'POLICY_SOP' => (clone $baseAuthorizedQuery)->where('category', 'POLICY_SOP')->count(),
+            'INTERNAL_MEMO' => (clone $baseAuthorizedQuery)->where('category', 'INTERNAL_MEMO')->count(),
+            'FORM_TEMPLATE' => (clone $baseAuthorizedQuery)->where('category', 'FORM_TEMPLATE')->count(),
         ];
 
         return $this->successResponse([
@@ -164,31 +194,61 @@ class EssDocumentController extends BaseApiController
 
     private function findAuthorizedDocument(int $id, $user): CompanyDocument
     {
-        $deptId = $user->department_id;
-        $sectionId = $user->section_id;
+        $user->loadMissing(['position:id,department_id,section_id', 'roles']);
+        $isPrivileged = $user->hasRole('SUPER_ADMIN') || $user->hasRole('ADMIN');
+
+        $deptId = $user->department_id ?: $user->position?->department_id;
+        $sectionId = $user->section_id ?: $user->position?->section_id;
         $positionId = $user->position_id;
 
-        $doc = CompanyDocument::where('id', $id)
-            ->where('status', 'PUBLISHED')
-            ->where(function ($q) use ($deptId, $sectionId, $positionId) {
+        $query = CompanyDocument::where('id', $id)
+            ->where('status', 'PUBLISHED');
+
+        if (!$isPrivileged) {
+            $query->where(function ($q) use ($deptId, $sectionId, $positionId) {
                 $q->where('audience_type', 'ALL')
                     ->orWhereHas('targets', function ($tQuery) use ($deptId, $sectionId, $positionId) {
-                        $tQuery->where(function ($sub) use ($deptId) {
+                        $tQuery->where(function ($sub) use ($deptId, $sectionId, $positionId) {
+                            $hasCondition = false;
                             if ($deptId) {
-                                $sub->where('target_type', 'DEPARTMENT')->where('target_id', $deptId);
+                                $sub->where(function ($d) use ($deptId) {
+                                    $d->where('target_type', 'DEPARTMENT')->where('target_id', $deptId);
+                                });
+                                $hasCondition = true;
                             }
-                        })->orWhere(function ($sub) use ($sectionId) {
                             if ($sectionId) {
-                                $sub->where('target_type', 'SECTION')->where('target_id', $sectionId);
+                                if ($hasCondition) {
+                                    $sub->orWhere(function ($s) use ($sectionId) {
+                                        $s->where('target_type', 'SECTION')->where('target_id', $sectionId);
+                                    });
+                                } else {
+                                    $sub->where(function ($s) use ($sectionId) {
+                                        $s->where('target_type', 'SECTION')->where('target_id', $sectionId);
+                                    });
+                                    $hasCondition = true;
+                                }
                             }
-                        })->orWhere(function ($sub) use ($positionId) {
                             if ($positionId) {
-                                $sub->where('target_type', 'POSITION')->where('target_id', $positionId);
+                                if ($hasCondition) {
+                                    $sub->orWhere(function ($p) use ($positionId) {
+                                        $p->where('target_type', 'POSITION')->where('target_id', $positionId);
+                                    });
+                                } else {
+                                    $sub->where(function ($p) use ($positionId) {
+                                        $p->where('target_type', 'POSITION')->where('target_id', $positionId);
+                                    });
+                                    $hasCondition = true;
+                                }
+                            }
+                            if (!$hasCondition) {
+                                $sub->whereRaw('1 = 0');
                             }
                         });
                     });
-            })
-            ->first();
+            });
+        }
+
+        $doc = $query->first();
 
         if (!$doc) {
             abort(403, 'Anda tidak memiliki akses untuk melihat dokumen ini.');

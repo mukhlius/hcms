@@ -42,7 +42,7 @@ import { TablePagination } from '@/components/ui/TablePagination';
 import { SortableHeader } from '@/components/ui/SortableHeader';
 import { toast, confirmDialog } from '@/stores/alertStore';
 import { companyDocumentService } from '@/services/companyDocumentService';
-import { organizationUnitService, positionService } from '@/services/masterDataService';
+import { departmentService, sectionService, positionService } from '@/services/masterDataService';
 import {
   CompanyDocumentItem,
   DocumentCategory,
@@ -51,6 +51,28 @@ import {
   CompanyDocumentTarget,
   DocumentCategoryCount
 } from '@/types/companyDocument';
+
+interface TargetDepartment {
+  id: number;
+  name: string;
+  code: string;
+}
+
+interface TargetSection {
+  id: number;
+  name: string;
+  code: string;
+  department_id?: number;
+  department_name?: string;
+}
+
+interface TargetPosition {
+  id: number;
+  title: string;
+  code: string;
+  department_name?: string;
+  section_name?: string;
+}
 
 const CATEGORY_LABELS: Record<DocumentCategory, { label: string; color: string }> = {
   REGULATION: { label: 'Peraturan Perusahaan', color: 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800' },
@@ -88,9 +110,11 @@ export default function AdminCompanyDocumentsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Metadata dropdown for audience picker
-  const [departmentsList, setDepartmentsList] = useState<{ id: number; name: string; code: string }[]>([]);
-  const [sectionsList, setSectionsList] = useState<{ id: number; name: string; code: string }[]>([]);
-  const [positionsList, setPositionsList] = useState<{ id: number; title: string; code: string }[]>([]);
+  const [departmentsList, setDepartmentsList] = useState<TargetDepartment[]>([]);
+  const [sectionsList, setSectionsList] = useState<TargetSection[]>([]);
+  const [positionsList, setPositionsList] = useState<TargetPosition[]>([]);
+  const [loadingMetadata, setLoadingMetadata] = useState<boolean>(false);
+  const [metadataLoaded, setMetadataLoaded] = useState<boolean>(false);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -104,10 +128,12 @@ export default function AdminCompanyDocumentsPage() {
   const [formCategory, setFormCategory] = useState<DocumentCategory>('INTERNAL_MEMO');
   const [formDescription, setFormDescription] = useState('');
   const [formVersion, setFormVersion] = useState('1.0');
+  const [formStatus, setFormStatus] = useState<DocumentStatus>('PUBLISHED');
   const [formEffectiveDate, setFormEffectiveDate] = useState('');
   const [formExpiryDate, setFormExpiryDate] = useState('');
   const [formAudienceType, setFormAudienceType] = useState<AudienceType>('ALL');
   const [selectedTargetIds, setSelectedTargetIds] = useState<number[]>([]);
+  const [audienceSearch, setAudienceSearch] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [existingFileName, setExistingFileName] = useState<string>('');
 
@@ -170,32 +196,68 @@ export default function AdminCompanyDocumentsPage() {
 
   const hasActiveFilters = Boolean(search || selectedCategory || selectedAudience || selectedStatus);
 
-  // Load audience metadata once when modal opens
-  const loadAudienceMetadata = async () => {
+  // Load audience metadata
+  const loadAudienceMetadata = useCallback(async () => {
     try {
-      const [unitsRes, posRes] = await Promise.allSettled([
-        organizationUnitService.getUnits({ per_page: 150 }),
-        positionService.getPositions({ per_page: 150 }),
+      setLoadingMetadata(true);
+      const [deptRes, secRes, posRes] = await Promise.allSettled([
+        departmentService.getDepartments({ per_page: 500 }),
+        sectionService.getSections({ per_page: 500 }),
+        positionService.getPositions({ per_page: 500 }),
       ]);
 
-      if (unitsRes.status === 'fulfilled' && unitsRes.value?.success && unitsRes.value.data) {
-        const units = unitsRes.value.data.data || [];
+      if (deptRes.status === 'fulfilled' && deptRes.value?.success) {
+        const raw: any = deptRes.value.data;
+        const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
         setDepartmentsList(
-          units.filter((u) => ['DEPARTMENT', 'DIVISION', 'BUSINESS_UNIT'].includes(u.type))
-        );
-        setSectionsList(
-          units.filter((u) => ['SECTION', 'SUB_SECTION', 'OTHER'].includes(u.type))
+          list.map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            code: d.code,
+          }))
         );
       }
 
-      if (posRes.status === 'fulfilled' && posRes.value?.success && posRes.value.data) {
-        const pos = posRes.value.data.data || [];
-        setPositionsList(pos.map((p) => ({ id: p.id, title: p.title, code: p.code })));
+      if (secRes.status === 'fulfilled' && secRes.value?.success) {
+        const raw: any = secRes.value.data;
+        const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
+        setSectionsList(
+          list.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            code: s.code,
+            department_id: s.department_id,
+            department_name: s.department?.name || '',
+          }))
+        );
       }
+
+      if (posRes.status === 'fulfilled' && posRes.value?.success) {
+        const raw: any = posRes.value.data;
+        const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
+        setPositionsList(
+          list.map((p: any) => ({
+            id: p.id,
+            title: p.title,
+            code: p.code,
+            department_name: p.department?.name || '',
+            section_name: p.section?.name || '',
+          }))
+        );
+      }
+
+      setMetadataLoaded(true);
     } catch (err) {
       console.warn('Failed to load audience dropdown metadata:', err);
+    } finally {
+      setLoadingMetadata(false);
     }
-  };
+  }, []);
+
+  // Preload audience metadata on mount
+  useEffect(() => {
+    loadAudienceMetadata();
+  }, [loadAudienceMetadata]);
 
   const handleOpenCreate = () => {
     setModalMode('create');
@@ -205,14 +267,18 @@ export default function AdminCompanyDocumentsPage() {
     setFormCategory('INTERNAL_MEMO');
     setFormDescription('');
     setFormVersion('1.0');
+    setFormStatus('PUBLISHED');
     setFormEffectiveDate(new Date().toISOString().split('T')[0]);
     setFormExpiryDate('');
     setFormAudienceType('ALL');
     setSelectedTargetIds([]);
     setSelectedFile(null);
     setExistingFileName('');
+    setAudienceSearch('');
     setIsModalOpen(true);
-    loadAudienceMetadata();
+    if (!metadataLoaded) {
+      loadAudienceMetadata();
+    }
   };
 
   const handleOpenEdit = (doc: CompanyDocumentItem) => {
@@ -223,20 +289,84 @@ export default function AdminCompanyDocumentsPage() {
     setFormCategory(doc.category);
     setFormDescription(doc.description || '');
     setFormVersion(doc.version || '1.0');
+    setFormStatus(doc.status || 'PUBLISHED');
     setFormEffectiveDate(doc.effective_date ? doc.effective_date.split('T')[0] : '');
     setFormExpiryDate(doc.expiry_date ? doc.expiry_date.split('T')[0] : '');
     setFormAudienceType(doc.audience_type);
-    setSelectedTargetIds(doc.targets ? doc.targets.map((t) => t.target_id) : []);
+    setSelectedTargetIds(doc.targets ? doc.targets.map((t) => Number(t.target_id)) : []);
     setSelectedFile(null);
     setExistingFileName(doc.file_name);
+    setAudienceSearch('');
     setIsModalOpen(true);
-    loadAudienceMetadata();
+    if (!metadataLoaded) {
+      loadAudienceMetadata();
+    }
   };
 
   const handleToggleTarget = (id: number) => {
     setSelectedTargetIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
+  };
+
+  // Filtered lists for audience picker
+  const filteredDepartments = departmentsList.filter(
+    (d) =>
+      !audienceSearch ||
+      d.name.toLowerCase().includes(audienceSearch.toLowerCase()) ||
+      d.code.toLowerCase().includes(audienceSearch.toLowerCase())
+  );
+
+  const filteredSections = sectionsList.filter(
+    (s) =>
+      !audienceSearch ||
+      s.name.toLowerCase().includes(audienceSearch.toLowerCase()) ||
+      s.code.toLowerCase().includes(audienceSearch.toLowerCase()) ||
+      (s.department_name && s.department_name.toLowerCase().includes(audienceSearch.toLowerCase()))
+  );
+
+  const filteredPositions = positionsList.filter(
+    (p) =>
+      !audienceSearch ||
+      p.title.toLowerCase().includes(audienceSearch.toLowerCase()) ||
+      p.code.toLowerCase().includes(audienceSearch.toLowerCase()) ||
+      (p.department_name && p.department_name.toLowerCase().includes(audienceSearch.toLowerCase())) ||
+      (p.section_name && p.section_name.toLowerCase().includes(audienceSearch.toLowerCase()))
+  );
+
+  const handleSelectAllVisible = () => {
+    let visibleIds: number[] = [];
+    if (formAudienceType === 'DEPARTMENT') {
+      visibleIds = filteredDepartments.map((d) => d.id);
+    } else if (formAudienceType === 'SECTION') {
+      visibleIds = filteredSections.map((s) => s.id);
+    } else if (formAudienceType === 'POSITION') {
+      visibleIds = filteredPositions.map((p) => p.id);
+    }
+
+    setSelectedTargetIds((prev) => {
+      const merged = new Set([...prev, ...visibleIds]);
+      return Array.from(merged);
+    });
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedTargetIds([]);
+  };
+
+  const getTargetDisplayName = (t: CompanyDocumentTarget, audienceType: AudienceType) => {
+    if (t.target_name && t.target_name.trim()) return t.target_name;
+    if (audienceType === 'DEPARTMENT') {
+      const d = departmentsList.find((item) => item.id === t.target_id);
+      if (d) return d.name;
+    } else if (audienceType === 'SECTION') {
+      const s = sectionsList.find((item) => item.id === t.target_id);
+      if (s) return s.name;
+    } else if (audienceType === 'POSITION') {
+      const p = positionsList.find((item) => item.id === t.target_id);
+      if (p) return p.title;
+    }
+    return `#${t.target_id}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -270,7 +400,7 @@ export default function AdminCompanyDocumentsPage() {
       formData.append('effective_date', formEffectiveDate);
       if (formExpiryDate) formData.append('expiry_date', formExpiryDate);
       formData.append('audience_type', formAudienceType);
-      formData.append('status', 'PUBLISHED');
+      formData.append('status', formStatus);
 
       if (selectedFile) {
         formData.append('file', selectedFile);
@@ -289,7 +419,9 @@ export default function AdminCompanyDocumentsPage() {
           } else if (formAudienceType === 'POSITION') {
             targetName = positionsList.find((p) => p.id === targetId)?.title || '';
           }
-          formData.append(`targets[${idx}][target_name]`, targetName);
+          if (targetName) {
+            formData.append(`targets[${idx}][target_name]`, targetName);
+          }
         });
       }
 
@@ -724,14 +856,20 @@ export default function AdminCompanyDocumentsPage() {
                             {aud.label}
                           </span>
                           {doc.audience_type !== 'ALL' && doc.targets && doc.targets.length > 0 && (
-                            <div className="flex flex-wrap gap-1 max-w-[260px]">
+                            <div
+                              className="flex flex-wrap gap-1 max-w-[280px]"
+                              title={doc.targets.map((t) => getTargetDisplayName(t, doc.audience_type)).join(', ')}
+                            >
                               {doc.targets.slice(0, 2).map((t, idx) => (
-                                <span key={idx} className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 truncate max-w-[120px]">
-                                  {t.target_name || `#${t.target_id}`}
+                                <span
+                                  key={idx}
+                                  className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 truncate max-w-[130px]"
+                                >
+                                  {getTargetDisplayName(t, doc.audience_type)}
                                 </span>
                               ))}
                               {doc.targets.length > 2 && (
-                                <span className="text-[10px] px-1 rounded bg-slate-200 text-slate-600 font-medium">
+                                <span className="text-[10px] px-1 rounded bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300 font-medium">
                                   +{doc.targets.length - 2} lagi
                                 </span>
                               )}
@@ -889,7 +1027,7 @@ export default function AdminCompanyDocumentsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* Versi */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -899,6 +1037,22 @@ export default function AdminCompanyDocumentsPage() {
                 placeholder="1.0"
                 value={formVersion}
                 onChange={(e) => setFormVersion(e.target.value)}
+              />
+            </div>
+
+            {/* Status Publikasi */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Status Publikasi
+              </label>
+              <Select
+                value={formStatus}
+                onChange={(e) => setFormStatus(e.target.value as DocumentStatus)}
+                options={[
+                  { value: 'PUBLISHED', label: '🟢 Terbitkan (Published)' },
+                  { value: 'DRAFT', label: '⚪ Simpan Draf (Draft)' },
+                  { value: 'ARCHIVED', label: '📦 Diarsipkan (Archived)' },
+                ]}
               />
             </div>
 
@@ -962,6 +1116,7 @@ export default function AdminCompanyDocumentsPage() {
                     onClick={() => {
                       setFormAudienceType(type);
                       setSelectedTargetIds([]);
+                      setAudienceSearch('');
                     }}
                     className={`flex items-center gap-2 p-2.5 rounded-lg border text-left text-xs font-medium transition-all cursor-pointer ${
                       isSelected
@@ -977,78 +1132,198 @@ export default function AdminCompanyDocumentsPage() {
             </div>
 
             {/* Dynamic Multi-Select based on Audience Type */}
-            {formAudienceType === 'ALL' && (
-              <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+            {formAudienceType === 'ALL' ? (
+              <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1.5 pt-1">
                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                 Dokumen ini akan dapat dilihat dan diunduh oleh seluruh karyawan perusahaan di portal ESS.
               </p>
-            )}
+            ) : (
+              <div className="space-y-2 pt-1 border-t border-blue-100 dark:border-blue-900/40">
+                {/* Search & Quick Action Toolbar */}
+                <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder={
+                        formAudienceType === 'DEPARTMENT'
+                          ? 'Cari nama atau kode departemen...'
+                          : formAudienceType === 'SECTION'
+                          ? 'Cari nama, kode seksi, atau departemen...'
+                          : 'Cari nama jabatan, kode posisi, atau departemen...'
+                      }
+                      value={audienceSearch}
+                      onChange={(e) => setAudienceSearch(e.target.value)}
+                      className="w-full pl-8 pr-7 py-1 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    {audienceSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setAudienceSearch('')}
+                        className="absolute right-2 top-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 self-end sm:self-center">
+                    <button
+                      type="button"
+                      onClick={handleSelectAllVisible}
+                      className="px-2.5 py-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 rounded-md border border-blue-200 dark:border-blue-800 transition-colors"
+                    >
+                      Pilih Semua (
+                      {formAudienceType === 'DEPARTMENT'
+                        ? filteredDepartments.length
+                        : formAudienceType === 'SECTION'
+                        ? filteredSections.length
+                        : filteredPositions.length}
+                      )
+                    </button>
+                    {selectedTargetIds.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleDeselectAll}
+                        className="px-2.5 py-1 text-[11px] font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-md border border-rose-200 dark:border-rose-900/60 transition-colors"
+                      >
+                        Batal Pilih
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-            {formAudienceType === 'DEPARTMENT' && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
-                  <span>Pilih Departemen Sasaran:</span>
-                  <span className="font-semibold text-blue-600">{selectedTargetIds.length} dipilih</span>
+                {/* Subtitle counter */}
+                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 px-0.5">
+                  <span>
+                    Daftar {formAudienceType === 'DEPARTMENT' ? 'Departemen' : formAudienceType === 'SECTION' ? 'Section' : 'Jabatan / Posisi'}:
+                  </span>
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">
+                    {selectedTargetIds.length} dipilih dari{' '}
+                    {formAudienceType === 'DEPARTMENT'
+                      ? departmentsList.length
+                      : formAudienceType === 'SECTION'
+                      ? sectionsList.length
+                      : positionsList.length}
+                  </span>
                 </div>
-                <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-lg p-2 bg-white dark:border-slate-800 dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/60">
-                  {departmentsList.map((dept) => (
-                    <label key={dept.id} className="flex items-center gap-2 py-1 px-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded cursor-pointer text-xs">
-                      <input
-                        type="checkbox"
-                        checked={selectedTargetIds.includes(dept.id)}
-                        onChange={() => handleToggleTarget(dept.id)}
-                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="font-mono text-slate-400 text-[10px]">{dept.code}</span>
-                      <span className="text-slate-700 dark:text-slate-300">{dept.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {formAudienceType === 'SECTION' && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
-                  <span>Pilih Section Sasaran:</span>
-                  <span className="font-semibold text-amber-600">{selectedTargetIds.length} dipilih</span>
-                </div>
-                <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-lg p-2 bg-white dark:border-slate-800 dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/60">
-                  {sectionsList.map((sec) => (
-                    <label key={sec.id} className="flex items-center gap-2 py-1 px-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded cursor-pointer text-xs">
-                      <input
-                        type="checkbox"
-                        checked={selectedTargetIds.includes(sec.id)}
-                        onChange={() => handleToggleTarget(sec.id)}
-                        className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
-                      />
-                      <span className="font-mono text-slate-400 text-[10px]">{sec.code}</span>
-                      <span className="text-slate-700 dark:text-slate-300">{sec.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+                {/* List Container */}
+                <div className="max-h-56 overflow-y-auto border border-slate-200 rounded-lg p-2 bg-white dark:border-slate-800 dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/60 space-y-0.5">
+                  {loadingMetadata && (
+                    <div className="p-6 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                      <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+                      <span>Memuat data sasaran...</span>
+                    </div>
+                  )}
 
-            {formAudienceType === 'POSITION' && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
-                  <span>Pilih Jabatan / Posisi Sasaran:</span>
-                  <span className="font-semibold text-purple-600">{selectedTargetIds.length} dipilih</span>
-                </div>
-                <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-lg p-2 bg-white dark:border-slate-800 dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/60">
-                  {positionsList.map((pos) => (
-                    <label key={pos.id} className="flex items-center gap-2 py-1 px-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded cursor-pointer text-xs">
-                      <input
-                        type="checkbox"
-                        checked={selectedTargetIds.includes(pos.id)}
-                        onChange={() => handleToggleTarget(pos.id)}
-                        className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
-                      />
-                      <span className="font-mono text-slate-400 text-[10px]">{pos.code}</span>
-                      <span className="text-slate-700 dark:text-slate-300">{pos.title}</span>
-                    </label>
-                  ))}
+                  {!loadingMetadata && formAudienceType === 'DEPARTMENT' && (
+                    filteredDepartments.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-slate-400">
+                        {audienceSearch ? `Tidak ada departemen yang cocok dengan "${audienceSearch}"` : 'Belum ada data departemen'}
+                      </div>
+                    ) : (
+                      filteredDepartments.map((dept) => {
+                        const isChecked = selectedTargetIds.includes(dept.id);
+                        return (
+                          <label
+                            key={dept.id}
+                            className={`flex items-center justify-between py-1.5 px-2 rounded cursor-pointer text-xs transition-colors ${
+                              isChecked
+                                ? 'bg-blue-50/70 dark:bg-blue-950/30'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleToggleTarget(dept.id)}
+                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
+                              />
+                              <span className="font-mono text-slate-400 text-[10px] shrink-0 font-semibold">{dept.code}</span>
+                              <span className="text-slate-800 dark:text-slate-200 truncate font-medium">{dept.name}</span>
+                            </div>
+                          </label>
+                        );
+                      })
+                    )
+                  )}
+
+                  {!loadingMetadata && formAudienceType === 'SECTION' && (
+                    filteredSections.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-slate-400">
+                        {audienceSearch ? `Tidak ada section yang cocok dengan "${audienceSearch}"` : 'Belum ada data section'}
+                      </div>
+                    ) : (
+                      filteredSections.map((sec) => {
+                        const isChecked = selectedTargetIds.includes(sec.id);
+                        return (
+                          <label
+                            key={sec.id}
+                            className={`flex items-center justify-between py-1.5 px-2 rounded cursor-pointer text-xs transition-colors ${
+                              isChecked
+                                ? 'bg-amber-50/70 dark:bg-amber-950/30'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleToggleTarget(sec.id)}
+                                className="rounded border-slate-300 text-amber-600 focus:ring-amber-500 h-3.5 w-3.5"
+                              />
+                              <span className="font-mono text-slate-400 text-[10px] shrink-0 font-semibold">{sec.code}</span>
+                              <span className="text-slate-800 dark:text-slate-200 truncate font-medium">{sec.name}</span>
+                            </div>
+                            {sec.department_name && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 shrink-0 ml-2">
+                                {sec.department_name}
+                              </span>
+                            )}
+                          </label>
+                        );
+                      })
+                    )
+                  )}
+
+                  {!loadingMetadata && formAudienceType === 'POSITION' && (
+                    filteredPositions.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-slate-400">
+                        {audienceSearch ? `Tidak ada posisi yang cocok dengan "${audienceSearch}"` : 'Belum ada data posisi'}
+                      </div>
+                    ) : (
+                      filteredPositions.map((pos) => {
+                        const isChecked = selectedTargetIds.includes(pos.id);
+                        return (
+                          <label
+                            key={pos.id}
+                            className={`flex items-center justify-between py-1.5 px-2 rounded cursor-pointer text-xs transition-colors ${
+                              isChecked
+                                ? 'bg-purple-50/70 dark:bg-purple-950/30'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleToggleTarget(pos.id)}
+                                className="rounded border-slate-300 text-purple-600 focus:ring-purple-500 h-3.5 w-3.5"
+                              />
+                              <span className="font-mono text-slate-400 text-[10px] shrink-0 font-semibold">{pos.code}</span>
+                              <span className="text-slate-800 dark:text-slate-200 truncate font-medium">{pos.title}</span>
+                            </div>
+                            {(pos.department_name || pos.section_name) && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 shrink-0 ml-2 truncate max-w-[160px]">
+                                {[pos.department_name, pos.section_name].filter(Boolean).join(' • ')}
+                              </span>
+                            )}
+                          </label>
+                        );
+                      })
+                    )
+                  )}
                 </div>
               </div>
             )}
