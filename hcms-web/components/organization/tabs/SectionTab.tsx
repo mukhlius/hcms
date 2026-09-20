@@ -9,7 +9,6 @@ import {
   Edit, 
   Power, 
   Trash2, 
-  ArrowRight,
   Briefcase,
   Building2,
   Network,
@@ -43,7 +42,7 @@ interface SectionTabProps {
   selectedCompanyId: string;
   selectedSiteId: string;
   selectedDepartmentId: string;
-  onDrillDownToPosition: (sectionId: number) => void;
+  onDrillDownToPosition?: (sectionId: number) => void;
   onRefreshAll?: () => void;
   createTrigger?: number;
 }
@@ -371,7 +370,9 @@ export const SectionTab: React.FC<SectionTabProps> = ({
                   <th className="px-4 py-3.5">
                     <SortableHeader label="Status" field="status" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
-                  <th className="px-4 py-3.5 text-center">Navigasi Lanjut</th>
+                  <th className="px-4 py-3.5 text-center">
+                    <SortableHeader label="Total Position" field="positions_count" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                  </th>
                   <th className="px-5 py-3.5 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -416,16 +417,15 @@ export const SectionTab: React.FC<SectionTabProps> = ({
                       </Badge>
                     </td>
                     <td className="px-4 py-3.5 text-center">
-                      <button
-                        type="button"
-                        onClick={() => onDrillDownToPosition(sec.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors cursor-pointer"
-                        title={`Buka Posisi Jabatan untuk Seksi ${sec.name}`}
-                      >
-                        <Briefcase className="h-3 w-3" />
-                        <span>Lihat Jabatan</span>
-                        <ArrowRight className="h-3 w-3" />
-                      </button>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        (sec.positions_count ?? 0) > 0
+                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/60'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        <Briefcase className="h-3 w-3 text-indigo-500" />
+                        <span className="font-semibold">{sec.positions_count ?? 0}</span>
+                        <span>Position</span>
+                      </span>
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">

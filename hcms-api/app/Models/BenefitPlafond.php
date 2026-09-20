@@ -16,6 +16,7 @@ class BenefitPlafond extends Model
         'salary_grade_id',
         'grade_id',
         'salary_grade_jenjang_id',
+        'master_jenjang_id',
         'lens_type',
         'frame_amount',
         'lens_amount',
@@ -48,6 +49,11 @@ class BenefitPlafond extends Model
     public function jenjang(): BelongsTo
     {
         return $this->belongsTo(SalaryGradeJenjang::class, 'salary_grade_jenjang_id');
+    }
+
+    public function masterJenjang(): BelongsTo
+    {
+        return $this->belongsTo(MasterJenjang::class, 'master_jenjang_id');
     }
 
     public function maritalStatus(): BelongsTo

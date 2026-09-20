@@ -28,7 +28,7 @@ class MasterJenjangController extends BaseApiController
             });
         }
 
-        $items = $query->orderBy('name', 'asc')->get();
+        $items = $query->orderByRaw('CASE WHEN level IS NULL THEN 1 ELSE 0 END, level ASC, name ASC')->get();
 
         return $this->successResponse($items, 'Daftar master jenjang berhasil diambil.');
     }
@@ -38,6 +38,7 @@ class MasterJenjangController extends BaseApiController
         $validated = $request->validate([
             'code' => ['nullable', 'string', 'max:50', 'unique:master_jenjangs,code'],
             'name' => ['required', 'string', 'max:150'],
+            'level' => ['nullable', 'integer', 'min:1'],
             'description' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
         ]);
@@ -66,6 +67,7 @@ class MasterJenjangController extends BaseApiController
         $validated = $request->validate([
             'code' => ['sometimes', 'required', 'string', 'max:50', Rule::unique('master_jenjangs', 'code')->ignore($masterJenjang->id)],
             'name' => ['sometimes', 'required', 'string', 'max:150'],
+            'level' => ['nullable', 'integer', 'min:1'],
             'description' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
         ]);

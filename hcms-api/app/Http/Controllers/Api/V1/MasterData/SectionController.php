@@ -19,7 +19,7 @@ class SectionController extends BaseApiController
             'company:id,code,name',
             'site:id,code,name',
             'leader:id,name,email',
-        ])->withCount(['users']);
+        ])->withCount(['users', 'positions']);
 
         if ($request->filled('department_id')) {
             $query->where('department_id', $request->query('department_id'));

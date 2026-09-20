@@ -20,8 +20,8 @@ import {
   Download,
   GitMerge
 } from 'lucide-react';
-import { BenefitPlafondItem, SalaryGradeItem, GradeItem, SalaryGradeJenjangItem } from '@/types';
-import { benefitPlafondService, salaryGradeService, jobGradeService, jenjangService, importExportService } from '@/services/masterDataService';
+import { BenefitPlafondItem, SalaryGradeItem, GradeItem, SalaryGradeJenjangItem, MasterJenjangItem } from '@/types';
+import { benefitPlafondService, salaryGradeService, jobGradeService, jenjangService, masterJenjangService, importExportService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -134,6 +134,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const [salaryGrades, setSalaryGrades] = useState<SalaryGradeItem[]>([]);
   const [jobGrades, setJobGrades] = useState<GradeItem[]>([]);
   const [jenjangList, setJenjangList] = useState<SalaryGradeJenjangItem[]>([]);
+  const [masterJenjangList, setMasterJenjangList] = useState<MasterJenjangItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
 
@@ -155,6 +156,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     salary_grade_id: 0,
     grade_id: 0,
     salary_grade_jenjang_id: 0,
+    master_jenjang_id: 0,
     lens_type: 'Monofokus',
     frame_amount: '',
     lens_amount: '',
@@ -176,16 +178,16 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
           setItems(plafondRes.data);
         }
       } else if (isUangPerdin) {
-        const [plafondRes, jenjangRes] = await Promise.all([
+        const [plafondRes, masterJenjangRes] = await Promise.all([
           benefitPlafondService.getBenefitPlafonds({ benefit_type: benefitType }),
-          jenjangService.getJenjangs(),
+          masterJenjangService.getMasterJenjangs(),
         ]);
 
         if (plafondRes.success && plafondRes.data) {
           setItems(plafondRes.data);
         }
-        if (jenjangRes.success && jenjangRes.data) {
-          setJenjangList(jenjangRes.data);
+        if (masterJenjangRes.success && masterJenjangRes.data) {
+          setMasterJenjangList(masterJenjangRes.data);
         }
       } else if (isTunjanganLapangan) {
         const [plafondRes, jobGradeRes] = await Promise.all([
@@ -229,6 +231,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     const firstGradeId = salaryGrades.length > 0 ? salaryGrades[0].id : 0;
     const firstJobGradeId = jobGrades.length > 0 ? jobGrades[0].id : 0;
     const firstJenjangId = jenjangList.length > 0 ? jenjangList[0].id : 0;
+    const firstMasterJenjangId = masterJenjangList.length > 0 ? masterJenjangList[0].id : 0;
 
     if (isKacamata) {
       setFormData({
@@ -236,6 +239,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: 0,
         grade_id: 0,
         salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
         lens_type: LENS_PRESETS[0],
         frame_amount: '',
         lens_amount: '',
@@ -252,7 +256,8 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         id: 0,
         salary_grade_id: 0,
         grade_id: 0,
-        salary_grade_jenjang_id: firstJenjangId,
+        salary_grade_jenjang_id: 0,
+        master_jenjang_id: firstMasterJenjangId,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -270,6 +275,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: 0,
         grade_id: firstJobGradeId,
         salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -287,6 +293,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: firstGradeId,
         grade_id: 0,
         salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -304,6 +311,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: firstGradeId,
         grade_id: 0,
         salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -321,6 +329,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: firstGradeId,
         grade_id: 0,
         salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -338,6 +347,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: firstGradeId,
         grade_id: 0,
         salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -355,6 +365,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: firstGradeId,
         grade_id: 0,
         salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -384,6 +395,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: 0,
         grade_id: 0,
         salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
         lens_type: item.lens_type || LENS_PRESETS[0],
         frame_amount: item.frame_amount !== null && item.frame_amount !== undefined ? String(item.frame_amount) : '',
         lens_amount: item.lens_amount !== null && item.lens_amount !== undefined ? String(item.lens_amount) : '',
@@ -401,6 +413,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: 0,
         grade_id: 0,
         salary_grade_jenjang_id: item.salary_grade_jenjang_id || item.jenjang?.id || 0,
+        master_jenjang_id: item.master_jenjang_id || item.master_jenjang?.id || 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -418,6 +431,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: 0,
         grade_id: item.grade_id || item.grade?.id || 0,
         salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -435,6 +449,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: item.salary_grade_id || item.salary_grade?.id || 0,
         grade_id: 0,
         salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -452,6 +467,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         salary_grade_id: item.salary_grade_id || item.salary_grade?.id || 0,
         grade_id: 0,
         salary_grade_jenjang_id: 0,
+        master_jenjang_id: 0,
         lens_type: '',
         frame_amount: '',
         lens_amount: '',
@@ -484,8 +500,8 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         return;
       }
     } else if (isUangPerdin) {
-      if (!formData.salary_grade_jenjang_id || formData.salary_grade_jenjang_id === 0) {
-        toast.warning('Pilih Jenjang Jabatan terlebih dahulu.', 'Form Belum Lengkap');
+      if (!formData.master_jenjang_id || formData.master_jenjang_id === 0) {
+        toast.warning('Pilih Master Jenjang terlebih dahulu.', 'Form Belum Lengkap');
         return;
       }
       if (formData.amount === '' || isNaN(parseFloat(formData.amount))) {
@@ -544,7 +560,8 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
       } else if (isUangPerdin) {
         payload = {
           benefit_type: benefitType,
-          salary_grade_jenjang_id: Number(formData.salary_grade_jenjang_id),
+          master_jenjang_id: Number(formData.master_jenjang_id),
+          salary_grade_jenjang_id: undefined,
           category_name: null as any,
           zone_name: null as any,
           amount: parseFloat(formData.amount),
@@ -624,9 +641,9 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     if (isKacamata) {
       confirmMsg = `Apakah Anda yakin ingin menghapus data plafon kacamata untuk kriteria "${item.lens_type}" dengan total bantuan ${formatRupiah(item.amount)}?`;
     } else if (isUangPerdin) {
-      const jName = item.jenjang?.name || `ID ${item.salary_grade_jenjang_id}`;
-      const golCode = item.jenjang?.salary_grade?.code ? `(Golongan ${item.jenjang.salary_grade.code})` : '';
-      confirmMsg = `Apakah Anda yakin ingin menghapus tarif uang perdin untuk Jenjang Jabatan "${jName}" ${golCode} senilai ${formatRupiah(item.amount)}?`;
+      const mjName = item.master_jenjang?.name || item.jenjang?.name || `ID ${item.master_jenjang_id || item.salary_grade_jenjang_id}`;
+      const mjLvl = item.master_jenjang?.level ? `(Level ${item.master_jenjang.level})` : '';
+      confirmMsg = `Apakah Anda yakin ingin menghapus tarif uang perdin untuk Master Jenjang "${mjName}" ${mjLvl} senilai ${formatRupiah(item.amount)}?`;
     } else if (isTunjanganLapangan) {
       const lvlName = item.grade?.name || item.grade?.code || `ID ${item.grade_id}`;
       confirmMsg = `Apakah Anda yakin ingin menghapus tunjangan lapangan Level Jabatan "${lvlName}" senilai ${formatRupiah(item.amount)}?`;
@@ -709,24 +726,19 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
       }
 
       if (isUangPerdin) {
+        const mj = item.master_jenjang;
         const j = item.jenjang;
-        const jName = (j?.name || '').toLowerCase();
-        const jGolCode = (j?.salary_grade?.code || '').toLowerCase();
-        const jGolName = (j?.salary_grade?.name || '').toLowerCase();
-        const jLvlCode = (j?.grade?.code || '').toLowerCase();
-        const jLvlName = (j?.grade?.name || '').toLowerCase();
-        const jLvlPangkat = (j?.grade?.pangkat || '').toLowerCase();
+        const mjName = (mj?.name || j?.name || '').toLowerCase();
+        const mjCode = (mj?.code || '').toLowerCase();
+        const mjLvl = mj?.level !== undefined && mj?.level !== null ? `level ${mj.level}` : '';
 
         const matchSearch =
           !search ||
-          jName.includes(q) ||
-          jGolCode.includes(q) ||
-          jGolName.includes(q) ||
-          jLvlCode.includes(q) ||
-          jLvlName.includes(q) ||
-          jLvlPangkat.includes(q);
+          mjName.includes(q) ||
+          mjCode.includes(q) ||
+          mjLvl.includes(q);
 
-        const targetId = item.salary_grade_jenjang_id || item.jenjang?.id;
+        const targetId = item.master_jenjang_id || item.master_jenjang?.id || item.salary_grade_jenjang_id || item.jenjang?.id;
         const matchGolongan = filterGolongan === 'ALL' || String(targetId) === filterGolongan;
 
         return matchSearch && matchGolongan && matchStatus;
@@ -794,7 +806,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     totalItems,
     paginatedData,
   } = useClientTable<BenefitPlafondItem>(filteredItems, {
-    defaultSortField: isKacamata ? 'lens_type' : isUangPerdin ? 'jenjang.salary_grade.code' : isTunjanganLapangan ? 'grade.code' : 'salary_grade.code',
+    defaultSortField: isKacamata ? 'lens_type' : isUangPerdin ? 'master_jenjang.level' : isTunjanganLapangan ? 'grade.code' : 'salary_grade.code',
     defaultPerPage: 10,
   });
 
@@ -841,7 +853,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
   const getSearchPlaceholder = () => {
     if (isKacamata) return 'Cari jenis lensa atau ketentuan...';
-    if (isUangPerdin) return 'Cari jenjang jabatan, golongan, level...';
+    if (isUangPerdin) return 'Cari master jenjang, kode, level...';
     if (isTunjanganLapangan) return 'Cari level jabatan, pangkat...';
     if (isPersalinan) return 'Cari golongan, kriteria persalinan...';
     if (isBantuanLumpsum) return 'Cari golongan, jenis bantuan lumpsum...';
@@ -885,10 +897,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                   onChange={(e) => setFilterGolongan(e.target.value)}
                   className="w-full h-9 appearance-none pl-8 pr-8 text-xs font-medium bg-white border border-slate-200 rounded-lg shadow-2xs hover:border-slate-300 hover:bg-slate-50/50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-700 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
                 >
-                  <option value="ALL">Semua Jenjang Jabatan</option>
-                  {jenjangList.map((j) => (
-                    <option key={j.id} value={String(j.id)}>
-                      {j.name} (Gol: {j.salary_grade?.code || '-'})
+                  <option value="ALL">Semua Master Jenjang</option>
+                  {masterJenjangList.map((mj) => (
+                    <option key={mj.id} value={String(mj.id)}>
+                      {mj.code} - {mj.name}{mj.level ? ` (Level ${mj.level})` : ''}
                     </option>
                   ))}
                 </select>
@@ -1064,16 +1076,13 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
               ) : isUangPerdin ? (
                 <tr>
                   <th className="px-5 py-3.5">
-                    <SortableHeader label="Golongan" field="jenjang.salary_grade.code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Kode Jenjang" field="master_jenjang.code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5">
-                    <SortableHeader label="Level Jabatan" field="jenjang.grade.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
-                  </th>
-                  <th className="px-4 py-3.5">
-                    <SortableHeader label="Jenjang Jabatan" field="jenjang.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Nama Master Jenjang" field="master_jenjang.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5 text-center">
-                    <SortableHeader label="Pangkat" field="jenjang.grade.pangkat" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Level Jenjang" field="master_jenjang.level" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5 text-right">
                     <SortableHeader label="Besaran Uang Perdin" field="amount" align="right" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
@@ -1309,9 +1318,9 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                   </tr>
                 ))
               ) : isUangPerdin ? (
-                /* Uang Perdin Rows (Berdasarkan Jenjang Jabatan) */
+                /* Uang Perdin Rows (Berdasarkan Master Jenjang) */
                 paginatedData.map((item) => {
-                  const j = item.jenjang;
+                  const mj = item.master_jenjang;
                   return (
                     <tr
                       key={item.id}
@@ -1319,28 +1328,23 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                     >
                       <td className="px-5 py-3.5 font-mono font-bold text-slate-800 dark:text-slate-200">
                         <Badge variant="outline" className="font-mono bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
-                          {j?.salary_grade?.code || '-'}
+                          {mj?.code || '-'}
                         </Badge>
-                      </td>
-                      <td className="px-4 py-3.5 font-medium text-slate-900 dark:text-slate-100">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            {j?.grade?.code || '-'}
-                          </span>
-                          <span className="text-slate-400">-</span>
-                          <span>{j?.grade?.name || '-'}</span>
-                        </div>
                       </td>
                       <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
                         <div className="flex items-center gap-1.5">
                           <GitMerge className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                          <span>{j?.name || '-'}</span>
+                          <span>{mj?.name || item.jenjang?.name || '-'}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3.5 text-center">
-                        <Badge variant={j?.grade?.pangkat === 'Staff' ? 'primary' : 'neutral'} className="text-[11px]">
-                          {j?.grade?.pangkat || '-'}
-                        </Badge>
+                        {mj?.level !== undefined && mj?.level !== null ? (
+                          <Badge variant="primary" className="font-semibold text-[11px]">
+                            Level {mj.level}
+                          </Badge>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
                       </td>
                       <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
                         {formatRupiah(item.amount)}
@@ -1670,50 +1674,48 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
               </div>
             </>
           ) : isUangPerdin ? (
-            /* ================= FORM KHUSUS UANG PERDIN (JENJANG JABATAN) ================= */
+            /* ================= FORM KHUSUS UANG PERDIN (MASTER JENJANG) ================= */
             <>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  1. Jenjang Jabatan <span className="text-rose-500">*</span>
+                  1. Master Jenjang <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative flex items-center group">
                   <select
-                    value={formData.salary_grade_jenjang_id}
-                    onChange={(e) => setFormData({ ...formData, salary_grade_jenjang_id: Number(e.target.value) })}
+                    value={formData.master_jenjang_id}
+                    onChange={(e) => setFormData({ ...formData, master_jenjang_id: Number(e.target.value) })}
                     required
                     className="w-full h-9.5 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50/40 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
                   >
-                    <option value="0" disabled>-- Pilih Jenjang Jabatan --</option>
-                    {jenjangList.map((j) => (
-                      <option key={j.id} value={j.id}>
-                        {j.name} (Gol: {j.salary_grade?.code || '-'}, Level: {j.grade?.code || '-'} - {j.grade?.name || '-'})
+                    <option value="0" disabled>-- Pilih Master Jenjang --</option>
+                    {masterJenjangList.map((mj) => (
+                      <option key={mj.id} value={mj.id}>
+                        {mj.code} - {mj.name} {mj.level ? `(Level ${mj.level})` : ''}
                       </option>
                     ))}
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
                 </div>
-                {formData.salary_grade_jenjang_id > 0 && (() => {
-                  const selectedJ = jenjangList.find((j) => j.id === Number(formData.salary_grade_jenjang_id));
-                  if (!selectedJ) return null;
+                {formData.master_jenjang_id > 0 && (() => {
+                  const selectedMj = masterJenjangList.find((m) => m.id === Number(formData.master_jenjang_id));
+                  if (!selectedMj) return null;
                   return (
                     <div className="mt-2 p-2.5 rounded-lg border border-blue-100 bg-blue-50/60 dark:border-blue-900/50 dark:bg-blue-950/20 text-xs flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                        <span className="text-slate-500">Golongan:</span>
+                        <span className="text-slate-500">Kode:</span>
                         <Badge variant="outline" className="font-mono font-semibold bg-white dark:bg-slate-800">
-                          {selectedJ.salary_grade?.code} - {selectedJ.salary_grade?.name}
+                          {selectedMj.code}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                        <span className="text-slate-500">Level:</span>
-                        <Badge variant="outline" className="font-mono font-semibold bg-white dark:bg-slate-800">
-                          {selectedJ.grade?.code} - {selectedJ.grade?.name}
-                        </Badge>
+                        <span className="text-slate-500">Jenjang:</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedMj.name}</span>
                       </div>
-                      {selectedJ.grade?.pangkat && (
+                      {selectedMj.level !== undefined && selectedMj.level !== null && (
                         <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                          <span className="text-slate-500">Pangkat:</span>
-                          <Badge variant={selectedJ.grade.pangkat === 'Staff' ? 'primary' : 'neutral'}>
-                            {selectedJ.grade.pangkat}
+                          <span className="text-slate-500">Hierarki Level:</span>
+                          <Badge variant="primary" className="font-bold">
+                            Level {selectedMj.level}
                           </Badge>
                         </div>
                       )}

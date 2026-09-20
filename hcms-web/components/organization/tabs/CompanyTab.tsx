@@ -9,9 +9,7 @@ import {
   Download, 
   Edit, 
   Power, 
-  Trash2, 
-  ArrowRight,
-  MapPin
+  Trash2
 } from 'lucide-react';
 import { MasterCompany } from '@/types';
 import { companyService, importExportService } from '@/services/masterDataService';
@@ -28,7 +26,7 @@ import { useClientTable } from '@/hooks/useClientTable';
 import { toast, confirmDialog } from '@/stores/alertStore';
 
 interface CompanyTabProps {
-  onDrillDownToSite: (companyId: number) => void;
+  onDrillDownToSite?: (companyId: number) => void;
   onRefreshAll?: () => void;
   onCompaniesLoaded?: (companies: MasterCompany[]) => void;
   createTrigger?: number;
@@ -267,7 +265,6 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({ onDrillDownToSite, onRef
                   <th className="px-4 py-3.5">
                     <SortableHeader label="Status" field="status" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
-                  <th className="px-4 py-3.5 text-center">Navigasi Site</th>
                   <th className="px-5 py-3.5 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -296,18 +293,6 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({ onDrillDownToSite, onRef
                       <Badge variant={c.status === 'ACTIVE' ? 'success' : 'neutral'}>
                         {c.status === 'ACTIVE' ? 'AKTIF' : 'NON-AKTIF'}
                       </Badge>
-                    </td>
-                    <td className="px-4 py-3.5 text-center">
-                      <button
-                        type="button"
-                        onClick={() => onDrillDownToSite(c.id)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors cursor-pointer"
-                        title={`Buka daftar Site untuk ${c.name}`}
-                      >
-                        <MapPin className="h-3 w-3" />
-                        <span>Lihat Site</span>
-                        <ArrowRight className="h-3 w-3" />
-                      </button>
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">

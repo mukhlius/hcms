@@ -190,6 +190,7 @@ export interface MasterSite {
   status: 'ACTIVE' | 'INACTIVE';
   company?: MasterCompany;
   work_locations_count?: number;
+  departments_count?: number;
   created_at?: string;
 }
 
@@ -228,6 +229,7 @@ export interface MasterSection {
   site?: MasterSite;
   leader?: { id: number; name: string; email?: string } | null;
   users_count?: number;
+  positions_count?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -362,6 +364,7 @@ export interface MasterJenjangItem {
   id: number;
   code: string;
   name: string;
+  level?: number | null;
   description?: string | null;
   status: 'ACTIVE' | 'INACTIVE';
   salary_grade_jenjangs_count?: number;
@@ -410,6 +413,7 @@ export interface BenefitPlafondItem {
   salary_grade_id?: number | null;
   grade_id?: number | null;
   salary_grade_jenjang_id?: number | null;
+  master_jenjang_id?: number | null;
   lens_type?: string | null;
   frame_amount?: number | null;
   lens_amount?: number | null;
@@ -424,6 +428,7 @@ export interface BenefitPlafondItem {
   salary_grade?: SalaryGradeItem | null;
   grade?: SalaryGradeItem | GradeItem | null;
   jenjang?: SalaryGradeJenjangItem | null;
+  master_jenjang?: MasterJenjangItem | null;
   marital_status?: ReferenceItem | null;
   created_at?: string;
   updated_at?: string;

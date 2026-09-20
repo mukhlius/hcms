@@ -14,7 +14,7 @@ class SiteController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
-        $query = OrganizationSite::with(['company:id,code,name'])->withCount(['workLocations']);
+        $query = OrganizationSite::with(['company:id,code,name'])->withCount(['workLocations', 'departments']);
 
         if ($request->filled('company_id')) {
             $query->where('company_id', $request->query('company_id'));
