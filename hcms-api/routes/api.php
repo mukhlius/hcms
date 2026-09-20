@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\SessionController;
 use App\Http\Controllers\Api\V1\SystemSettingController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\RecycleBinController;
+use App\Http\Controllers\Api\V1\DatabaseBackupController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -96,6 +97,14 @@ Route::prefix('v1')->group(function () {
                 Route::post('/batch', [SystemSettingController::class, 'updateBatch'])->middleware('permission:settings.update');
                 Route::post('/upload-icon', [SystemSettingController::class, 'uploadAppIcon'])->middleware('permission:settings.update');
                 Route::delete('/remove-icon', [SystemSettingController::class, 'removeAppIcon'])->middleware('permission:settings.update');
+            });
+
+            // Database Backups
+            Route::prefix('backups')->group(function () {
+                Route::get('/', [DatabaseBackupController::class, 'index'])->middleware('permission:settings.view');
+                Route::post('/', [DatabaseBackupController::class, 'store'])->middleware('permission:settings.update');
+                Route::get('/{filename}/download', [DatabaseBackupController::class, 'download'])->middleware('permission:settings.view');
+                Route::delete('/{filename}', [DatabaseBackupController::class, 'destroy'])->middleware('permission:settings.update');
             });
 
             // Recycle Bin (Tempat Sampah & Pemulihan Data)

@@ -135,3 +135,49 @@ export const organizationService = {
     return res.data;
   },
 };
+
+export interface BackupItem {
+  filename: string;
+  size_bytes: number;
+  size_formatted: string;
+  created_at: string;
+  extension: string;
+}
+
+export interface DatabaseInfo {
+  database_name: string;
+  database_host: string;
+  database_port: string;
+  total_tables: number;
+  database_size_mb: number;
+  total_backups: number;
+  total_backup_size_formatted: string;
+  last_backup: string | null;
+}
+
+export interface BackupResponseData {
+  database: DatabaseInfo;
+  backups: BackupItem[];
+}
+
+export const backupService = {
+  getBackups: async () => {
+    const res = await apiClient.get<ApiResponse<BackupResponseData>>('/admin/backups');
+    return res.data;
+  },
+  createBackup: async (note?: string) => {
+    const res = await apiClient.post<ApiResponse<any>>('/admin/backups', { note });
+    return res.data;
+  },
+  downloadBackup: async (filename: string) => {
+    const res = await apiClient.get(`/admin/backups/${encodeURIComponent(filename)}/download`, {
+      responseType: 'blob',
+    });
+    return res.data;
+  },
+  deleteBackup: async (filename: string) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/backups/${encodeURIComponent(filename)}`);
+    return res.data;
+  },
+};
+
