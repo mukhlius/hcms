@@ -311,8 +311,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isBantuanLumpsum) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: firstJobGradeId,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -481,8 +483,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isBantuanLumpsum) {
       setFormData({
         id: item.id,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: item.grade_id || item.grade?.id || 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
