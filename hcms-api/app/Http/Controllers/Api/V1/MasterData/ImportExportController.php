@@ -222,6 +222,16 @@ class ImportExportController extends BaseApiController
                 'period_type' => ['nullable', 'string', 'max:50'],
                 'status' => ['nullable', 'string', 'max:50'],
             ],
+            'bantuan-komunikasi' => [
+                'basis' => ['nullable', 'string', 'in:LEVEL_JABATAN,POSITION'],
+                'grade_code' => ['required_without_all:position_code,salary_grade_code', 'nullable', 'string', 'max:50'],
+                'position_code' => ['required_without_all:grade_code,salary_grade_code', 'nullable', 'string', 'max:50'],
+                'salary_grade_code' => ['nullable', 'string', 'max:50'],
+                'category_name' => ['nullable', 'string', 'max:100'],
+                'amount' => ['required', 'numeric', 'min:0'],
+                'period_type' => ['nullable', 'string', 'max:50'],
+                'status' => ['nullable', 'string', 'max:50'],
+            ],
             'shifts' => [
                 'code' => ['required', 'string', 'max:50'],
                 'name' => ['required', 'string', 'max:150'],
@@ -503,8 +513,9 @@ class ImportExportController extends BaseApiController
                         $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     ],
                     'bantuan-komunikasi' => [
-                        $item->salaryGrade?->code ?? '',
-                        $item->salaryGrade?->name ?? '',
+                        $item->position_id ? 'POSITION' : 'LEVEL_JABATAN',
+                        $item->position_id ? ($item->position?->code ?? '') : ($item->grade?->code ?? ''),
+                        $item->position_id ? ($item->position?->title ?? '') : ($item->grade?->name ?? ''),
                         $item->category_name ?? '',
                         (string) ($item->amount ?? 0),
                         $item->period_type ?? 'BULANAN',
@@ -734,10 +745,11 @@ class ImportExportController extends BaseApiController
                 ],
             ],
             'bantuan-komunikasi' => [
-                'headers' => ['salary_grade_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
+                'headers' => ['basis', 'grade_code', 'position_code', 'category_name', 'amount', 'period_type', 'description', 'status'],
                 'samples' => [
-                    ['GOL-1A', 'Paket Data & Komunikasi Lapangan', '250000', 'BULANAN', 'Voucher / penggantian pulsa & kuota data', 'ACTIVE'],
-                    ['GOL-4A', 'Paket Data & Komunikasi Lapangan', '500000', 'BULANAN', 'Voucher / penggantian pulsa & kuota data', 'ACTIVE'],
+                    ['LEVEL_JABATAN', 'MGR', '', 'Paket Data & Komunikasi Lapangan', '500000', 'BULANAN', 'Plafon komunikasi untuk level Manager ke atas', 'ACTIVE'],
+                    ['LEVEL_JABATAN', 'SPV', '', 'Paket Data & Komunikasi Lapangan', '350000', 'BULANAN', 'Plafon komunikasi untuk level Supervisor', 'ACTIVE'],
+                    ['POSITION', '', 'POS-MNG-MINE', 'Paket Komunikasi Darurat Tambang', '750000', 'BULANAN', 'Khusus Kepala Teknik Tambang / Mining Manager', 'ACTIVE'],
                 ],
             ],
             'bantuan-perumahan' => [

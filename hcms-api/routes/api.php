@@ -293,7 +293,7 @@ Route::prefix('v1')->group(function () {
                     Route::get('/', [\App\Http\Controllers\Api\V1\MasterData\CompanyDocumentController::class, 'index']);
                     Route::post('/', [\App\Http\Controllers\Api\V1\MasterData\CompanyDocumentController::class, 'store']);
                     Route::get('/{id}', [\App\Http\Controllers\Api\V1\MasterData\CompanyDocumentController::class, 'show']);
-                    Route::put('/{id}', [\App\Http\Controllers\Api\V1\MasterData\CompanyDocumentController::class, 'update']);
+                    Route::match(['put', 'post'], '/{id}', [\App\Http\Controllers\Api\V1\MasterData\CompanyDocumentController::class, 'update']);
                     Route::delete('/{id}', [\App\Http\Controllers\Api\V1\MasterData\CompanyDocumentController::class, 'destroy']);
                     Route::patch('/{id}/toggle-status', [\App\Http\Controllers\Api\V1\MasterData\CompanyDocumentController::class, 'toggleStatus']);
                     Route::get('/{id}/download', [\App\Http\Controllers\Api\V1\MasterData\CompanyDocumentController::class, 'download']);

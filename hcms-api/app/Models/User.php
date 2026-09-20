@@ -102,6 +102,11 @@ class User extends Authenticatable
         return $this->belongsTo(OrganizationSection::class, 'section_id');
     }
 
+    public function position(): BelongsTo
+    {
+        return $this->belongsTo(Position::class, 'position_id');
+    }
+
     public function userSessions(): HasMany
     {
         return $this->hasMany(UserSession::class);

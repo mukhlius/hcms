@@ -83,6 +83,11 @@ class PositionController extends BaseApiController
             });
         }
 
+        if ($request->boolean('all')) {
+            $positions = $query->orderBy('title')->get();
+            return $this->successResponse($positions, 'Daftar posisi jabatan berhasil diambil.');
+        }
+
         $perPage = min((int)$request->query('per_page', 20), 500);
         $positions = $query->latest()->paginate($perPage);
 

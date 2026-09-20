@@ -18,10 +18,12 @@ import {
   Home,
   ChevronDown,
   Download,
-  GitMerge
+  GitMerge,
+  Briefcase,
+  UserCheck
 } from 'lucide-react';
-import { BenefitPlafondItem, SalaryGradeItem, GradeItem, SalaryGradeJenjangItem, MasterJenjangItem } from '@/types';
-import { benefitPlafondService, salaryGradeService, jobGradeService, jenjangService, masterJenjangService, importExportService } from '@/services/masterDataService';
+import { BenefitPlafondItem, SalaryGradeItem, GradeItem, SalaryGradeJenjangItem, MasterJenjangItem, PositionItem } from '@/types';
+import { benefitPlafondService, salaryGradeService, jobGradeService, positionService, jenjangService, masterJenjangService, importExportService } from '@/services/masterDataService';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -85,9 +87,6 @@ const LUMPSUM_CATEGORIES = [
 
 const KOMUNIKASI_CATEGORIES = [
   'Paket Data & Komunikasi Lapangan',
-  'Tunjangan Pulsa On-Call & Radio',
-  'Paket Data Operasional Heavy Equipment',
-  'Executive Communication Allowance',
 ];
 
 const PERUMAHAN_CATEGORIES = [
@@ -129,6 +128,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   const [items, setItems] = useState<BenefitPlafondItem[]>([]);
   const [salaryGrades, setSalaryGrades] = useState<SalaryGradeItem[]>([]);
   const [jobGrades, setJobGrades] = useState<GradeItem[]>([]);
+  const [positions, setPositions] = useState<PositionItem[]>([]);
   const [jenjangList, setJenjangList] = useState<SalaryGradeJenjangItem[]>([]);
   const [masterJenjangList, setMasterJenjangList] = useState<MasterJenjangItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -136,6 +136,7 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
   // Filters
   const [filterGolongan, setFilterGolongan] = useState<string>('ALL');
+  const [filterBasis, setFilterBasis] = useState<'ALL' | 'LEVEL_JABATAN' | 'POSITION'>('ALL');
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
   const [filterZone, setFilterZone] = useState<string>('ALL');
   const [filterLensType, setFilterLensType] = useState<string>('ALL');
@@ -149,8 +150,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
   // Form Data
   const [formData, setFormData] = useState({
     id: 0,
+    basis: 'LEVEL_JABATAN' as 'LEVEL_JABATAN' | 'POSITION',
     salary_grade_id: 0,
     grade_id: 0,
+    position_id: 0,
     salary_grade_jenjang_id: 0,
     master_jenjang_id: 0,
     lens_type: 'Monofokus',
@@ -197,6 +200,22 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         if (jobGradeRes.success && jobGradeRes.data) {
           setJobGrades(jobGradeRes.data);
         }
+      } else if (isBantuanKomunikasi) {
+        const [plafondRes, jobGradeRes, posRes] = await Promise.all([
+          benefitPlafondService.getBenefitPlafonds({ benefit_type: benefitType }),
+          jobGradeService.getGrades(),
+          positionService.getPositions({ per_page: 500 }),
+        ]);
+
+        if (plafondRes.success && plafondRes.data) {
+          setItems(plafondRes.data);
+        }
+        if (jobGradeRes.success && jobGradeRes.data) {
+          setJobGrades(jobGradeRes.data);
+        }
+        if (posRes.success && posRes.data) {
+          setPositions(Array.isArray(posRes.data) ? posRes.data : (posRes.data as any).data || []);
+        }
       } else {
         const [plafondRes, salaryGradeRes] = await Promise.all([
           benefitPlafondService.getBenefitPlafonds({ benefit_type: benefitType }),
@@ -232,8 +251,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     if (isKacamata) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: LENS_PRESETS[0],
@@ -250,8 +271,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isUangPerdin) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: firstMasterJenjangId,
         lens_type: '',
@@ -268,8 +291,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isTunjanganLapangan) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: firstJobGradeId,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -304,8 +329,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isBantuanKomunikasi) {
       setFormData({
         id: 0,
-        salary_grade_id: firstGradeId,
-        grade_id: 0,
+        basis: 'LEVEL_JABATAN',
+        salary_grade_id: 0,
+        grade_id: firstJobGradeId,
+        position_id: positions.length > 0 ? positions[0].id : 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -322,8 +349,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isBantuanPerumahan) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -340,8 +369,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isPersalinan) {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -358,8 +389,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else {
       setFormData({
         id: 0,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: firstGradeId,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -388,8 +421,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     if (isKacamata) {
       setFormData({
         id: item.id,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: item.lens_type || LENS_PRESETS[0],
@@ -406,8 +441,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isUangPerdin) {
       setFormData({
         id: item.id,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: item.salary_grade_jenjang_id || item.jenjang?.id || 0,
         master_jenjang_id: item.master_jenjang_id || item.master_jenjang?.id || 0,
         lens_type: '',
@@ -424,8 +461,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isTunjanganLapangan) {
       setFormData({
         id: item.id,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: 0,
         grade_id: item.grade_id || item.grade?.id || 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -460,8 +499,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else if (isPersalinan) {
       setFormData({
         id: item.id,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: item.salary_grade_id || item.salary_grade?.id || 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -478,8 +519,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     } else {
       setFormData({
         id: item.id,
+        basis: 'LEVEL_JABATAN',
         salary_grade_id: item.salary_grade_id || item.salary_grade?.id || 0,
         grade_id: 0,
+        position_id: 0,
         salary_grade_jenjang_id: 0,
         master_jenjang_id: 0,
         lens_type: '',
@@ -690,7 +733,10 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
       const lvlName = item.grade?.name || item.grade?.code || `ID ${item.grade_id}`;
       confirmMsg = `Apakah Anda yakin ingin menghapus bantuan lumpsum Level Jabatan "${lvlName}" (${item.category_name}) senilai ${formatRupiah(item.amount)}?`;
     } else if (isBantuanKomunikasi) {
-      confirmMsg = `Apakah Anda yakin ingin menghapus bantuan komunikasi Golongan "${golName}" (${item.category_name}) senilai ${formatRupiah(item.amount)}?`;
+      const criteriaName = item.position_id || item.position
+        ? `Posisi "${item.position?.title || item.position?.code || 'ID ' + item.position_id}"`
+        : `Level Jabatan "${(item.grade as GradeItem)?.name || item.grade?.code || 'ID ' + item.grade_id}"`;
+      confirmMsg = `Apakah Anda yakin ingin menghapus bantuan komunikasi untuk ${criteriaName} (${item.category_name}) senilai ${formatRupiah(item.amount)}?`;
     } else if (isBantuanPerumahan) {
       confirmMsg = `Apakah Anda yakin ingin menghapus bantuan perumahan Golongan "${golName}" (${item.category_name}) senilai ${formatRupiah(item.amount)}?`;
     } else {
@@ -784,6 +830,39 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
         return matchSearch && matchGolongan && matchStatus;
       }
 
+      if (isBantuanKomunikasi) {
+        const isPos = Boolean(item.position_id || item.position);
+        const posTitle = (item.position?.title || '').toLowerCase();
+        const posCode = (item.position?.code || '').toLowerCase();
+        const posDept = (item.position?.department?.name || '').toLowerCase();
+        const lvl = item.grade as GradeItem | undefined;
+        const lvlName = (lvl?.name || '').toLowerCase();
+        const lvlCode = (lvl?.code || '').toLowerCase();
+        const lvlPangkat = (lvl?.pangkat || '').toLowerCase();
+        const desc = (item.description || '').toLowerCase();
+        const cat = (item.category_name || '').toLowerCase();
+
+        const matchSearch =
+          !search ||
+          posTitle.includes(q) ||
+          posCode.includes(q) ||
+          posDept.includes(q) ||
+          lvlName.includes(q) ||
+          lvlCode.includes(q) ||
+          lvlPangkat.includes(q) ||
+          desc.includes(q) ||
+          cat.includes(q);
+
+        const matchBasis =
+          filterBasis === 'ALL' ||
+          (filterBasis === 'POSITION' && isPos) ||
+          (filterBasis === 'LEVEL_JABATAN' && !isPos);
+
+        const matchCategory = filterCategory === 'ALL' || item.category_name === filterCategory;
+
+        return matchSearch && matchBasis && matchCategory && matchStatus;
+      }
+
       const gol = item.salary_grade;
       const lvl = item.grade as GradeItem | undefined;
       const golName = (gol?.name || '').toLowerCase();
@@ -825,11 +904,13 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
     search,
     isKacamata,
     isTunjanganLapangan,
+    isBantuanKomunikasi,
     isPersalinan,
     isPengobatan,
     isUangPerdin,
     filterLensType,
     filterGolongan,
+    filterBasis,
     filterCategory,
     filterStatus,
   ]);
@@ -864,14 +945,17 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
 
   const isAnyFilterActive = isKacamata
     ? Boolean(search || filterLensType !== 'ALL' || filterStatus !== 'ALL')
-    : isTunjanganLapangan || isUangPerdin
-      ? Boolean(search || filterGolongan !== 'ALL' || filterStatus !== 'ALL')
-      : Boolean(search || filterGolongan !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL');
+    : isBantuanKomunikasi
+      ? Boolean(search || filterBasis !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL')
+      : isTunjanganLapangan || isUangPerdin
+        ? Boolean(search || filterGolongan !== 'ALL' || filterStatus !== 'ALL')
+        : Boolean(search || filterGolongan !== 'ALL' || filterCategory !== 'ALL' || filterStatus !== 'ALL');
 
   const handleResetFilter = () => {
     setSearch('');
     setFilterStatus('ALL');
     setFilterLensType('ALL');
+    setFilterBasis('ALL');
     setFilterGolongan('ALL');
     setFilterCategory('ALL');
     setFilterZone('ALL');
@@ -960,6 +1044,20 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                       {g.code} - {g.name}{g.pangkat ? ` (${g.pangkat})` : ''}
                     </option>
                   ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+              </div>
+            ) : isBantuanKomunikasi ? (
+              <div className="relative min-w-[210px] group">
+                <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover:text-slate-600 transition-colors" />
+                <select
+                  value={filterBasis}
+                  onChange={(e) => setFilterBasis(e.target.value as any)}
+                  className="w-full h-9 appearance-none pl-8 pr-8 text-xs font-medium bg-white border border-slate-200 rounded-lg shadow-2xs hover:border-slate-300 hover:bg-slate-50/50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-700 cursor-pointer transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
+                >
+                  <option value="ALL">Semua Basis (Level & Posisi)</option>
+                  <option value="LEVEL_JABATAN">Basis Level Jabatan</option>
+                  <option value="POSITION">Basis Posisi Spesifik</option>
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
               </div>
@@ -1185,12 +1283,13 @@ export const BenefitPlafondTab: React.FC<BenefitPlafondTabProps> = ({
                 </tr>
               ) : isBantuanKomunikasi ? (
                 <tr>
-                  <th className="px-5 py-3.5">
-                    <SortableHeader label="Kode" field="salary_grade.code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                  <th className="px-5 py-3.5 text-center">
+                    <SortableHeader label="Basis" field="position_id" align="center" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
                   <th className="px-4 py-3.5">
-                    <SortableHeader label="Nama Golongan" field="salary_grade.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableHeader label="Kriteria (Level / Posisi)" field="grade.name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>
+                  <th className="px-4 py-3.5">Detail / Departemen</th>
                   <th className="px-4 py-3.5">
                     <SortableHeader label="Kategori Komunikasi" field="category_name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                   </th>

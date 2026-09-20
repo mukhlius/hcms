@@ -46,6 +46,11 @@ class SectionController extends BaseApiController
             });
         }
 
+        if ($request->boolean('all')) {
+            $sections = $query->orderBy('name')->get();
+            return $this->successResponse($sections, 'Daftar seksi (section) berhasil diambil.');
+        }
+
         $perPage = min((int)$request->query('per_page', 20), 500);
         $sections = $query->orderBy('name')->paginate($perPage);
 

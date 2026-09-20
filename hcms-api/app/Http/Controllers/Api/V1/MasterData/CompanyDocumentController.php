@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1\MasterData;
 use App\Http\Controllers\Api\BaseApiController;
 use App\Models\CompanyDocument;
 use App\Models\CompanyDocumentTarget;
+use App\Models\OrganizationDepartment;
+use App\Models\OrganizationSection;
 use App\Models\OrganizationUnit;
 use App\Models\Position;
 use App\Services\AuditService;
@@ -118,11 +120,14 @@ class CompanyDocumentController extends BaseApiController
             // Save target records if audience is not ALL
             if ($validated['audience_type'] !== 'ALL' && !empty($validated['targets'])) {
                 foreach ($validated['targets'] as $target) {
+                    $targetId = (int)$target['target_id'];
+                    $targetName = $this->resolveTargetName($validated['audience_type'], $targetId, $target['target_name'] ?? null);
+
                     CompanyDocumentTarget::create([
                         'company_document_id' => $doc->id,
                         'target_type' => $validated['audience_type'],
-                        'target_id' => $target['target_id'],
-                        'target_name' => $target['target_name'] ?? null,
+                        'target_id' => $targetId,
+                        'target_name' => $targetName,
                     ]);
                 }
             }
@@ -197,11 +202,14 @@ class CompanyDocumentController extends BaseApiController
             CompanyDocumentTarget::where('company_document_id', $document->id)->delete();
             if ($validated['audience_type'] !== 'ALL' && !empty($validated['targets'])) {
                 foreach ($validated['targets'] as $target) {
+                    $targetId = (int)$target['target_id'];
+                    $targetName = $this->resolveTargetName($validated['audience_type'], $targetId, $target['target_name'] ?? null);
+
                     CompanyDocumentTarget::create([
                         'company_document_id' => $document->id,
                         'target_type' => $validated['audience_type'],
-                        'target_id' => $target['target_id'],
-                        'target_name' => $target['target_name'] ?? null,
+                        'target_id' => $targetId,
+                        'target_name' => $targetName,
                     ]);
                 }
             }
@@ -269,5 +277,20 @@ class CompanyDocumentController extends BaseApiController
             'Content-Type' => $document->mime_type,
             'Content-Disposition' => 'inline; filename="' . $document->file_name . '"',
         ]);
+    }
+
+    protected function resolveTargetName(string $type, int $id, ?string $providedName): ?string
+    {
+        $name = !empty($providedName) ? trim($providedName) : null;
+        if ($name) {
+            return $name;
+        }
+
+        return match ($type) {
+            'DEPARTMENT' => OrganizationDepartment::where('id', $id)->value('name'),
+            'SECTION' => OrganizationSection::where('id', $id)->value('name'),
+            'POSITION' => Position::where('id', $id)->value('title'),
+            default => null,
+        };
     }
 }

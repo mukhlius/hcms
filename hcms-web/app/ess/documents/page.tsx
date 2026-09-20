@@ -85,9 +85,11 @@ export default function EssDocumentsPage() {
       });
 
       if (res.success && res.data) {
-        setDocuments(res.data.documents.data || []);
-        setTotalPages(res.data.documents.last_page || 1);
-        setTotalItems(res.data.documents.total || 0);
+        const rawDocs = res.data.documents;
+        const list = Array.isArray(rawDocs) ? rawDocs : (Array.isArray(rawDocs?.data) ? rawDocs.data : []);
+        setDocuments(list);
+        setTotalPages(rawDocs?.last_page || 1);
+        setTotalItems(rawDocs?.total || list.length);
         if (res.data.counts) {
           setCounts(res.data.counts);
         }
