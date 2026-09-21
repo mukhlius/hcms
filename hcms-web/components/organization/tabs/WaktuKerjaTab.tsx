@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Filter,
-  ChevronDown
+  ChevronDown,
+  RotateCcw
 } from 'lucide-react';
 import { PositionWorkTimeItem, PositionItem, ShiftItem, WorkScheduleItem } from '@/types';
 import { positionWorkTimeService, positionService, scheduleMasterService } from '@/services/masterDataService';
@@ -308,7 +309,7 @@ export const WaktuKerjaTab: React.FC<WaktuKerjaTabProps> = ({ onRefreshAll, crea
                 placeholder="Cari kode/nama posisi, departemen..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 text-xs"
+                className="pl-9 h-9 text-xs"
               />
             </div>
 
@@ -326,6 +327,22 @@ export const WaktuKerjaTab: React.FC<WaktuKerjaTabProps> = ({ onRefreshAll, crea
               <Filter className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
               <ChevronDown className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             </div>
+
+            {(search || filterType !== 'ALL') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearch('');
+                  setFilterType('ALL');
+                }}
+                className="h-9 px-2 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200"
+                title="Reset Filter"
+              >
+                <RotateCcw className="h-3 w-3 mr-1" />
+                Reset
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -340,10 +357,10 @@ export const WaktuKerjaTab: React.FC<WaktuKerjaTabProps> = ({ onRefreshAll, crea
       </Card>
 
       {/* Main Table */}
-      <Card className="overflow-hidden border-slate-200">
+      <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-700 text-[11px] font-semibold uppercase tracking-wider">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               <tr>
                 <th className="px-4 py-3.5">Posisi Jabatan</th>
                 <th className="px-4 py-3.5">Departemen</th>
@@ -353,7 +370,7 @@ export const WaktuKerjaTab: React.FC<WaktuKerjaTabProps> = ({ onRefreshAll, crea
                 <th className="px-4 py-3.5 text-center">Hari / Minggu</th>
                 <th className="px-4 py-3.5 text-center">Lembur</th>
                 <th className="px-4 py-3.5 text-center">Status</th>
-                <th className="px-4 py-3.5 text-right">Aksi</th>
+                <th className="px-5 py-3.5 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -572,10 +589,10 @@ export const WaktuKerjaTab: React.FC<WaktuKerjaTabProps> = ({ onRefreshAll, crea
           />
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               Batal
             </Button>
-            <Button type="submit" isLoading={submitting}>
+            <Button type="submit" size="sm" isLoading={submitting}>
               {modalMode === 'create' ? 'Simpan Waktu Kerja' : 'Perbarui Waktu Kerja'}
             </Button>
           </div>

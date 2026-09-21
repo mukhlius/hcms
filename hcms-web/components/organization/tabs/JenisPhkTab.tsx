@@ -9,7 +9,10 @@ import {
   Trash2,
   UserX,
   Scale,
-  Download
+  Download,
+  Filter,
+  ChevronDown,
+  RotateCcw
 } from 'lucide-react';
 import { TerminationTypeItem } from '@/types';
 import { terminationTypeService } from '@/services/masterDataService';
@@ -239,94 +242,95 @@ export const JenisPhkTab: React.FC<JenisPhkTabProps> = ({ onRefreshAll, createTr
 
   return (
     <div className="space-y-4">
-      {/* Header & Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* Action Toolbar / Filter Component */}
+      <Card className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-slate-200">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1 max-w-2xl">
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               type="text"
               placeholder="Cari kode, jenis PHK, dasar pasal PP 35/2021..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 text-sm w-full"
+              className="pl-9 h-9 text-xs"
             />
           </div>
 
-          <div className="w-full sm:w-56">
-            <Select
+          <div className="relative w-56">
+            <select
               value={filterPesangon}
               onChange={(e) => setFilterPesangon(e.target.value)}
-              options={[
-                { value: 'ALL', label: 'Semua Ketentuan Hak' },
-                { value: 'WITH_PESANGON', label: 'Berhak Uang Pesangon' },
-                { value: 'NO_PESANGON', label: 'Tanpa Uang Pesangon' },
-              ]}
-              className="text-sm"
-            />
+              className="w-full h-9 pl-8 pr-7 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 font-medium cursor-pointer appearance-none"
+            >
+              <option value="ALL">Semua Ketentuan Hak</option>
+              <option value="WITH_PESANGON">Berhak Uang Pesangon</option>
+              <option value="NO_PESANGON">Tanpa Uang Pesangon</option>
+            </select>
+            <Filter className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>
+
+          {(search || filterPesangon !== 'ALL') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearch('');
+                setFilterPesangon('ALL');
+              }}
+              className="h-9 px-2 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200"
+              title="Reset Filter"
+            >
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Reset
+            </Button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 border-gray-200"
+            leftIcon={<Download className="h-3.5 w-3.5" />}
           >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Export CSV</span>
+            Unduh CSV
           </Button>
 
           <Button
             variant="outline"
             size="sm"
             onClick={loadData}
-            disabled={loading}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 border-gray-200"
+            isLoading={loading}
+            leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
+            Segarkan
           </Button>
         </div>
-      </div>
+      </Card>
 
       {/* Table Card */}
-      <Card className="border border-gray-200 overflow-hidden shadow-sm">
+      <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600">
-            <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="py-3.5 px-4 w-12 text-center">No</th>
-                <th className="py-3.5 px-4">
-                  <SortableHeader
-                    field="code"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Kode
-                  </SortableHeader>
+                <th className="px-4 py-3.5 w-12 text-center">No</th>
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Kode" field="code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="py-3.5 px-4">
-                  <SortableHeader
-                    field="name"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Alasan & Jenis PHK
-                  </SortableHeader>
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Alasan &amp; Jenis PHK" field="name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="py-3.5 px-4">Dasar Hukum</th>
-                <th className="py-3.5 px-4 text-center">Pesangon (UP)</th>
-                <th className="py-3.5 px-4 text-center">Penghargaan (PMTK)</th>
-                <th className="py-3.5 px-4 text-center">Hak Lainnya</th>
-                <th className="py-3.5 px-4 text-center">Status</th>
-                <th className="py-3.5 px-4 text-right">Aksi</th>
+                <th className="px-4 py-3.5">Dasar Hukum</th>
+                <th className="px-4 py-3.5 text-center">Pesangon (UP)</th>
+                <th className="px-4 py-3.5 text-center">Penghargaan (PMTK)</th>
+                <th className="px-4 py-3.5 text-center">Hak Lainnya</th>
+                <th className="px-4 py-3.5 text-center">Status</th>
+                <th className="px-5 py-3.5 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
@@ -343,10 +347,10 @@ export const JenisPhkTab: React.FC<JenisPhkTabProps> = ({ onRefreshAll, createTr
                 ))
               ) : paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-gray-500">
-                    <UserX className="h-10 w-10 mx-auto text-gray-300 mb-2" />
-                    <p className="font-medium text-gray-600">Tidak ada data jenis PHK ditemukan</p>
-                    <p className="text-xs text-gray-400 mt-1">Coba sesuaikan filter pencarian atau tambah data baru.</p>
+                  <td colSpan={9} className="py-12 text-center text-slate-400">
+                    <UserX className="h-10 w-10 mx-auto text-slate-300 mb-2" />
+                    <p className="font-medium text-slate-600">Tidak ada data jenis PHK ditemukan</p>
+                    <p className="text-xs text-slate-400 mt-1">Coba sesuaikan filter pencarian atau tambah data baru.</p>
                   </td>
                 </tr>
               ) : (
@@ -356,19 +360,19 @@ export const JenisPhkTab: React.FC<JenisPhkTabProps> = ({ onRefreshAll, createTr
                   const pmtkMult = Number(item.pmtk_multiplier);
 
                   return (
-                    <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="py-3.5 px-4 text-center text-xs text-gray-500 font-mono">
+                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3.5 px-4 text-center text-xs text-slate-500 font-mono">
                         {itemNumber}
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-semibold text-xs text-gray-800 whitespace-nowrap">
-                        <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded border border-gray-200">
+                      <td className="py-3.5 px-4 font-mono font-semibold text-xs text-slate-800 whitespace-nowrap">
+                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
                           {item.code}
                         </span>
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="font-semibold text-gray-900">{item.name}</div>
+                        <div className="font-semibold text-slate-900">{item.name}</div>
                         {item.description && (
-                          <div className="text-xs text-gray-400 line-clamp-1 mt-0.5">{item.description}</div>
+                          <div className="text-xs text-slate-400 line-clamp-1 mt-0.5">{item.description}</div>
                         )}
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
@@ -378,14 +382,14 @@ export const JenisPhkTab: React.FC<JenisPhkTabProps> = ({ onRefreshAll, createTr
                             {item.legal_basis}
                           </span>
                         ) : (
-                          <span className="text-xs text-gray-400">-</span>
+                          <span className="text-xs text-slate-400">-</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${pesangonMult > 0
                               ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : 'bg-gray-100 text-gray-400'
+                              : 'bg-slate-100 text-slate-400'
                             }`}
                         >
                           {pesangonMult > 0 ? `${pesangonMult}x Upah` : '0x (Nihil)'}
@@ -395,7 +399,7 @@ export const JenisPhkTab: React.FC<JenisPhkTabProps> = ({ onRefreshAll, createTr
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${pmtkMult > 0
                               ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                              : 'bg-gray-100 text-gray-400'
+                              : 'bg-slate-100 text-slate-400'
                             }`}
                         >
                           {pmtkMult > 0 ? `${pmtkMult}x PMTK` : '0x (Nihil)'}
@@ -414,7 +418,7 @@ export const JenisPhkTab: React.FC<JenisPhkTabProps> = ({ onRefreshAll, createTr
                             </span>
                           )}
                           {!item.entitled_to_uph && !item.entitled_to_uang_pisah && (
-                            <span className="text-xs text-gray-400">-</span>
+                            <span className="text-xs text-slate-400">-</span>
                           )}
                         </div>
                       </td>
@@ -432,7 +436,7 @@ export const JenisPhkTab: React.FC<JenisPhkTabProps> = ({ onRefreshAll, createTr
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenEdit(item)}
-                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-gray-200"
+                            className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-slate-200"
                             title="Edit Jenis PHK"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -441,7 +445,7 @@ export const JenisPhkTab: React.FC<JenisPhkTabProps> = ({ onRefreshAll, createTr
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(item)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-gray-200"
+                            className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-slate-200"
                             title="Hapus Jenis PHK"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -597,21 +601,21 @@ export const JenisPhkTab: React.FC<JenisPhkTabProps> = ({ onRefreshAll, createTr
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => setIsModalOpen(false)}
-              disabled={submitting}
             >
               Batal
             </Button>
             <Button
               type="submit"
-              disabled={submitting}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              size="sm"
+              isLoading={submitting}
             >
-              {submitting ? 'Menyimpan...' : modalMode === 'create' ? 'Simpan Jenis PHK' : 'Perbarui Jenis PHK'}
+              {modalMode === 'create' ? 'Simpan Jenis PHK' : 'Perbarui Jenis PHK'}
             </Button>
           </div>
         </form>

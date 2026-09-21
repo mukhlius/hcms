@@ -10,7 +10,10 @@ import {
   Clock,
   Download,
   ShieldAlert,
-  FileWarning
+  FileWarning,
+  Filter,
+  ChevronDown,
+  RotateCcw
 } from 'lucide-react';
 import { WarningLetterDurationItem } from '@/types';
 import { warningLetterDurationService } from '@/services/masterDataService';
@@ -250,114 +253,101 @@ export const DurasiSpTab: React.FC<DurasiSpTabProps> = ({ onRefreshAll, createTr
 
   return (
     <div className="space-y-4">
-      {/* Header & Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* Action Toolbar / Filter Component */}
+      <Card className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-slate-200">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1 max-w-2xl">
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               type="text"
               placeholder="Cari kode, nama SP, sanksi/konsekuensi..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 text-sm w-full"
+              className="pl-9 h-9 text-xs"
             />
           </div>
 
-          <div className="w-full sm:w-52">
-            <Select
+          <div className="relative w-52">
+            <select
               value={filterLevel}
               onChange={(e) => setFilterLevel(e.target.value)}
-              options={[
-                { value: 'ALL', label: 'Semua Tingkatan SP' },
-                { value: 'TEGURAN', label: 'Teguran Lisan/Tertulis' },
-                { value: 'SP_1', label: 'SP 1 (Pertama)' },
-                { value: 'SP_2', label: 'SP 2 (Kedua)' },
-                { value: 'SP_3', label: 'SP 3 (Ketiga / Terakhir)' },
-              ]}
-              className="text-sm"
-            />
+              className="w-full h-9 pl-8 pr-7 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 font-medium cursor-pointer appearance-none"
+            >
+              <option value="ALL">Semua Tingkatan SP</option>
+              <option value="TEGURAN">Teguran Lisan/Tertulis</option>
+              <option value="SP_1">SP 1 (Pertama)</option>
+              <option value="SP_2">SP 2 (Kedua)</option>
+              <option value="SP_3">SP 3 (Ketiga / Terakhir)</option>
+            </select>
+            <Filter className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>
+
+          {(search || filterLevel !== 'ALL') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearch('');
+                setFilterLevel('ALL');
+              }}
+              className="h-9 px-2 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200"
+              title="Reset Filter"
+            >
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Reset
+            </Button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 border-gray-200"
+            leftIcon={<Download className="h-3.5 w-3.5" />}
           >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Export CSV</span>
+            Unduh CSV
           </Button>
 
           <Button
             variant="outline"
             size="sm"
             onClick={loadData}
-            disabled={loading}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 border-gray-200"
+            isLoading={loading}
+            leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
+            Segarkan
           </Button>
         </div>
-      </div>
+      </Card>
 
       {/* Table Card */}
-      <Card className="border border-gray-200 overflow-hidden shadow-sm">
+      <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600">
-            <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="py-3.5 px-4 w-12 text-center">No</th>
-                <th className="py-3.5 px-4">
-                  <SortableHeader
-                    field="code"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Kode
-                  </SortableHeader>
+                <th className="px-4 py-3.5 w-12 text-center">No</th>
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Kode" field="code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="py-3.5 px-4">
-                  <SortableHeader
-                    field="level"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Tingkat SP
-                  </SortableHeader>
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Tingkat SP" field="level" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="py-3.5 px-4">
-                  <SortableHeader
-                    field="name"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Nama SP / Sanksi
-                  </SortableHeader>
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Nama SP / Sanksi" field="name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="py-3.5 px-4 text-center">
-                  <SortableHeader
-                    field="duration_months"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Masa Berlaku
-                  </SortableHeader>
+                <th className="px-4 py-3.5 text-center">
+                  <SortableHeader label="Masa Berlaku" field="duration_months" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} align="center" />
                 </th>
-                <th className="py-3.5 px-4">Dampak & Konsekuensi</th>
-                <th className="py-3.5 px-4">Dasar Ketentuan</th>
-                <th className="py-3.5 px-4 text-center">Status</th>
-                <th className="py-3.5 px-4 text-right">Aksi</th>
+                <th className="px-4 py-3.5">Dampak &amp; Konsekuensi</th>
+                <th className="px-4 py-3.5">Dasar Ketentuan</th>
+                <th className="px-4 py-3.5 text-center">Status</th>
+                <th className="px-5 py-3.5 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
@@ -374,22 +364,22 @@ export const DurasiSpTab: React.FC<DurasiSpTabProps> = ({ onRefreshAll, createTr
                 ))
               ) : paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-gray-500">
-                    <FileWarning className="h-10 w-10 mx-auto text-gray-300 mb-2" />
-                    <p className="font-medium text-gray-600">Tidak ada tingkatan SP ditemukan</p>
-                    <p className="text-xs text-gray-400 mt-1">Coba sesuaikan filter pencarian atau tambah data baru.</p>
+                  <td colSpan={9} className="py-12 text-center text-slate-400">
+                    <FileWarning className="h-10 w-10 mx-auto text-slate-300 mb-2" />
+                    <p className="font-medium text-slate-600">Tidak ada tingkatan SP ditemukan</p>
+                    <p className="text-xs text-slate-400 mt-1">Coba sesuaikan filter pencarian atau tambah data baru.</p>
                   </td>
                 </tr>
               ) : (
                 paginatedData.map((item: WarningLetterDurationItem, index: number) => {
                   const itemNumber = (currentPage - 1) * perPage + index + 1;
                   return (
-                    <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="py-3.5 px-4 text-center text-xs text-gray-500 font-mono">
+                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3.5 px-4 text-center text-xs text-slate-500 font-mono">
                         {itemNumber}
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-semibold text-xs text-gray-800 whitespace-nowrap">
-                        <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded border border-gray-200">
+                      <td className="py-3.5 px-4 font-mono font-semibold text-xs text-slate-800 whitespace-nowrap">
+                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
                           {item.code}
                         </span>
                       </td>
@@ -397,7 +387,7 @@ export const DurasiSpTab: React.FC<DurasiSpTabProps> = ({ onRefreshAll, createTr
                         {getLevelBadge(item.level)}
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="font-semibold text-gray-900">{item.name}</div>
+                        <div className="font-semibold text-slate-900">{item.name}</div>
                       </td>
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
@@ -405,12 +395,12 @@ export const DurasiSpTab: React.FC<DurasiSpTabProps> = ({ onRefreshAll, createTr
                           {item.duration_months} Bulan
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-gray-700 max-w-sm">
+                      <td className="py-3.5 px-4 text-xs text-slate-700 max-w-sm">
                         <p className="line-clamp-2" title={item.consequence_description || '-'}>
                           {item.consequence_description || '-'}
                         </p>
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-gray-500 max-w-xs truncate">
+                      <td className="py-3.5 px-4 text-xs text-slate-500 max-w-xs truncate">
                         {item.description || '-'}
                       </td>
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
@@ -427,7 +417,7 @@ export const DurasiSpTab: React.FC<DurasiSpTabProps> = ({ onRefreshAll, createTr
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenEdit(item)}
-                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-gray-200"
+                            className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-slate-200"
                             title="Edit Tingkat SP"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -436,7 +426,7 @@ export const DurasiSpTab: React.FC<DurasiSpTabProps> = ({ onRefreshAll, createTr
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(item)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-gray-200"
+                            className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-slate-200"
                             title="Hapus Tingkat SP"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -464,59 +454,61 @@ export const DurasiSpTab: React.FC<DurasiSpTabProps> = ({ onRefreshAll, createTr
         )}
       </Card>
 
-      {/* Modal Form */}
+      {/* Modal Form Tambah / Edit */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={modalMode === 'create' ? 'Tambah Tingkat / Durasi SP' : 'Edit Tingkat / Durasi SP'}
+        title={modalMode === 'create' ? 'Tambah Tingkat Surat Peringatan (SP)' : 'Edit Tingkat Surat Peringatan (SP)'}
         maxWidth="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Kode SP <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Kode Tingkat SP <span className="text-rose-500">*</span>
               </label>
               <Input
-                placeholder="Contoh: SP_1"
+                placeholder="Contoh: SP-01"
                 required
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                className="font-mono text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Tingkat Surat <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Tingkatan SP <span className="text-rose-500">*</span>
               </label>
               <Select
                 value={formData.level}
                 onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
                 options={[
-                  { value: 'TEGURAN', label: 'Teguran Lisan/Tertulis' },
-                  { value: 'SP_1', label: 'SP 1 (Pertama)' },
-                  { value: 'SP_2', label: 'SP 2 (Kedua)' },
-                  { value: 'SP_3', label: 'SP 3 (Ketiga / Terakhir)' },
+                  { value: 'TEGURAN', label: 'Surat Peringatan Lisan / Teguran Tertulis' },
+                  { value: 'SP_1', label: 'Surat Peringatan I (SP 1)' },
+                  { value: 'SP_2', label: 'Surat Peringatan II (SP 2)' },
+                  { value: 'SP_3', label: 'Surat Peringatan III / Terakhir (SP 3)' },
                 ]}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Nama Dokumen Peringatan <span className="text-red-500">*</span>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Nama Sanksi / Peringatan <span className="text-rose-500">*</span>
             </label>
             <Input
-              placeholder="Contoh: Surat Peringatan Pertama (SP 1)"
+              placeholder="Contoh: Surat Peringatan Pertama (Pelanggaran Ringan)"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="text-xs"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Masa Berlaku (Bulan) <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Durasi Masa Berlaku (Bulan) <span className="text-rose-500">*</span>
               </label>
               <Input
                 type="number"
@@ -524,12 +516,13 @@ export const DurasiSpTab: React.FC<DurasiSpTabProps> = ({ onRefreshAll, createTr
                 required
                 value={formData.duration_months}
                 onChange={(e) => setFormData({ ...formData, duration_months: parseInt(e.target.value) || 6 })}
+                className="text-xs"
               />
-              <p className="text-[11px] text-gray-400 mt-1">Standar UU Ketenagakerjaan: 6 Bulan</p>
+              <p className="text-[11px] text-slate-400 mt-1">Standar UU Ketenagakerjaan: 6 Bulan</p>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Status <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Status <span className="text-rose-500">*</span>
               </label>
               <Select
                 value={formData.status}
@@ -543,12 +536,12 @@ export const DurasiSpTab: React.FC<DurasiSpTabProps> = ({ onRefreshAll, createTr
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               Dampak & Konsekuensi Pelanggaran
             </label>
             <textarea
               rows={3}
-              className="w-full text-xs rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 placeholder-gray-400"
+              className="w-full text-xs rounded-lg border-slate-300 shadow-xs focus:border-blue-600 focus:ring-blue-600 placeholder-slate-400"
               placeholder="Contoh: Penundaan kenaikan grade, penundaan promosi jabatan, evaluasi KPI..."
               value={formData.consequence_description}
               onChange={(e) => setFormData({ ...formData, consequence_description: e.target.value })}
@@ -556,31 +549,32 @@ export const DurasiSpTab: React.FC<DurasiSpTabProps> = ({ onRefreshAll, createTr
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               Keterangan / Dasar Regulasi
             </label>
             <Input
               placeholder="Contoh: PP 35/2021 & Peraturan Perusahaan Bab Disiplin"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="text-xs"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => setIsModalOpen(false)}
-              disabled={submitting}
             >
               Batal
             </Button>
             <Button
               type="submit"
-              disabled={submitting}
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              size="sm"
+              isLoading={submitting}
             >
-              {submitting ? 'Menyimpan...' : modalMode === 'create' ? 'Simpan Tingkat SP' : 'Perbarui Tingkat SP'}
+              {modalMode === 'create' ? 'Simpan Tingkat SP' : 'Perbarui Tingkat SP'}
             </Button>
           </div>
         </form>

@@ -365,38 +365,28 @@ export const RosterKerjaTab: React.FC<RosterKerjaTabProps> = ({ onRefreshAll, cr
       </Card>
 
       {/* Main Table Card */}
-      <Card className="overflow-hidden border-slate-200">
+      <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-700 text-[11px] font-semibold uppercase tracking-wider">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="px-4 py-3.5">
-                  <SortableHeader field="level" currentField={sortField} currentOrder={sortOrder} onSort={handleSort}>
-                    Level (Jabatan)
-                  </SortableHeader>
+                <th className="px-5 py-3.5">
+                  <SortableHeader label="Level (Jabatan)" field="level" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
                 <th className="px-4 py-3.5">
-                  <SortableHeader field="roster_name" currentField={sortField} currentOrder={sortOrder} onSort={handleSort}>
-                    Nama Pola Roster
-                  </SortableHeader>
+                  <SortableHeader label="Nama Pola Roster" field="roster_name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
                 <th className="px-4 py-3.5 text-center">
-                  <SortableHeader field="days_on" currentField={sortField} currentOrder={sortOrder} onSort={handleSort} align="center">
-                    Hari Kerja (ON)
-                  </SortableHeader>
+                  <SortableHeader label="Hari Kerja (ON)" field="days_on" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} align="center" />
                 </th>
                 <th className="px-4 py-3.5 text-center">
-                  <SortableHeader field="days_off" currentField={sortField} currentOrder={sortOrder} onSort={handleSort} align="center">
-                    Hari Cuti (OFF)
-                  </SortableHeader>
+                  <SortableHeader label="Hari Cuti (OFF)" field="days_off" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} align="center" />
                 </th>
                 <th className="px-4 py-3.5">Catatan</th>
                 <th className="px-4 py-3.5 text-center">
-                  <SortableHeader field="status" currentField={sortField} currentOrder={sortOrder} onSort={handleSort} align="center">
-                    Status
-                  </SortableHeader>
+                  <SortableHeader label="Status" field="status" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} align="center" />
                 </th>
-                <th className="px-4 py-3.5 text-right">Aksi</th>
+                <th className="px-5 py-3.5 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

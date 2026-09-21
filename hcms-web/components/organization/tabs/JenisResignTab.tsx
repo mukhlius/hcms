@@ -12,7 +12,10 @@ import {
   Download,
   FileCheck,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Filter,
+  ChevronDown,
+  RotateCcw
 } from 'lucide-react';
 import { ResignationTypeItem } from '@/types';
 import { resignationTypeService } from '@/services/masterDataService';
@@ -239,104 +242,98 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
 
   return (
     <div className="space-y-4">
-      {/* Header & Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* Action Toolbar / Filter Component */}
+      <Card className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-slate-200">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1 max-w-2xl">
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               type="text"
               placeholder="Cari kode, jenis resign, keterangan..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 text-sm w-full"
+              className="pl-9 h-9 text-xs"
             />
           </div>
 
-          <div className="w-full sm:w-56">
-            <Select
+          <div className="relative w-56">
+            <select
               value={filterNotice}
               onChange={(e) => setFilterNotice(e.target.value)}
-              options={[
-                { value: 'ALL', label: 'Semua Notice Period' },
-                { value: '30_DAYS', label: 'One Month Notice (>= 30 Hari)' },
-                { value: 'SHORT', label: 'Short Notice (< 30 Hari)' },
-                { value: 'IMMEDIATE', label: 'Tanpa Notice (0 Hari)' },
-              ]}
-              className="text-sm"
-            />
+              className="w-full h-9 pl-8 pr-7 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 font-medium cursor-pointer appearance-none"
+            >
+              <option value="ALL">Semua Notice Period</option>
+              <option value="30_DAYS">One Month Notice (&gt;= 30 Hari)</option>
+              <option value="SHORT">Short Notice (&lt; 30 Hari)</option>
+              <option value="IMMEDIATE">Tanpa Notice (0 Hari)</option>
+            </select>
+            <Filter className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>
+
+          {(search || filterNotice !== 'ALL') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearch('');
+                setFilterNotice('ALL');
+              }}
+              className="h-9 px-2 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200"
+              title="Reset Filter"
+            >
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Reset
+            </Button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 border-gray-200"
+            leftIcon={<Download className="h-3.5 w-3.5" />}
           >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Export CSV</span>
+            Unduh CSV
           </Button>
 
           <Button
             variant="outline"
             size="sm"
             onClick={loadData}
-            disabled={loading}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 border-gray-200"
+            isLoading={loading}
+            leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
+            Segarkan
           </Button>
         </div>
-      </div>
+      </Card>
 
       {/* Table Card */}
-      <Card className="border border-gray-200 overflow-hidden shadow-sm">
+      <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600">
-            <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="py-3.5 px-4 w-12 text-center">No</th>
-                <th className="py-3.5 px-4">
-                  <SortableHeader
-                    field="code"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Kode
-                  </SortableHeader>
+                <th className="px-4 py-3.5 w-12 text-center">No</th>
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Kode" field="code" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="py-3.5 px-4">
-                  <SortableHeader
-                    field="name"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Nama Jenis Resign
-                  </SortableHeader>
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Nama Jenis Resign" field="name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="py-3.5 px-4 text-center">
-                  <SortableHeader
-                    field="notice_period_days"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Notice Period
-                  </SortableHeader>
+                <th className="px-4 py-3.5 text-center">
+                  <SortableHeader label="Notice Period" field="notice_period_days" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} align="center" />
                 </th>
-                <th className="py-3.5 px-4 text-center">Exit Clearance</th>
-                <th className="py-3.5 px-4 text-center">Uang Pisah</th>
-                <th className="py-3.5 px-4 text-center">Sisa Cuti Dibayar</th>
-                <th className="py-3.5 px-4 text-center">Status</th>
-                <th className="py-3.5 px-4 text-right">Aksi</th>
+                <th className="px-4 py-3.5 text-center">Exit Clearance</th>
+                <th className="px-4 py-3.5 text-center">Uang Pisah</th>
+                <th className="px-4 py-3.5 text-center">Sisa Cuti Dibayar</th>
+                <th className="px-4 py-3.5 text-center">Status</th>
+                <th className="px-5 py-3.5 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
@@ -353,29 +350,29 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
                 ))
               ) : paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-gray-500">
-                    <LogOut className="h-10 w-10 mx-auto text-gray-300 mb-2" />
-                    <p className="font-medium text-gray-600">Tidak ada data jenis resign ditemukan</p>
-                    <p className="text-xs text-gray-400 mt-1">Coba sesuaikan filter pencarian atau tambah data baru.</p>
+                  <td colSpan={9} className="py-12 text-center text-slate-400">
+                    <LogOut className="h-10 w-10 mx-auto text-slate-300 mb-2" />
+                    <p className="font-medium text-slate-600">Tidak ada data jenis resign ditemukan</p>
+                    <p className="text-xs text-slate-400 mt-1">Coba sesuaikan filter pencarian atau tambah data baru.</p>
                   </td>
                 </tr>
               ) : (
                 paginatedData.map((item: ResignationTypeItem, index: number) => {
                   const itemNumber = (currentPage - 1) * perPage + index + 1;
                   return (
-                    <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="py-3.5 px-4 text-center text-xs text-gray-500 font-mono">
+                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3.5 px-4 text-center text-xs text-slate-500 font-mono">
                         {itemNumber}
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-semibold text-xs text-gray-800 whitespace-nowrap">
-                        <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded border border-gray-200">
+                      <td className="py-3.5 px-4 font-mono font-semibold text-xs text-slate-800 whitespace-nowrap">
+                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
                           {item.code}
                         </span>
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="font-semibold text-gray-900">{item.name}</div>
+                        <div className="font-semibold text-slate-900">{item.name}</div>
                         {item.description && (
-                          <div className="text-xs text-gray-400 line-clamp-1 mt-0.5">{item.description}</div>
+                          <div className="text-xs text-slate-400 line-clamp-1 mt-0.5">{item.description}</div>
                         )}
                       </td>
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
@@ -391,7 +388,7 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
                             Wajib
                           </span>
                         ) : (
-                          <span className="text-xs text-gray-400">Tidak Wajib</span>
+                          <span className="text-xs text-slate-400">Tidak Wajib</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
@@ -401,8 +398,8 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
                             Berhak
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
-                            <XCircle className="h-3 w-3 text-gray-400" />
+                          <span className="inline-flex items-center gap-1 text-xs text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                            <XCircle className="h-3 w-3 text-slate-400" />
                             Tidak
                           </span>
                         )}
@@ -414,8 +411,8 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
                             Dibayar
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
-                            <XCircle className="h-3 w-3 text-gray-400" />
+                          <span className="inline-flex items-center gap-1 text-xs text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                            <XCircle className="h-3 w-3 text-slate-400" />
                             Hangus
                           </span>
                         )}
@@ -434,7 +431,7 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenEdit(item)}
-                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-gray-200"
+                            className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-slate-200"
                             title="Edit Jenis Resign"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -443,7 +440,7 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(item)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-gray-200"
+                            className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-slate-200"
                             title="Hapus Jenis Resign"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -471,62 +468,66 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
         )}
       </Card>
 
-      {/* Modal Form */}
+      {/* Modal Form Tambah / Edit */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={modalMode === 'create' ? 'Tambah Jenis Pengunduran Diri' : 'Edit Jenis Pengunduran Diri'}
+        title={modalMode === 'create' ? 'Tambah Jenis Resign Baru' : 'Edit Jenis Resign'}
         maxWidth="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Kode Jenis Resign <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Kode Resign <span className="text-rose-500">*</span>
               </label>
               <Input
-                placeholder="Contoh: RESIGN_1_MONTH"
+                placeholder="Contoh: RES-NORMAL"
                 required
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                className="font-mono text-xs"
               />
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Notice Period (Hari) <span className="text-red-500">*</span>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Nama / Jenis Pengunduran Diri <span className="text-rose-500">*</span>
               </label>
               <Input
-                type="number"
-                min="0"
+                placeholder="Contoh: Pengunduran Diri Sukarela (Standard 30 Hari)"
                 required
-                value={formData.notice_period_days}
-                onChange={(e) => setFormData({ ...formData, notice_period_days: parseInt(e.target.value) || 0 })}
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="text-xs"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Nama / Alasan Resign <span className="text-red-500">*</span>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Notice Period (Hari Kalender) <span className="text-rose-500">*</span>
             </label>
             <Input
-              placeholder="Contoh: Resign Sukarela (One Month Notice)"
+              type="number"
+              min="0"
               required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.notice_period_days}
+              onChange={(e) => setFormData({ ...formData, notice_period_days: parseInt(e.target.value) || 0 })}
+              className="text-xs"
             />
+            <p className="text-[11px] text-slate-400 mt-1">Standar UU: Minimal 30 hari sebelum tanggal efektif</p>
           </div>
 
-          {/* Policy Toggles */}
-          <div className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          {/* Ketentuan Tambahan */}
+          <div className="space-y-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.requires_clearance}
                 onChange={(e) => setFormData({ ...formData, requires_clearance: e.target.checked })}
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 h-4 w-4"
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
               />
-              <span className="text-xs text-gray-800 font-semibold">
+              <span className="text-xs text-slate-800 font-semibold">
                 Wajib Melakukan Exit Clearance & Serah Terima Inventaris
               </span>
             </label>
@@ -536,9 +537,9 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
                 type="checkbox"
                 checked={formData.entitled_to_uang_pisah}
                 onChange={(e) => setFormData({ ...formData, entitled_to_uang_pisah: e.target.checked })}
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 h-4 w-4"
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
               />
-              <span className="text-xs text-gray-800 font-semibold">
+              <span className="text-xs text-slate-800 font-semibold">
                 Berhak Menerima Uang Pisah (Sesuai Masa Kerja & PKB)
               </span>
             </label>
@@ -548,9 +549,9 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
                 type="checkbox"
                 checked={formData.entitled_to_sisa_cuti}
                 onChange={(e) => setFormData({ ...formData, entitled_to_sisa_cuti: e.target.checked })}
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 h-4 w-4"
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
               />
-              <span className="text-xs text-gray-800 font-semibold">
+              <span className="text-xs text-slate-800 font-semibold">
                 Berhak Penggantian Sisa Cuti Tahunan yang Belum Gugur
               </span>
             </label>
@@ -558,8 +559,8 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Status <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Status <span className="text-rose-500">*</span>
               </label>
               <Select
                 value={formData.status}
@@ -571,32 +572,33 @@ export const JenisResignTab: React.FC<JenisResignTabProps> = ({ onRefreshAll, cr
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Keterangan Tambahan
               </label>
               <Input
                 placeholder="Penjelasan ketentuan..."
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="text-xs"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => setIsModalOpen(false)}
-              disabled={submitting}
             >
               Batal
             </Button>
             <Button
               type="submit"
-              disabled={submitting}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              size="sm"
+              isLoading={submitting}
             >
-              {submitting ? 'Menyimpan...' : modalMode === 'create' ? 'Simpan Jenis Resign' : 'Perbarui Jenis Resign'}
+              {modalMode === 'create' ? 'Simpan Jenis Resign' : 'Perbarui Jenis Resign'}
             </Button>
           </div>
         </form>

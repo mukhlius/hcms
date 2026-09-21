@@ -10,7 +10,10 @@ import {
   CalendarCheck,
   CalendarDays,
   Download,
-  Repeat
+  Repeat,
+  Filter,
+  ChevronDown,
+  RotateCcw
 } from 'lucide-react';
 import { PublicHolidayItem } from '@/types';
 import { publicHolidayService } from '@/services/masterDataService';
@@ -243,117 +246,113 @@ export const KalenderLiburTab: React.FC<KalenderLiburTabProps> = ({ onRefreshAll
 
   return (
     <div className="space-y-4">
-      {/* Header & Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* Action Toolbar / Filter Component */}
+      <Card className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-slate-200">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1 max-w-2xl">
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               type="text"
               placeholder="Cari nama hari libur, tanggal..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 text-sm w-full"
+              className="pl-9 h-9 text-xs"
             />
           </div>
 
-          <div className="w-full sm:w-36">
-            <Select
+          <div className="relative w-36">
+            <select
               value={filterYear}
               onChange={(e) => setFilterYear(e.target.value)}
-              options={[
-                { value: 'ALL', label: 'Semua Tahun' },
-                { value: '2025', label: 'Tahun 2025' },
-                { value: '2026', label: 'Tahun 2026' },
-                { value: '2027', label: 'Tahun 2027' },
-              ]}
-              className="text-sm"
-            />
+              className="w-full h-9 pl-8 pr-7 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 font-medium cursor-pointer appearance-none"
+            >
+              <option value="ALL">Semua Tahun</option>
+              <option value="2025">Tahun 2025</option>
+              <option value="2026">Tahun 2026</option>
+              <option value="2027">Tahun 2027</option>
+            </select>
+            <Filter className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>
 
-          <div className="w-full sm:w-48">
-            <Select
+          <div className="relative w-44">
+            <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              options={[
-                { value: 'ALL', label: 'Semua Kategori' },
-                { value: 'HARI_LIBUR_NASIONAL', label: 'Libur Nasional' },
-                { value: 'CUTI_BERSAMA', label: 'Cuti Bersama' },
-                { value: 'LIBUR_KHUSUS_SITE', label: 'Libur Khusus Site' },
-              ]}
-              className="text-sm"
-            />
+              className="w-full h-9 pl-8 pr-7 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 font-medium cursor-pointer appearance-none"
+            >
+              <option value="ALL">Semua Kategori</option>
+              <option value="HARI_LIBUR_NASIONAL">Libur Nasional</option>
+              <option value="CUTI_BERSAMA">Cuti Bersama</option>
+              <option value="LIBUR_KHUSUS_SITE">Libur Khusus Site</option>
+            </select>
+            <Filter className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>
+
+          {(search || filterYear !== '2026' || filterType !== 'ALL') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearch('');
+                setFilterYear('2026');
+                setFilterType('ALL');
+              }}
+              className="h-9 px-2 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200"
+              title="Reset Filter"
+            >
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Reset
+            </Button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 border-gray-200"
+            leftIcon={<Download className="h-3.5 w-3.5" />}
           >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Export CSV</span>
+            Unduh CSV
           </Button>
 
           <Button
             variant="outline"
             size="sm"
             onClick={loadData}
-            disabled={loading}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 border-gray-200"
+            isLoading={loading}
+            leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
+            Segarkan
           </Button>
         </div>
-      </div>
+      </Card>
 
       {/* Table Card */}
-      <Card className="border border-gray-200 overflow-hidden shadow-sm">
+      <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600">
-            <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="py-3.5 px-4 w-12 text-center">No</th>
-                <th className="py-3.5 px-4">
-                  <SortableHeader
-                    field="holiday_date"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Tanggal
-                  </SortableHeader>
+                <th className="px-4 py-3.5 w-12 text-center">No</th>
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Tanggal" field="holiday_date" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="py-3.5 px-4">
-                  <SortableHeader
-                    field="name"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Nama Hari Libur
-                  </SortableHeader>
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Nama Hari Libur" field="name" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="py-3.5 px-4">
-                  <SortableHeader
-                    field="type"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
-                    onSort={handleSort}
-                  >
-                    Kategori
-                  </SortableHeader>
+                <th className="px-4 py-3.5">
+                  <SortableHeader label="Kategori" field="type" currentField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 </th>
-                <th className="py-3.5 px-4 text-center">Berulang</th>
-                <th className="py-3.5 px-4">Keterangan</th>
-                <th className="py-3.5 px-4 text-center">Status</th>
-                <th className="py-3.5 px-4 text-right">Aksi</th>
+                <th className="px-4 py-3.5 text-center">Berulang</th>
+                <th className="px-4 py-3.5">Keterangan</th>
+                <th className="px-4 py-3.5 text-center">Status</th>
+                <th className="px-5 py-3.5 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
@@ -369,31 +368,31 @@ export const KalenderLiburTab: React.FC<KalenderLiburTabProps> = ({ onRefreshAll
                 ))
               ) : paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-gray-500">
-                    <CalendarCheck className="h-10 w-10 mx-auto text-gray-300 mb-2" />
-                    <p className="font-medium text-gray-600">Tidak ada data tanggal merah ditemukan</p>
-                    <p className="text-xs text-gray-400 mt-1">Coba sesuaikan filter pencarian atau tambah data baru.</p>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <CalendarCheck className="h-10 w-10 mx-auto text-slate-300 mb-2" />
+                    <p className="font-medium text-slate-600">Tidak ada data tanggal merah ditemukan</p>
+                    <p className="text-xs text-slate-400 mt-1">Coba sesuaikan filter pencarian atau tambah data baru.</p>
                   </td>
                 </tr>
               ) : (
                 paginatedData.map((item: PublicHolidayItem, index: number) => {
                   const itemNumber = (currentPage - 1) * perPage + index + 1;
                   return (
-                    <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="py-3.5 px-4 text-center text-xs text-gray-500 font-mono">
+                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3.5 px-4 text-center text-xs text-slate-500 font-mono">
                         {itemNumber}
                       </td>
-                      <td className="py-3.5 px-4 font-medium text-gray-900 whitespace-nowrap">
+                      <td className="py-3.5 px-4 font-medium text-slate-900 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <CalendarDays className="h-4 w-4 text-rose-500 shrink-0" />
                           <div>
                             <div className="text-sm font-semibold">{formatDisplayDate(item.holiday_date)}</div>
-                            <div className="text-xs text-gray-400 font-mono">{item.holiday_date}</div>
+                            <div className="text-xs text-slate-400 font-mono">{item.holiday_date}</div>
                           </div>
                         </div>
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="font-medium text-gray-800">{item.name}</span>
+                        <span className="font-medium text-slate-800">{item.name}</span>
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         {item.type === 'HARI_LIBUR_NASIONAL' && (
@@ -419,10 +418,10 @@ export const KalenderLiburTab: React.FC<KalenderLiburTabProps> = ({ onRefreshAll
                             Ya
                           </span>
                         ) : (
-                          <span className="text-xs text-gray-400">Tidak</span>
+                          <span className="text-xs text-slate-400">Tidak</span>
                         )}
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-gray-500 max-w-xs truncate">
+                      <td className="py-3.5 px-4 text-xs text-slate-500 max-w-xs truncate">
                         {item.description || '-'}
                       </td>
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
@@ -439,7 +438,7 @@ export const KalenderLiburTab: React.FC<KalenderLiburTabProps> = ({ onRefreshAll
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenEdit(item)}
-                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-gray-200"
+                            className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-slate-200"
                             title="Edit Hari Libur"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -448,7 +447,7 @@ export const KalenderLiburTab: React.FC<KalenderLiburTabProps> = ({ onRefreshAll
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(item)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-gray-200"
+                            className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-slate-200"
                             title="Hapus Hari Libur"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -476,74 +475,66 @@ export const KalenderLiburTab: React.FC<KalenderLiburTabProps> = ({ onRefreshAll
         )}
       </Card>
 
-      {/* Modal Form */}
+      {/* Modal Form Tambah / Edit */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={modalMode === 'create' ? 'Tambah Hari Libur / Tanggal Merah' : 'Edit Hari Libur / Tanggal Merah'}
-        maxWidth="md"
+        title={modalMode === 'create' ? 'Tambah Hari Libur Baru' : 'Edit Data Hari Libur'}
+        maxWidth="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Tanggal Libur <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="date"
-                required
-                value={formData.holiday_date}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  const yr = val ? new Date(val).getFullYear() : formData.year;
-                  setFormData({ ...formData, holiday_date: val, year: yr });
-                }}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Tahun <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="number"
-                required
-                value={formData.year}
-                onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) || 2026 })}
-              />
-            </div>
-          </div>
+          <Input
+            label="Nama Hari Libur / Cuti Bersama *"
+            placeholder="Contoh: Hari Raya Idul Fitri 1447 H"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Nama Hari Libur <span className="text-red-500">*</span>
-            </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
-              placeholder="Contoh: Tahun Baru Imlek 2577 Kongzili"
+              label="Tanggal Libur *"
+              type="date"
+              value={formData.holiday_date}
+              onChange={(e) => {
+                const dateVal = e.target.value;
+                const yearVal = dateVal ? parseInt(dateVal.split('-')[0]) || formData.year : formData.year;
+                setFormData({
+                  ...formData,
+                  holiday_date: dateVal,
+                  year: yearVal,
+                });
+              }}
               required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
+
+            <Input
+              label="Tahun Kalender *"
+              type="number"
+              min={2020}
+              max={2035}
+              value={formData.year}
+              onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) || 2026 })}
+              required
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Kategori Libur <span className="text-red-500">*</span>
-              </label>
-              <Select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                options={[
-                  { value: 'HARI_LIBUR_NASIONAL', label: 'Libur Nasional' },
-                  { value: 'CUTI_BERSAMA', label: 'Cuti BersAMA' },
-                  { value: 'LIBUR_KHUSUS_SITE', label: 'Libur Khusus Site' },
-                ]}
-              />
-            </div>
+            <Select
+              label="Kategori / Tipe Libur *"
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+              options={[
+                { value: 'HARI_LIBUR_NASIONAL', label: 'Hari Libur Nasional' },
+                { value: 'CUTI_BERSAMA', label: 'Cuti Bersama' },
+                { value: 'LIBUR_KHUSUS_SITE', label: 'Libur Khusus Site / Tambang' },
+              ]}
+              required
+            />
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Status <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Status *
               </label>
               <Select
                 value={formData.status}
@@ -562,45 +553,45 @@ export const KalenderLiburTab: React.FC<KalenderLiburTabProps> = ({ onRefreshAll
                 type="checkbox"
                 checked={formData.is_recurring}
                 onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
-                className="rounded border-gray-300 text-rose-600 focus:ring-rose-500 h-4 w-4"
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
               />
-              <span className="text-xs text-gray-700 font-medium">
+              <span className="text-xs text-slate-700 font-medium">
                 Berulang Setiap Tahun (Recurring Annual)
               </span>
             </label>
-            <p className="text-[11px] text-gray-400 mt-0.5 ml-6">
+            <p className="text-[11px] text-slate-400 mt-0.5 ml-6">
               Centang jika libur ini terjadi pada tanggal masehi yang sama setiap tahun (misal: Hari Kemerdekaan 17 Agustus).
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               Keterangan / Dasar Keputusan
             </label>
             <textarea
               rows={3}
-              className="w-full text-xs rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 placeholder-gray-400"
+              className="w-full text-xs rounded-lg border-slate-300 shadow-xs focus:border-blue-600 focus:ring-blue-600 placeholder-slate-400"
               placeholder="SKB 3 Menteri atau Surat Keputusan Site..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => setIsModalOpen(false)}
-              disabled={submitting}
             >
               Batal
             </Button>
             <Button
               type="submit"
-              disabled={submitting}
-              className="bg-rose-600 hover:bg-rose-700 text-white"
+              size="sm"
+              isLoading={submitting}
             >
-              {submitting ? 'Menyimpan...' : modalMode === 'create' ? 'Simpan Hari Libur' : 'Perbarui Hari Libur'}
+              {modalMode === 'create' ? 'Simpan Hari Libur' : 'Perbarui Hari Libur'}
             </Button>
           </div>
         </form>
