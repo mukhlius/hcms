@@ -27,6 +27,17 @@ class OrganizationDepartment extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function booted()
+    {
+        static::saved(function ($dept) {
+            app(\App\Services\OrganizationSyncService::class)->syncDepartment($dept);
+        });
+
+        static::deleted(function ($dept) {
+            app(\App\Services\OrganizationSyncService::class)->deleteDepartment($dept);
+        });
+    }
+
     public function company(): BelongsTo
     {
         return $this->belongsTo(OrganizationCompany::class, 'company_id');

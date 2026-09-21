@@ -42,6 +42,15 @@ class Position extends Model
         'effective_to' => 'date',
     ];
 
+    protected static function booted()
+    {
+        static::saving(function ($position) {
+            if (!$position->organization_unit_id && ($position->section_id || $position->department_id)) {
+                app(\App\Services\OrganizationSyncService::class)->resolvePositionUnit($position);
+            }
+        });
+    }
+
     protected $appends = [
         'vacancy_headcount',
     ];

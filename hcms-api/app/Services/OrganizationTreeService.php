@@ -28,7 +28,7 @@ class OrganizationTreeService
     }
 
     /**
-     * Recursively build nested tree array from flat collection.
+     * Recursively build nested tree array from flat collection with aggregated position counts.
      */
     protected function buildNestedTree($units, $parentId = null): array
     {
@@ -39,11 +39,33 @@ class OrganizationTreeService
                 $children = $this->buildNestedTree($units, $unit->id);
                 $node = $unit->toArray();
                 $node['children'] = $children;
+
+                // Aggregate positions count from descendants
+                $childrenPositions = array_sum(array_column($children, 'positions_count'));
+                $node['positions_count'] = ($unit->positions_count ?? 0) + $childrenPositions;
+                $node['children_count'] = count($children);
+
                 $branch[] = $node;
             }
         }
 
         return $branch;
+    }
+
+    /**
+     * Get recursive descendant unit IDs.
+     */
+    public function getDescendantIds(int $unitId): array
+    {
+        $ids = [];
+        $children = OrganizationUnit::where('parent_id', $unitId)->pluck('id')->all();
+
+        foreach ($children as $childId) {
+            $ids[] = $childId;
+            $ids = array_merge($ids, $this->getDescendantIds($childId));
+        }
+
+        return $ids;
     }
 
     /**
