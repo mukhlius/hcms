@@ -289,6 +289,49 @@ Route::prefix('v1')->group(function () {
                 Route::get('/overtime-types', [\App\Http\Controllers\Api\V1\MasterData\ReferenceDataController::class, 'overtimeTypes']);
                 Route::get('/recruitment-sources', [\App\Http\Controllers\Api\V1\MasterData\ReferenceDataController::class, 'recruitmentSources']);
 
+                // 7 Extension Organization References
+                // 1. Roster Kerja Berdasarkan Level Jabatan
+                Route::get('/level-rosters', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'indexLevelRosters']);
+                Route::post('/level-rosters', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'storeLevelRoster']);
+                Route::put('/level-rosters/{roster}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'updateLevelRoster']);
+                Route::delete('/level-rosters/{roster}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'destroyLevelRoster']);
+
+                // 2. Waktu Kerja Berdasarkan Position
+                Route::get('/position-work-times', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'indexPositionWorkTimes']);
+                Route::post('/position-work-times', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'storePositionWorkTime']);
+                Route::put('/position-work-times/{workTime}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'updatePositionWorkTime']);
+                Route::delete('/position-work-times/{workTime}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'destroyPositionWorkTime']);
+
+                // 3. Kalender Tanggal Merah
+                Route::get('/public-holidays', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'indexPublicHolidays']);
+                Route::post('/public-holidays', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'storePublicHoliday']);
+                Route::put('/public-holidays/{holiday}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'updatePublicHoliday']);
+                Route::delete('/public-holidays/{holiday}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'destroyPublicHoliday']);
+
+                // 4. Durasi Paid Leave
+                Route::get('/paid-leave-policies', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'indexPaidLeavePolicies']);
+                Route::post('/paid-leave-policies', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'storePaidLeavePolicy']);
+                Route::put('/paid-leave-policies/{policy}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'updatePaidLeavePolicy']);
+                Route::delete('/paid-leave-policies/{policy}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'destroyPaidLeavePolicy']);
+
+                // 5. Durasi SP
+                Route::get('/warning-letter-durations', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'indexWarningLetterDurations']);
+                Route::post('/warning-letter-durations', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'storeWarningLetterDuration']);
+                Route::put('/warning-letter-durations/{sp}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'updateWarningLetterDuration']);
+                Route::delete('/warning-letter-durations/{sp}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'destroyWarningLetterDuration']);
+
+                // 6. Jenis PHK
+                Route::get('/termination-types', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'indexTerminationTypes']);
+                Route::post('/termination-types', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'storeTerminationType']);
+                Route::put('/termination-types/{type}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'updateTerminationType']);
+                Route::delete('/termination-types/{type}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'destroyTerminationType']);
+
+                // 7. Jenis Resign
+                Route::get('/resignation-types', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'indexResignationTypes']);
+                Route::post('/resignation-types', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'storeResignationType']);
+                Route::put('/resignation-types/{type}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'updateResignationType']);
+                Route::delete('/resignation-types/{type}', [\App\Http\Controllers\Api\V1\MasterData\OrgReferenceExtensionController::class, 'destroyResignationType']);
+
                 // Custom Master Data
                 Route::prefix('custom')->group(function () {
                     Route::get('/', [\App\Http\Controllers\Api\V1\MasterData\CustomMasterController::class, 'index']);

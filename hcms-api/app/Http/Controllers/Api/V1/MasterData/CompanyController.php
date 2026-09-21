@@ -261,6 +261,13 @@ class CompanyController extends BaseApiController
             'bantuan_lumpsum' => BenefitPlafond::where('benefit_type', 'BANTUAN_LUMPSUM')->where('status', 'ACTIVE')->count(),
             'bantuan_komunikasi' => BenefitPlafond::where('benefit_type', 'BANTUAN_KOMUNIKASI')->where('status', 'ACTIVE')->count(),
             'bantuan_perumahan' => BenefitPlafond::where('benefit_type', 'BANTUAN_PERUMAHAN')->where('status', 'ACTIVE')->count(),
+            'roster_kerja' => \App\Models\LevelWorkRoster::count(),
+            'waktu_kerja' => \App\Models\PositionWorkTime::count(),
+            'kalender_libur' => \App\Models\PublicHoliday::count(),
+            'durasi_paid_leave' => \App\Models\PaidLeavePolicy::count(),
+            'durasi_sp' => \App\Models\WarningLetterDuration::count(),
+            'jenis_phk' => \App\Models\TerminationType::count(),
+            'jenis_resign' => \App\Models\ResignationType::count(),
         ];
 
         return $this->successResponse($counts, 'Ringkasan hitungan master data berhasil diambil.');
