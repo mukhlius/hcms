@@ -36,9 +36,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (ValidationException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
+                $firstError = collect($e->errors())->flatten()->first();
+                $message = $firstError ?: 'Data yang diberikan tidak valid.';
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Data yang diberikan tidak valid.',
+                    'message' => $message,
                     'code' => 'VALIDATION_ERROR',
                     'errors' => $e->errors(),
                     'request_id' => RequestContext::getRequestId(),

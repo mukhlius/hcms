@@ -175,6 +175,10 @@ export const backupService = {
     });
     return res.data;
   },
+  restoreBackup: async (filename: string) => {
+    const res = await apiClient.post<ApiResponse<any>>(`/admin/backups/${encodeURIComponent(filename)}/restore`);
+    return res.data;
+  },
   deleteBackup: async (filename: string) => {
     const res = await apiClient.delete<ApiResponse<null>>(`/admin/backups/${encodeURIComponent(filename)}`);
     return res.data;

@@ -148,8 +148,15 @@ class DepartmentController extends BaseApiController
     public function destroy(OrganizationDepartment $department): JsonResponse
     {
         // Prevent deletion if it has sections
-        if ($department->sections()->exists()) {
-            return $this->errorResponse('Tidak dapat menghapus departemen yang masih memiliki data seksi (section).', 422);
+        $sectionsCount = $department->sections()->count();
+        if ($sectionsCount > 0) {
+            return $this->errorResponse("Tidak dapat menghapus departemen '{$department->name}' karena masih memiliki {$sectionsCount} seksi (section) terkait. Hapus atau pindahkan seksi terlebih dahulu.", 422);
+        }
+
+        // Prevent deletion if it has users
+        $usersCount = $department->users()->count();
+        if ($usersCount > 0) {
+            return $this->errorResponse("Tidak dapat menghapus departemen '{$department->name}' karena masih terhubung dengan {$usersCount} karyawan/pengguna.", 422);
         }
 
         $old = $department->toArray();

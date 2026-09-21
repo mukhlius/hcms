@@ -18,7 +18,8 @@ import {
   HelpCircle,
   FileArchive,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  RotateCcw
 } from 'lucide-react';
 import { backupService, BackupItem } from '@/services/adminService';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -37,6 +38,8 @@ export default function DatabaseBackupPage() {
   const [backupNote, setBackupNote] = useState('');
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
+  const [selectedBackupForRestore, setSelectedBackupForRestore] = useState<BackupItem | null>(null);
+  const [restoreConfirmInput, setRestoreConfirmInput] = useState('');
 
   // Fetch Backups and Database Info
   const { data: backupResponse, isLoading, isFetching, refetch } = useQuery({
@@ -83,6 +86,26 @@ export default function DatabaseBackupPage() {
       toast.error(
         err.response?.data?.message || 'Gagal menghapus berkas backup.',
         'Gagal Menghapus'
+      );
+    },
+  });
+
+  // Restore Backup Mutation
+  const restoreMutation = useMutation({
+    mutationFn: (filename: string) => backupService.restoreBackup(filename),
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries({ queryKey: ['database-backups'] });
+      setSelectedBackupForRestore(null);
+      setRestoreConfirmInput('');
+      toast.success(
+        `Basis data berhasil dipulihkan dari ${res?.data?.filename || 'snapshot'}. Salinan cadangan darurat pra-pemulihan telah dibuat (${res?.data?.safety_backup || ''}).`,
+        'Pemulihan Berhasil'
+      );
+    },
+    onError: (err: any) => {
+      toast.error(
+        err.response?.data?.message || err.message || 'Gagal memulihkan snapshot basis data.',
+        'Pemulihan Gagal'
       );
     },
   });
@@ -327,6 +350,20 @@ export default function DatabaseBackupPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => {
+                            setSelectedBackupForRestore(backup);
+                            setRestoreConfirmInput('');
+                          }}
+                          disabled={restoreMutation.isPending || deleteMutation.isPending}
+                          className="h-8 px-2.5 text-xs text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-900/60 dark:text-amber-400 dark:hover:bg-amber-950/40 cursor-pointer"
+                          title="Pulihkan database dari berkas snapshot ini"
+                        >
+                          <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                          Pulihkan
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleDownload(backup.filename)}
                           disabled={downloadingFile === backup.filename}
                           className="h-8 px-2.5 text-xs text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-400 dark:hover:bg-blue-950/40 cursor-pointer"
@@ -338,7 +375,7 @@ export default function DatabaseBackupPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDelete(backup.filename)}
-                          disabled={deleteMutation.isPending}
+                          disabled={deleteMutation.isPending || restoreMutation.isPending}
                           className="h-8 px-2.5 text-xs text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/40 cursor-pointer"
                         >
                           <Trash2 className="h-3.5 w-3.5 mr-1.5" />
@@ -478,6 +515,88 @@ export default function DatabaseBackupPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal Konfirmasi Pemulihan (Restore) Database */}
+      <Modal
+        isOpen={!!selectedBackupForRestore}
+        onClose={() => !restoreMutation.isPending && setSelectedBackupForRestore(null)}
+        title="Konfirmasi Pemulihan Basis Data (Restore)"
+        maxWidth="md"
+      >
+        {selectedBackupForRestore && (
+          <div className="space-y-4">
+            <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg text-amber-800 dark:text-amber-300 text-xs space-y-2">
+              <div className="flex items-center gap-2 font-bold text-sm text-amber-900 dark:text-amber-200">
+                <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+                <span>Peringatan Penimpaan Data Aktif</span>
+              </div>
+              <p>
+                Tindakan ini akan <strong>menimpa seluruh data sistem yang sedang berjalan</strong> dengan isi data dari snapshot berkas berikut:
+              </p>
+              <div className="p-2.5 bg-white/80 dark:bg-slate-900/80 rounded border border-amber-200/60 dark:border-amber-900/40 font-mono text-[11px] text-slate-800 dark:text-slate-200 space-y-0.5">
+                <div className="truncate"><strong>Berkas:</strong> {selectedBackupForRestore.filename}</div>
+                <div><strong>Ukuran:</strong> {selectedBackupForRestore.size_formatted}</div>
+                <div><strong>Waktu Dibuat:</strong> {selectedBackupForRestore.created_at}</div>
+              </div>
+              <p className="text-[11px] flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold pt-1">
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                Sistem akan otomatis membuat cadangan darurat (safety backup) sesaat sebelum data ditimpa.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Ketik kata <span className="font-bold text-rose-600 dark:text-rose-400 select-all">PULIHKAN</span> di bawah ini untuk melanjutkan:
+              </label>
+              <Input
+                type="text"
+                value={restoreConfirmInput}
+                onChange={(e) => setRestoreConfirmInput(e.target.value)}
+                placeholder="Ketik PULIHKAN..."
+                disabled={restoreMutation.isPending}
+                className="text-xs"
+                autoFocus
+              />
+              <p className="text-[11px] text-slate-500 mt-1">
+                Tombol pemulihan hanya akan aktif setelah Anda mengetik kata kunci di atas dengan tepat.
+              </p>
+            </div>
+
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedBackupForRestore(null)}
+                disabled={restoreMutation.isPending}
+                className="cursor-pointer"
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => restoreMutation.mutate(selectedBackupForRestore.filename)}
+                disabled={restoreConfirmInput !== 'PULIHKAN' || restoreMutation.isPending}
+                className="cursor-pointer bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50"
+              >
+                {restoreMutation.isPending ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Sedang Memulihkan Basis Data...
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Ya, Pulihkan Sekarang
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

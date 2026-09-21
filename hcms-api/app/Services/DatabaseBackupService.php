@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +18,30 @@ class DatabaseBackupService
         if (!File::exists($this->backupDir)) {
             File::makeDirectory($this->backupDir, 0755, true);
         }
+    }
+
+    /**
+     * Dapatkan zona waktu sistem yang aktif dari pengaturan
+     */
+    public function getTimezone(): string
+    {
+        return SystemSettingService::get('app_timezone', config('app.timezone', 'Asia/Makassar'));
+    }
+
+    /**
+     * Dapatkan waktu sekarang berformat Y-m-d H:i:s sesuai zona waktu sistem
+     */
+    public function getCurrentDateTime(): string
+    {
+        return Carbon::now($this->getTimezone())->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Format timestamp file ke Y-m-d H:i:s sesuai zona waktu sistem
+     */
+    public function formatFileTime(int $timestamp): string
+    {
+        return Carbon::createFromTimestamp($timestamp, $this->getTimezone())->format('Y-m-d H:i:s');
     }
 
     /**
@@ -42,7 +67,7 @@ class DatabaseBackupService
                 'filename' => $file->getFilename(),
                 'size_bytes' => $sizeBytes,
                 'size_formatted' => $this->formatBytes($sizeBytes),
-                'created_at' => date('Y-m-d H:i:s', $file->getMTime()),
+                'created_at' => $this->formatFileTime($file->getMTime()),
                 'extension' => $extension,
             ];
         }
@@ -104,7 +129,8 @@ class DatabaseBackupService
     public function createBackup(?string $note = null): array
     {
         $dbName = config('database.connections.mysql.database', env('DB_DATABASE', 'hcms_v3_db'));
-        $timestamp = date('Y-m-d_His');
+        $now = Carbon::now($this->getTimezone());
+        $timestamp = $now->format('Y-m-d_His');
         $filename = "backup-{$dbName}-{$timestamp}.sql";
         $filePath = $this->backupDir . DIRECTORY_SEPARATOR . $filename;
 
@@ -137,7 +163,7 @@ class DatabaseBackupService
             'filepath' => $filePath,
             'size_bytes' => $fileSize,
             'size_formatted' => $this->formatBytes($fileSize),
-            'created_at' => date('Y-m-d H:i:s'),
+            'created_at' => $now->format('Y-m-d H:i:s'),
             'engine' => $engine,
             'note' => $note,
         ];
@@ -196,6 +222,58 @@ class DatabaseBackupService
     }
 
     /**
+     * Pulihkan basis data dari file backup snapshot
+     */
+    public function restoreBackup(string $filename, bool $createSafetyBackup = true): array
+    {
+        $filePath = $this->getBackupPath($filename);
+        if (!$filePath) {
+            throw new \Exception("File backup '{$filename}' tidak ditemukan.");
+        }
+
+        $dbName = config('database.connections.mysql.database', env('DB_DATABASE', 'hcms_v3_db'));
+        $safetyBackupInfo = null;
+
+        // 1. Buat cadangan pengaman (safety net) otomatis sebelum menimpa data aktif
+        if ($createSafetyBackup) {
+            try {
+                $safetyBackupInfo = $this->createBackup("Auto safety backup sebelum restore {$filename}");
+            } catch (\Throwable $e) {
+                Log::warning("Gagal membuat cadangan darurat pra-pemulihan: " . $e->getMessage());
+            }
+        }
+
+        $mysqlBinary = $this->findMysqlBinary();
+        $startTime = microtime(true);
+        $engine = 'native_pdo';
+
+        if ($mysqlBinary) {
+            try {
+                $this->runMysqlRestore($mysqlBinary, $filePath, $dbName);
+                $engine = 'mysql_cli';
+            } catch (\Throwable $e) {
+                Log::warning("Restore via mysql CLI gagal, beralih ke Native PDO: " . $e->getMessage());
+                $this->runNativePdoRestore($filePath);
+                $engine = 'native_pdo (fallback)';
+            }
+        } else {
+            $this->runNativePdoRestore($filePath);
+            $engine = 'native_pdo';
+        }
+
+        $duration = round(microtime(true) - $startTime, 2);
+
+        return [
+            'success' => true,
+            'filename' => $filename,
+            'restored_at' => $this->getCurrentDateTime(),
+            'duration_seconds' => $duration,
+            'engine' => $engine,
+            'safety_backup' => $safetyBackupInfo ? $safetyBackupInfo['filename'] : null,
+        ];
+    }
+
+    /**
      * Deteksi lokasi mysqldump di server / Laragon / system PATH
      */
     protected function findMysqldumpBinary(): ?string
@@ -219,6 +297,50 @@ class DatabaseBackupService
 
         // 4. Cek PATH sistem
         $command = PHP_OS_FAMILY === 'Windows' ? 'where mysqldump' : 'which mysqldump';
+        $output = @shell_exec($command);
+        if ($output) {
+            $lines = explode("\n", trim($output));
+            if (!empty($lines[0]) && File::exists(trim($lines[0]))) {
+                return trim($lines[0]);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Deteksi lokasi mysql client binary di server / Laragon / system PATH
+     */
+    protected function findMysqlBinary(): ?string
+    {
+        // 1. Cek dari konfigurasi .env khusus CLI
+        $customPath = env('DB_CLI_PATH');
+        if ($customPath && File::exists($customPath)) {
+            return $customPath;
+        }
+
+        // 2. Jika DB_DUMP_PATH terisi, turunkan lokasi mysql.exe dari folder yang sama
+        $dumpPath = env('DB_DUMP_PATH');
+        if ($dumpPath) {
+            $candidate = str_replace('mysqldump.exe', 'mysql.exe', $dumpPath);
+            if (File::exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        // 3. Cek lokasi standar Laragon di Windows
+        $laragonGlob = glob('C:\\laragon\\bin\\mysql\\*\\bin\\mysql.exe');
+        if (!empty($laragonGlob) && File::exists($laragonGlob[0])) {
+            return $laragonGlob[0];
+        }
+
+        // 4. Cek lokasi standar XAMPP di Windows
+        if (File::exists('C:\\xampp\\mysql\\bin\\mysql.exe')) {
+            return 'C:\\xampp\\mysql\\bin\\mysql.exe';
+        }
+
+        // 5. Cek PATH sistem
+        $command = PHP_OS_FAMILY === 'Windows' ? 'where mysql' : 'which mysql';
         $output = @shell_exec($command);
         if ($output) {
             $lines = explode("\n", trim($output));
@@ -298,7 +420,7 @@ class DatabaseBackupService
         fwrite($handle, "-- ========================================================\n");
         fwrite($handle, "-- HCMS Database Snapshot\n");
         fwrite($handle, "-- Database: `{$dbName}`\n");
-        fwrite($handle, "-- Generated At: " . date('Y-m-d H:i:s') . "\n");
+        fwrite($handle, "-- Generated At: " . $this->getCurrentDateTime() . " ({$this->getTimezone()})\n");
         fwrite($handle, "-- Engine: HCMS Native PDO Dump Generator\n");
         fwrite($handle, "-- ========================================================\n\n");
         fwrite($handle, "SET NAMES utf8mb4;\n");
@@ -363,8 +485,97 @@ class DatabaseBackupService
 
         fwrite($handle, "COMMIT;\n");
         fwrite($handle, "SET FOREIGN_KEY_CHECKS = 1;\n");
-        fwrite($handle, "-- Dump completed on " . date('Y-m-d H:i:s') . "\n");
+        fwrite($handle, "-- Dump completed on " . $this->getCurrentDateTime() . "\n");
 
+        fclose($handle);
+    }
+
+    /**
+     * Eksekusi pemulihan snapshot database via mysql client process
+     */
+    protected function runMysqlRestore(string $binary, string $sourceFile, string $dbName): void
+    {
+        $host = config('database.connections.mysql.host', '127.0.0.1');
+        $port = config('database.connections.mysql.port', '3306');
+        $username = config('database.connections.mysql.username', 'root');
+        $password = config('database.connections.mysql.password', '');
+
+        $cmd = [
+            $binary,
+            "--host={$host}",
+            "--port={$port}",
+            "--user={$username}",
+        ];
+
+        if (!empty($password)) {
+            $cmd[] = "--password={$password}";
+        }
+
+        $cmd[] = $dbName;
+
+        $process = new Process($cmd);
+        $process->setTimeout(600); // 10 menit
+
+        $fileStream = fopen($sourceFile, 'r');
+        if (!$fileStream) {
+            throw new \Exception("Tidak dapat membuka file snapshot untuk dibaca: {$sourceFile}");
+        }
+
+        $process->setInput($fileStream);
+        $process->run();
+
+        if (is_resource($fileStream)) {
+            fclose($fileStream);
+        }
+
+        if (!$process->isSuccessful()) {
+            throw new \Exception('Eksekusi restore mysql gagal: ' . $process->getErrorOutput());
+        }
+    }
+
+    /**
+     * Fallback pemulihan via Native PDO jika binary mysql tidak tersedia
+     */
+    protected function runNativePdoRestore(string $sourceFile): void
+    {
+        $handle = fopen($sourceFile, 'r');
+        if (!$handle) {
+            throw new \Exception("Tidak dapat membuka file backup: {$sourceFile}");
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
+        DB::statement('SET AUTOCOMMIT = 0;');
+        DB::statement('START TRANSACTION;');
+
+        try {
+            $query = '';
+            while (($line = fgets($handle)) !== false) {
+                $trimmed = trim($line);
+                // Lewati baris kosong dan komentar SQL
+                if ($trimmed === '' || str_starts_with($trimmed, '--') || str_starts_with($trimmed, '/*')) {
+                    continue;
+                }
+
+                $query .= $line;
+                if (str_ends_with(rtrim($line), ';')) {
+                    DB::unprepared($query);
+                    $query = '';
+                }
+            }
+
+            if (!empty(trim($query))) {
+                DB::unprepared($query);
+            }
+
+            DB::statement('COMMIT;');
+        } catch (\Throwable $e) {
+            DB::statement('ROLLBACK;');
+            DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
+            fclose($handle);
+            throw $e;
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
         fclose($handle);
     }
 

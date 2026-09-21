@@ -125,4 +125,40 @@ class DatabaseBackupController extends BaseApiController
 
         return $this->successResponse(null, "File backup {$filename} berhasil dihapus.");
     }
+
+    /**
+     * Pulihkan snapshot database dari file backup
+     */
+    public function restore(Request $request, string $filename): JsonResponse
+    {
+        $filePath = $this->backupService->getBackupPath($filename);
+
+        if (!$filePath) {
+            return $this->errorResponse('File backup tidak ditemukan atau sudah dihapus.', 404);
+        }
+
+        try {
+            $user = $request->user();
+            $result = $this->backupService->restoreBackup($filename, createSafetyBackup: true);
+
+            AuditService::log(
+                action: 'RESTORE',
+                module: 'database_backup',
+                entityType: 'DatabaseBackup',
+                entityId: $filename,
+                oldValues: null,
+                newValues: [
+                    'filename' => $filename,
+                    'engine' => $result['engine'],
+                    'duration_seconds' => $result['duration_seconds'],
+                    'safety_backup' => $result['safety_backup'],
+                ],
+                actorId: $user ? $user->id : null
+            );
+
+            return $this->successResponse($result, "Basis data berhasil dipulihkan dari snapshot {$filename}.");
+        } catch (\Throwable $e) {
+            return $this->errorResponse('Gagal memulihkan cadangan database: ' . $e->getMessage(), 500);
+        }
+    }
 }

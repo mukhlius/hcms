@@ -103,6 +103,7 @@ Route::prefix('v1')->group(function () {
             Route::prefix('backups')->group(function () {
                 Route::get('/', [DatabaseBackupController::class, 'index'])->middleware('permission:settings.view');
                 Route::post('/', [DatabaseBackupController::class, 'store'])->middleware('permission:settings.update');
+                Route::post('/{filename}/restore', [DatabaseBackupController::class, 'restore'])->middleware('permission:settings.update');
                 Route::get('/{filename}/download', [DatabaseBackupController::class, 'download'])->middleware('permission:settings.view');
                 Route::delete('/{filename}', [DatabaseBackupController::class, 'destroy'])->middleware('permission:settings.update');
             });
