@@ -34,7 +34,36 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  (error: AxiosError<{ message?: string; success?: boolean }>) => {
+    // Tangani dan terjemahkan error jaringan / timeout ke Bahasa Indonesia
+    if (error.code === 'ECONNABORTED' || error.message?.toLowerCase().includes('timeout')) {
+      const friendlyMsg = 'Batas waktu koneksi habis (timeout). Server backend atau database sedang lambat atau tidak merespons.';
+      error.message = friendlyMsg;
+      if (!error.response) {
+        (error as any).response = {
+          status: 504,
+          statusText: 'Gateway Timeout',
+          data: { success: false, message: friendlyMsg },
+          headers: {},
+          config: error.config,
+        };
+      } else if (error.response.data) {
+        error.response.data.message = friendlyMsg;
+      }
+    } else if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response) {
+      const friendlyMsg = 'Tidak dapat terhubung ke server backend (API). Pastikan server Laravel dan MySQL sedang berjalan.';
+      error.message = friendlyMsg;
+      if (!error.response) {
+        (error as any).response = {
+          status: 503,
+          statusText: 'Service Unavailable',
+          data: { success: false, message: friendlyMsg },
+          headers: {},
+          config: error.config,
+        };
+      }
+    }
+
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       // Clear credentials and route to login if unauthenticated on client
       if (!window.location.pathname.startsWith('/login')) {
