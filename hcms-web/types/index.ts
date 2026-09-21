@@ -458,10 +458,13 @@ export interface PositionWorkTimeItem {
   id: number;
   position_id: number;
   shift_id?: number | null;
+  shift_type?: 'DAY' | 'NIGHT' | 'CUSTOM' | null;
   work_schedule_id?: number | null;
   work_type: 'SHIFT' | 'NON_SHIFT' | 'FLEXIBLE';
   start_time?: string | null;
   end_time?: string | null;
+  late_tolerance_minutes?: number | null;
+  early_out_tolerance_minutes?: number | null;
   daily_hours: number;
   weekly_days: number;
   break_minutes: number;

@@ -163,17 +163,25 @@ class OrgReferenceExtensionController extends BaseApiController
         $validated = $request->validate([
             'position_id' => ['required', 'exists:positions,id'],
             'shift_id' => ['nullable', 'exists:shifts,id'],
+            'shift_type' => ['nullable', 'string', 'in:DAY,NIGHT,CUSTOM'],
             'work_schedule_id' => ['nullable', 'exists:work_schedules,id'],
-            'work_type' => ['required', 'string', 'in:SHIFT,NON_SHIFT,FLEXIBLE'],
+            'work_type' => ['nullable', 'string', 'in:SHIFT,NON_SHIFT,FLEXIBLE'],
             'start_time' => ['nullable', 'date_format:H:i,H:i:s'],
             'end_time' => ['nullable', 'date_format:H:i,H:i:s'],
-            'daily_hours' => ['required', 'numeric', 'min:1', 'max:24'],
-            'weekly_days' => ['required', 'integer', 'min:1', 'max:7'],
+            'late_tolerance_minutes' => ['nullable', 'integer', 'min:0'],
+            'early_out_tolerance_minutes' => ['nullable', 'integer', 'min:0'],
+            'daily_hours' => ['nullable', 'numeric', 'min:1', 'max:24'],
+            'weekly_days' => ['nullable', 'integer', 'min:1', 'max:7'],
             'break_minutes' => ['nullable', 'integer', 'min:0'],
             'is_overtime_eligible' => ['nullable', 'boolean'],
             'description' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:ACTIVE,INACTIVE'],
         ]);
+
+        $validated['work_type'] = $validated['work_type'] ?? 'SHIFT';
+        $validated['daily_hours'] = $validated['daily_hours'] ?? 8.00;
+        $validated['weekly_days'] = $validated['weekly_days'] ?? 5;
+        $validated['break_minutes'] = $validated['break_minutes'] ?? 60;
 
         $item = PositionWorkTime::create($validated);
         AuditService::log('CREATE', 'POSITION_WORK_TIME', PositionWorkTime::class, (string)$item->id, newValues: $item->toArray());
@@ -186,12 +194,15 @@ class OrgReferenceExtensionController extends BaseApiController
         $validated = $request->validate([
             'position_id' => ['sometimes', 'required', 'exists:positions,id'],
             'shift_id' => ['nullable', 'exists:shifts,id'],
+            'shift_type' => ['nullable', 'string', 'in:DAY,NIGHT,CUSTOM'],
             'work_schedule_id' => ['nullable', 'exists:work_schedules,id'],
-            'work_type' => ['sometimes', 'required', 'string', 'in:SHIFT,NON_SHIFT,FLEXIBLE'],
+            'work_type' => ['nullable', 'string', 'in:SHIFT,NON_SHIFT,FLEXIBLE'],
             'start_time' => ['nullable', 'date_format:H:i,H:i:s'],
             'end_time' => ['nullable', 'date_format:H:i:s,H:i'],
-            'daily_hours' => ['sometimes', 'required', 'numeric', 'min:1', 'max:24'],
-            'weekly_days' => ['sometimes', 'required', 'integer', 'min:1', 'max:7'],
+            'late_tolerance_minutes' => ['nullable', 'integer', 'min:0'],
+            'early_out_tolerance_minutes' => ['nullable', 'integer', 'min:0'],
+            'daily_hours' => ['nullable', 'numeric', 'min:1', 'max:24'],
+            'weekly_days' => ['nullable', 'integer', 'min:1', 'max:7'],
             'break_minutes' => ['nullable', 'integer', 'min:0'],
             'is_overtime_eligible' => ['nullable', 'boolean'],
             'description' => ['nullable', 'string'],

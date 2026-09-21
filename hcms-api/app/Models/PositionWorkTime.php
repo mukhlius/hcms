@@ -14,10 +14,13 @@ class PositionWorkTime extends Model
     protected $fillable = [
         'position_id',
         'shift_id',
+        'shift_type',
         'work_schedule_id',
         'work_type',
         'start_time',
         'end_time',
+        'late_tolerance_minutes',
+        'early_out_tolerance_minutes',
         'daily_hours',
         'weekly_days',
         'break_minutes',
@@ -30,6 +33,8 @@ class PositionWorkTime extends Model
         'daily_hours' => 'decimal:2',
         'weekly_days' => 'integer',
         'break_minutes' => 'integer',
+        'late_tolerance_minutes' => 'integer',
+        'early_out_tolerance_minutes' => 'integer',
         'is_overtime_eligible' => 'boolean',
     ];
 
