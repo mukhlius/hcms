@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AppShell } from '@/components/layout/AppShell';
@@ -12,12 +12,21 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
+export const viewport: Viewport = {
+  themeColor: '#2563eb',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   let appName = 'HCMS ENTERPRISE';
   let appIcon = '/icon.svg';
 
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
+    const apiUrl = process.env.INTERNAL_API_URL || 'http://127.0.0.1:8000/api/v1';
     const res = await fetch(`${apiUrl}/public/settings`, {
       cache: 'no-store',
     });
@@ -37,6 +46,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: appName,
     description: 'Enterprise Human Capital Management System for Multi-Site Mining Operations',
+    manifest: '/manifest.webmanifest',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: 'HCMS',
+    },
+    formatDetection: {
+      telephone: false,
+    },
     icons: {
       icon: appIcon,
       shortcut: appIcon,

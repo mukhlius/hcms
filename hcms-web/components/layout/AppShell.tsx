@@ -8,6 +8,7 @@ import { useThemeStore } from '@/stores/themeStore';
 import { settingService } from '@/services/adminService';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { MobileBottomNav } from './MobileBottomNav';
 import { PageTransition } from '@/components/motion/PageTransition';
 
 const queryClient = new QueryClient({
@@ -98,11 +99,12 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         <Sidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-6 lg:pb-8">
             <div className="mx-auto w-full max-w-[1720px] 2xl:max-w-[1920px]">
               <PageTransition>{children}</PageTransition>
             </div>
           </main>
+          <MobileBottomNav />
         </div>
       </div>
     </QueryClientProvider>

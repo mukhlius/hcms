@@ -1,6 +1,19 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
+function generateRequestId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+export const API_BASE_URL = typeof window !== 'undefined'
+  ? '/api/v1'
+  : (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1');
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -13,6 +26,9 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (typeof window !== 'undefined') {
+    // Gunakan reverse proxy Next.js (/api/v1) di browser agar bebas kendala CORS dan firewall port backend
+    config.baseURL = '/api/v1';
+
     const token = localStorage.getItem('hcms_auth_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -20,7 +36,7 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
     // Correlation ID
     if (!config.headers['X-Request-ID']) {
-      config.headers['X-Request-ID'] = crypto.randomUUID();
+      config.headers['X-Request-ID'] = generateRequestId();
     }
   }
 
