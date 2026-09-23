@@ -130,7 +130,8 @@ export const MobileBottomNav: React.FC = () => {
       {/* Mobile Bottom Navigation Bar (Fixed di bagian bawah) */}
       <nav
         aria-label="Navigasi Bawah Mobile"
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 transition-all"
+        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] pt-1.5 transition-all"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 0.5rem)' }}
       >
         <div className="mx-auto flex max-w-lg items-center justify-around px-2">
           {/* Item 1 */}
@@ -179,7 +180,7 @@ export const MobileBottomNav: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setQuickActionOpen(false)}
-              className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs md:hidden"
+              className="fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm lg:hidden"
             />
 
             {/* Sheet Content */}
@@ -188,7 +189,8 @@ export const MobileBottomNav: React.FC = () => {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-              className="fixed bottom-0 left-0 right-0 z-50 md:hidden rounded-t-3xl bg-white dark:bg-slate-900 p-5 shadow-2xl border-t border-slate-200 dark:border-slate-800 pb-[max(env(safe-area-inset-bottom)+1rem,1.75rem)]"
+              className="fixed bottom-0 left-0 right-0 z-[70] lg:hidden rounded-t-3xl bg-white dark:bg-slate-900 p-5 shadow-2xl border-t border-slate-200 dark:border-slate-800"
+              style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 1.25rem), 1.75rem)' }}
             >
               {/* Drag Pill */}
               <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />

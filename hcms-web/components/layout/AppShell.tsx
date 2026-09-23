@@ -99,7 +99,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         <Sidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-6 lg:pb-8">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
             <div className="mx-auto w-full max-w-[1720px] 2xl:max-w-[1920px]">
               <PageTransition>{children}</PageTransition>
             </div>
