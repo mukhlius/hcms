@@ -46,6 +46,7 @@ export const companyService = {
       plafond_kacamata?: number;
       plafond_persalinan?: number;
       roster_kerja?: number;
+      pola_shift?: number;
       waktu_kerja?: number;
       kalender_libur?: number;
       durasi_paid_leave?: number;

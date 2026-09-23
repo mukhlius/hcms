@@ -44,6 +44,7 @@ import { PohTab } from '@/components/organization/tabs/PohTab';
 import { WorkAreaTab } from '@/components/organization/tabs/WorkAreaTab';
 import { HubunganKerjaTab } from '@/components/organization/tabs/HubunganKerjaTab';
 import { RosterKerjaTab } from '@/components/organization/tabs/RosterKerjaTab';
+import { PolaShiftTab } from '@/components/organization/tabs/PolaShiftTab';
 import { WaktuKerjaTab } from '@/components/organization/tabs/WaktuKerjaTab';
 import { KalenderLiburTab } from '@/components/organization/tabs/KalenderLiburTab';
 import { DurasiPaidLeaveTab } from '@/components/organization/tabs/DurasiPaidLeaveTab';
@@ -67,6 +68,7 @@ type OrgTabType =
   | 'poh'
   | 'work_area'
   | 'roster_kerja'
+  | 'pola_shift'
   | 'waktu_kerja'
   | 'kalender_libur'
   | 'durasi_paid_leave'
@@ -88,6 +90,7 @@ const validTabs: OrgTabType[] = [
   'poh',
   'work_area',
   'roster_kerja',
+  'pola_shift',
   'waktu_kerja',
   'kalender_libur',
   'durasi_paid_leave',
@@ -134,6 +137,7 @@ function OrganizationReferencesContent() {
     poh: number;
     work_area: number;
     roster_kerja: number;
+    pola_shift: number;
     waktu_kerja: number;
     kalender_libur: number;
     durasi_paid_leave: number;
@@ -158,6 +162,7 @@ function OrganizationReferencesContent() {
     poh: 0,
     work_area: 0,
     roster_kerja: 0,
+    pola_shift: 0,
     waktu_kerja: 0,
     kalender_libur: 0,
     durasi_paid_leave: 0,
@@ -193,6 +198,7 @@ function OrganizationReferencesContent() {
           plafond_kacamata: res.data.plafond_kacamata ?? 0,
           plafond_persalinan: res.data.plafond_persalinan ?? 0,
           roster_kerja: res.data.roster_kerja ?? 0,
+          pola_shift: res.data.pola_shift ?? 0,
           waktu_kerja: res.data.waktu_kerja ?? 0,
           kalender_libur: res.data.kalender_libur ?? 0,
           durasi_paid_leave: res.data.durasi_paid_leave ?? 0,
@@ -414,6 +420,13 @@ function OrganizationReferencesContent() {
       badgeColor: 'bg-blue-100 text-blue-800',
     },
     {
+      id: 'pola_shift' as OrgTabType,
+      label: 'Pola Shift Kerja',
+      icon: <Clock className="h-4 w-4 shrink-0" />,
+      count: counts.pola_shift,
+      badgeColor: 'bg-cyan-100 text-cyan-800',
+    },
+    {
       id: 'waktu_kerja' as OrgTabType,
       label: 'Waktu Kerja',
       icon: <Clock className="h-4 w-4 shrink-0" />,
@@ -481,6 +494,7 @@ function OrganizationReferencesContent() {
       case 'poh': return 'Tambah POH';
       case 'work_area': return 'Tambah Work Area';
       case 'roster_kerja': return 'Tambah Roster Kerja';
+      case 'pola_shift': return 'Tambah Shift Kerja';
       case 'waktu_kerja': return 'Tambah Waktu Kerja';
       case 'kalender_libur': return 'Tambah Hari Libur';
       case 'durasi_paid_leave': return 'Tambah Paid Leave';
@@ -620,6 +634,14 @@ function OrganizationReferencesContent() {
             key="roster-kerja-tab"
             onRefreshAll={loadCounts}
             createTrigger={createTriggers['roster_kerja'] || 0}
+          />
+        )}
+
+        {activeTab === 'pola_shift' && (
+          <PolaShiftTab
+            key="pola-shift-tab"
+            onRefreshAll={loadCounts}
+            createTrigger={createTriggers['pola_shift'] || 0}
           />
         )}
 

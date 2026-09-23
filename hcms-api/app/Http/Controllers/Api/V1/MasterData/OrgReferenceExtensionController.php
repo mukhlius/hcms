@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\MasterData;
 
 use App\Http\Controllers\Api\BaseApiController;
 use App\Models\AuditLog;
+use App\Models\Grade;
 use App\Models\LevelWorkRoster;
 use App\Models\PaidLeavePolicy;
 use App\Models\PositionWorkTime;
