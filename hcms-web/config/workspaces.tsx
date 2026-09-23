@@ -23,6 +23,7 @@ import {
   Award,
   UserCheck2,
   HeartHandshake,
+  HardDriveDownload,
   User as UserIcon
 } from 'lucide-react';
 import { User } from '@/types';
@@ -196,6 +197,7 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
           { label: 'Event Keamanan', href: '/admin/security-events', icon: <ShieldAlert className="h-4 w-4" />, permission: 'security.view' },
           { label: 'Audit Trail', href: '/admin/audit-logs', icon: <FileText className="h-4 w-4" />, permission: 'audit.view' },
           { label: 'Pengaturan Sistem', href: '/admin/settings', icon: <Settings className="h-4 w-4" />, permission: 'settings.view' },
+          { label: 'Backup Database', href: '/admin/database-backup', icon: <HardDriveDownload className="h-4 w-4 text-emerald-500" />, permission: 'settings.view' },
           { label: 'Tempat Sampah', href: '/admin/recycle-bin', icon: <Trash2 className="h-4 w-4 text-rose-500" />, permission: 'users.view' },
         ],
       },

@@ -106,6 +106,18 @@ class OrganizationUnitController extends BaseApiController
     public function show(OrganizationUnit $unit): JsonResponse
     {
         $unit->load(['parent', 'company', 'site', 'leader:id,name,email', 'children', 'positions.grade']);
+
+        // If unit has no direct positions (e.g. Department, Site, Company), load positions of its descendants
+        if ($unit->positions->isEmpty()) {
+            $descendantIds = $this->treeService->getDescendantIds($unit->id);
+            if (!empty($descendantIds)) {
+                $positions = \App\Models\Position::whereIn('organization_unit_id', $descendantIds)
+                    ->with(['grade:id,code,name,level', 'site:id,code,name', 'department:id,code,name', 'section:id,code,name'])
+                    ->get();
+                $unit->setRelation('positions', $positions);
+            }
+        }
+
         $breadcrumbs = $this->treeService->getBreadcrumbs($unit);
 
         $auditLogs = AuditLog::where('entity_type', OrganizationUnit::class)

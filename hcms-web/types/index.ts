@@ -436,9 +436,123 @@ export interface BenefitPlafondItem {
   updated_at?: string;
 }
 
+export interface LevelWorkRosterItem {
+  id: number;
+  level: number;
+  grade_id?: number | null;
+  work_schedule_id?: number | null;
+  roster_name: string;
+  days_on: number;
+  days_off: number;
+  poh_type: 'ALL' | 'LOKAL' | 'NON_LOKAL';
+  travel_days: number;
+  description?: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  grade?: GradeItem | null;
+  work_schedule?: WorkScheduleItem | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PositionWorkTimeItem {
+  id: number;
+  position_id: number;
+  shift_id?: number | null;
+  shift_type?: 'DAY' | 'NIGHT' | 'CUSTOM' | null;
+  work_schedule_id?: number | null;
+  work_type: 'SHIFT' | 'NON_SHIFT' | 'FLEXIBLE';
+  start_time?: string | null;
+  end_time?: string | null;
+  late_tolerance_minutes?: number | null;
+  early_out_tolerance_minutes?: number | null;
+  daily_hours: number;
+  weekly_days: number;
+  break_minutes: number;
+  is_overtime_eligible: boolean;
+  description?: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  position?: PositionItem | null;
+  shift?: ShiftItem | null;
+  work_schedule?: WorkScheduleItem | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PublicHolidayItem {
+  id: number;
+  holiday_date: string;
+  name: string;
+  type: 'HARI_LIBUR_NASIONAL' | 'CUTI_BERSAMA' | 'LIBUR_KHUSUS_SITE';
+  year: number;
+  is_recurring: boolean;
+  description?: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PaidLeavePolicyItem {
+  id: number;
+  code: string;
+  name: string;
+  category: 'ANNUAL' | 'MATERNITY' | 'FAMILY_EVENT' | 'RELIGIOUS' | 'MEDICAL' | 'OTHER';
+  duration_days: number;
+  duration_unit: 'HARI_KERJA' | 'HARI_KALENDER' | 'BULAN';
+  requires_document: boolean;
+  required_document_name?: string | null;
+  description?: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface WarningLetterDurationItem {
+  id: number;
+  code: string;
+  level: 'TEGURAN' | 'SP_1' | 'SP_2' | 'SP_3';
+  name: string;
+  duration_months: number;
+  validity_unit: string;
+  consequence_description?: string | null;
+  description?: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface TerminationTypeItem {
+  id: number;
+  code: string;
+  name: string;
+  legal_basis?: string | null;
+  pesangon_multiplier: number;
+  pmtk_multiplier: number;
+  entitled_to_uph: boolean;
+  entitled_to_uang_pisah: boolean;
+  description?: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ResignationTypeItem {
+  id: number;
+  code: string;
+  name: string;
+  notice_period_days: number;
+  requires_clearance: boolean;
+  entitled_to_uang_pisah: boolean;
+  entitled_to_sisa_cuti: boolean;
+  description?: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface AuthState {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+

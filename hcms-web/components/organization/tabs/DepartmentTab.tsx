@@ -163,9 +163,17 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
   };
 
   const handleDelete = async (dept: MasterDepartment) => {
+    if ((dept.sections_count ?? 0) > 0) {
+      toast.warning(
+        `Departemen "${dept.name}" masih memiliki ${dept.sections_count} seksi (section) terkait. Hapus atau pindahkan data seksi terlebih dahulu sebelum menghapus departemen ini.`,
+        'Tidak Dapat Dihapus'
+      );
+      return;
+    }
+
     const confirmed = await confirmDialog({
       title: 'Hapus Departemen',
-      message: `Apakah Anda yakin ingin menghapus departemen "${dept.name}" (${dept.code})? Data yang memiliki seksi (section) tidak dapat dihapus.`,
+      message: `Apakah Anda yakin ingin menghapus departemen "${dept.name}" (${dept.code})? Data yang dihapus akan dipindahkan ke Tempat Sampah (Recycle Bin).`,
       confirmText: 'Ya, Hapus Departemen',
       cancelText: 'Batal',
       variant: 'danger',
@@ -367,10 +375,10 @@ export const DepartmentTab: React.FC<DepartmentTabProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(dept)}
-                            className="h-8 w-8 p-0 text-slate-600 hover:text-rose-600 hover:bg-rose-50"
-                            title="Hapus Departemen"
+                            className={`h-8 w-8 p-0 ${(dept.sections_count ?? 0) > 0 ? 'text-slate-400 hover:text-amber-600 hover:bg-amber-50' : 'text-slate-600 hover:text-rose-600 hover:bg-rose-50'}`}
+                            title={(dept.sections_count ?? 0) > 0 ? `Memiliki ${dept.sections_count} seksi (Hapus seksi terkait terlebih dahulu)` : 'Hapus Departemen'}
                           >
-                            <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                            <Trash2 className={`h-3.5 w-3.5 ${(dept.sections_count ?? 0) > 0 ? 'text-slate-400' : 'text-rose-500'}`} />
                           </Button>
                         </div>
                       </td>

@@ -40,7 +40,7 @@ class SystemSetting extends Model
         };
 
         if ($this->key === 'app_icon' && is_string($val) && str_contains($val, '/storage/')) {
-            $currentAppUrl = rtrim(config('app.url') ?: url('/'), '/');
+            $currentAppUrl = request() ? rtrim(request()->getSchemeAndHttpHost(), '/') : rtrim(config('app.url') ?: url('/'), '/');
             $val = preg_replace('#^https?://[^/]+(/storage/.*)$#', $currentAppUrl . '$1', $val);
         }
 

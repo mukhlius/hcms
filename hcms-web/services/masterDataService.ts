@@ -17,6 +17,13 @@ import {
   WorkScheduleItem,
   EmploymentTypeItem,
   BenefitPlafondItem,
+  LevelWorkRosterItem,
+  PositionWorkTimeItem,
+  PublicHolidayItem,
+  PaidLeavePolicyItem,
+  WarningLetterDurationItem,
+  TerminationTypeItem,
+  ResignationTypeItem,
 } from '@/types';
 
 export const companyService = {
@@ -38,6 +45,14 @@ export const companyService = {
       plafond_pengobatan?: number;
       plafond_kacamata?: number;
       plafond_persalinan?: number;
+      roster_kerja?: number;
+      pola_shift?: number;
+      waktu_kerja?: number;
+      kalender_libur?: number;
+      durasi_paid_leave?: number;
+      durasi_sp?: number;
+      jenis_phk?: number;
+      jenis_resign?: number;
       tunjangan_lapangan?: number;
       uang_perdin?: number;
       bantuan_lumpsum?: number;
@@ -657,7 +672,10 @@ export const importExportService = {
     return res.data;
   },
   getExportUrl: (entity: string) => {
-    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1').replace(/\/+$/, '');
+    const baseUrl = (typeof window !== 'undefined'
+      ? '/api/v1'
+      : (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1')
+    ).replace(/\/+$/, '');
     let token = '';
     if (typeof window !== 'undefined') {
       token = localStorage.getItem('token') || localStorage.getItem('auth_token') || sessionStorage.getItem('token') || '';
@@ -665,3 +683,138 @@ export const importExportService = {
     return `${baseUrl}/admin/master-data/export/${entity}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
   },
 };
+
+// ================= 7 EXTENSION MASTER SERVICES =================
+export const levelRosterService = {
+  getLevelRosters: async (params?: { level?: number; poh_type?: string; status?: string; search?: string; per_page?: number }) => {
+    const res = await apiClient.get<ApiResponse<{ data: LevelWorkRosterItem[]; total: number }>>('/admin/master-data/level-rosters', { params });
+    return res.data;
+  },
+  createLevelRoster: async (payload: Partial<LevelWorkRosterItem>) => {
+    const res = await apiClient.post<ApiResponse<LevelWorkRosterItem>>('/admin/master-data/level-rosters', payload);
+    return res.data;
+  },
+  updateLevelRoster: async (id: number, payload: Partial<LevelWorkRosterItem>) => {
+    const res = await apiClient.put<ApiResponse<LevelWorkRosterItem>>(`/admin/master-data/level-rosters/${id}`, payload);
+    return res.data;
+  },
+  deleteLevelRoster: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/level-rosters/${id}`);
+    return res.data;
+  },
+};
+
+export const positionWorkTimeService = {
+  getPositionWorkTimes: async (params?: { work_type?: string; position_id?: number; status?: string; search?: string; per_page?: number }) => {
+    const res = await apiClient.get<ApiResponse<{ data: PositionWorkTimeItem[]; total: number }>>('/admin/master-data/position-work-times', { params });
+    return res.data;
+  },
+  createPositionWorkTime: async (payload: Partial<PositionWorkTimeItem>) => {
+    const res = await apiClient.post<ApiResponse<PositionWorkTimeItem>>('/admin/master-data/position-work-times', payload);
+    return res.data;
+  },
+  updatePositionWorkTime: async (id: number, payload: Partial<PositionWorkTimeItem>) => {
+    const res = await apiClient.put<ApiResponse<PositionWorkTimeItem>>(`/admin/master-data/position-work-times/${id}`, payload);
+    return res.data;
+  },
+  deletePositionWorkTime: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/position-work-times/${id}`);
+    return res.data;
+  },
+};
+
+export const publicHolidayService = {
+  getPublicHolidays: async (params?: { year?: number; type?: string; status?: string; search?: string; per_page?: number }) => {
+    const res = await apiClient.get<ApiResponse<{ data: PublicHolidayItem[]; total: number }>>('/admin/master-data/public-holidays', { params });
+    return res.data;
+  },
+  createPublicHoliday: async (payload: Partial<PublicHolidayItem>) => {
+    const res = await apiClient.post<ApiResponse<PublicHolidayItem>>('/admin/master-data/public-holidays', payload);
+    return res.data;
+  },
+  updatePublicHoliday: async (id: number, payload: Partial<PublicHolidayItem>) => {
+    const res = await apiClient.put<ApiResponse<PublicHolidayItem>>(`/admin/master-data/public-holidays/${id}`, payload);
+    return res.data;
+  },
+  deletePublicHoliday: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/public-holidays/${id}`);
+    return res.data;
+  },
+};
+
+export const paidLeavePolicyService = {
+  getPaidLeavePolicies: async (params?: { category?: string; status?: string; search?: string; per_page?: number }) => {
+    const res = await apiClient.get<ApiResponse<{ data: PaidLeavePolicyItem[]; total: number }>>('/admin/master-data/paid-leave-policies', { params });
+    return res.data;
+  },
+  createPaidLeavePolicy: async (payload: Partial<PaidLeavePolicyItem>) => {
+    const res = await apiClient.post<ApiResponse<PaidLeavePolicyItem>>('/admin/master-data/paid-leave-policies', payload);
+    return res.data;
+  },
+  updatePaidLeavePolicy: async (id: number, payload: Partial<PaidLeavePolicyItem>) => {
+    const res = await apiClient.put<ApiResponse<PaidLeavePolicyItem>>(`/admin/master-data/paid-leave-policies/${id}`, payload);
+    return res.data;
+  },
+  deletePaidLeavePolicy: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/paid-leave-policies/${id}`);
+    return res.data;
+  },
+};
+
+export const warningLetterDurationService = {
+  getWarningLetterDurations: async (params?: { level?: string; status?: string; search?: string; per_page?: number }) => {
+    const res = await apiClient.get<ApiResponse<{ data: WarningLetterDurationItem[]; total: number }>>('/admin/master-data/warning-letter-durations', { params });
+    return res.data;
+  },
+  createWarningLetterDuration: async (payload: Partial<WarningLetterDurationItem>) => {
+    const res = await apiClient.post<ApiResponse<WarningLetterDurationItem>>('/admin/master-data/warning-letter-durations', payload);
+    return res.data;
+  },
+  updateWarningLetterDuration: async (id: number, payload: Partial<WarningLetterDurationItem>) => {
+    const res = await apiClient.put<ApiResponse<WarningLetterDurationItem>>(`/admin/master-data/warning-letter-durations/${id}`, payload);
+    return res.data;
+  },
+  deleteWarningLetterDuration: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/warning-letter-durations/${id}`);
+    return res.data;
+  },
+};
+
+export const terminationTypeService = {
+  getTerminationTypes: async (params?: { status?: string; search?: string; per_page?: number }) => {
+    const res = await apiClient.get<ApiResponse<{ data: TerminationTypeItem[]; total: number }>>('/admin/master-data/termination-types', { params });
+    return res.data;
+  },
+  createTerminationType: async (payload: Partial<TerminationTypeItem>) => {
+    const res = await apiClient.post<ApiResponse<TerminationTypeItem>>('/admin/master-data/termination-types', payload);
+    return res.data;
+  },
+  updateTerminationType: async (id: number, payload: Partial<TerminationTypeItem>) => {
+    const res = await apiClient.put<ApiResponse<TerminationTypeItem>>(`/admin/master-data/termination-types/${id}`, payload);
+    return res.data;
+  },
+  deleteTerminationType: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/termination-types/${id}`);
+    return res.data;
+  },
+};
+
+export const resignationTypeService = {
+  getResignationTypes: async (params?: { status?: string; search?: string; per_page?: number }) => {
+    const res = await apiClient.get<ApiResponse<{ data: ResignationTypeItem[]; total: number }>>('/admin/master-data/resignation-types', { params });
+    return res.data;
+  },
+  createResignationType: async (payload: Partial<ResignationTypeItem>) => {
+    const res = await apiClient.post<ApiResponse<ResignationTypeItem>>('/admin/master-data/resignation-types', payload);
+    return res.data;
+  },
+  updateResignationType: async (id: number, payload: Partial<ResignationTypeItem>) => {
+    const res = await apiClient.put<ApiResponse<ResignationTypeItem>>(`/admin/master-data/resignation-types/${id}`, payload);
+    return res.data;
+  },
+  deleteResignationType: async (id: number) => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/admin/master-data/resignation-types/${id}`);
+    return res.data;
+  },
+};
+

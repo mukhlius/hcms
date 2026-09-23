@@ -40,10 +40,15 @@ abstract class BaseApiController extends Controller
 
     protected function errorResponse(
         string $message,
-        string $code = 'BAD_REQUEST',
+        string|int $code = 'BAD_REQUEST',
         mixed $errors = null,
         int $statusCode = 400
     ): JsonResponse {
+        if (is_int($code)) {
+            $statusCode = $code;
+            $code = 'ERROR_' . $statusCode;
+        }
+
         $response = [
             'success' => false,
             'message' => $message,

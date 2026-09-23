@@ -8,6 +8,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -35,9 +36,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (ValidationException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
+                $firstError = collect($e->errors())->flatten()->first();
+                $message = $firstError ?: 'Data yang diberikan tidak valid.';
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Data yang diberikan tidak valid.',
+                    'message' => $message,
                     'code' => 'VALIDATION_ERROR',
                     'errors' => $e->errors(),
                     'request_id' => RequestContext::getRequestId(),
@@ -66,6 +70,33 @@ return Application::configure(basePath: dirname(__DIR__))
                     'errors' => (object) [],
                     'request_id' => RequestContext::getRequestId(),
                 ], 404);
+            }
+        });
+
+        $exceptions->render(function (QueryException|PDOException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                $rawMessage = $e->getMessage();
+                $userFriendlyMessage = 'Terjadi kesalahan pada komunikasi basis data.';
+
+                if (str_contains($rawMessage, '2002') || str_contains($rawMessage, 'Connection refused') || str_contains($rawMessage, 'actively refused it')) {
+                    $userFriendlyMessage = 'Gagal terhubung ke basis data (MySQL). Pastikan layanan MySQL di Laragon atau server sedang aktif dan berjalan.';
+                } elseif (str_contains($rawMessage, '1045') || str_contains($rawMessage, 'Access denied')) {
+                    $userFriendlyMessage = 'Akses basis data ditolak. Periksa konfigurasi nama pengguna (username) dan kata sandi database Anda.';
+                } elseif (str_contains($rawMessage, '1049') || str_contains($rawMessage, 'Unknown database')) {
+                    $userFriendlyMessage = 'Basis data tidak ditemukan pada server MySQL. Pastikan nama database di file konfigurasi sudah benar.';
+                }
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $userFriendlyMessage,
+                    'code' => 'DATABASE_CONNECTION_ERROR',
+                    'errors' => config('app.debug') ? [
+                        'exception' => get_class($e),
+                        'line' => $e->getLine(),
+                        'details' => $rawMessage,
+                    ] : (object) [],
+                    'request_id' => RequestContext::getRequestId(),
+                ], 503);
             }
         });
 

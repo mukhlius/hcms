@@ -8,7 +8,7 @@ export default function SchedulesRedirectPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/admin/master-data/references?tab=SHIFTS');
+    router.replace('/admin/organization/references?tab=pola_shift');
   }, [router]);
 
   return (

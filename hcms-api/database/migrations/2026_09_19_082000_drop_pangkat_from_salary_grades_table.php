@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::table('salary_grades', function (Blueprint $table) {
             if (Schema::hasColumn('salary_grades', 'pangkat')) {
+                try {
+                    $table->dropIndex('salary_grades_pangkat_index');
+                } catch (\Throwable $e) {
+                }
                 $table->dropColumn('pangkat');
             }
         });

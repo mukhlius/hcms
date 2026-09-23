@@ -23,6 +23,17 @@ class OrganizationSection extends Model
         'status',
     ];
 
+    protected static function booted()
+    {
+        static::saved(function ($sec) {
+            app(\App\Services\OrganizationSyncService::class)->syncSection($sec);
+        });
+
+        static::deleted(function ($sec) {
+            app(\App\Services\OrganizationSyncService::class)->deleteSection($sec);
+        });
+    }
+
     public function company(): BelongsTo
     {
         return $this->belongsTo(OrganizationCompany::class, 'company_id');

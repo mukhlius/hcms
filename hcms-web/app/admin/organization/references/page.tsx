@@ -12,7 +12,15 @@ import {
   Compass,
   ShieldCheck,
   FileSignature,
-  Plus
+  CalendarDays,
+  Clock,
+  CalendarCheck,
+  Palmtree,
+  AlertTriangle,
+  UserX,
+  LogOut,
+  Plus,
+  GitMerge
 } from 'lucide-react';
 import { MasterCompany, MasterSite, MasterDepartment, OrganizationUnitNode } from '@/types';
 import {
@@ -35,11 +43,61 @@ import { MasterJenjangTab } from '@/components/organization/tabs/MasterJenjangTa
 import { PohTab } from '@/components/organization/tabs/PohTab';
 import { WorkAreaTab } from '@/components/organization/tabs/WorkAreaTab';
 import { HubunganKerjaTab } from '@/components/organization/tabs/HubunganKerjaTab';
+import { RosterKerjaTab } from '@/components/organization/tabs/RosterKerjaTab';
+import { PolaShiftTab } from '@/components/organization/tabs/PolaShiftTab';
+import { WaktuKerjaTab } from '@/components/organization/tabs/WaktuKerjaTab';
+import { KalenderLiburTab } from '@/components/organization/tabs/KalenderLiburTab';
+import { DurasiPaidLeaveTab } from '@/components/organization/tabs/DurasiPaidLeaveTab';
+import { DurasiSpTab } from '@/components/organization/tabs/DurasiSpTab';
+import { JenisPhkTab } from '@/components/organization/tabs/JenisPhkTab';
+import { JenisResignTab } from '@/components/organization/tabs/JenisResignTab';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Tabs } from '@/components/ui/Tabs';
-import { GitMerge } from 'lucide-react';
 
-type OrgTabType = 'company' | 'site' | 'department' | 'section' | 'position' | 'level' | 'grade' | 'master_jenjang' | 'jenjang' | 'hubungan_kerja' | 'poh' | 'work_area';
+type OrgTabType =
+  | 'company'
+  | 'site'
+  | 'department'
+  | 'section'
+  | 'position'
+  | 'level'
+  | 'grade'
+  | 'master_jenjang'
+  | 'jenjang'
+  | 'hubungan_kerja'
+  | 'poh'
+  | 'work_area'
+  | 'roster_kerja'
+  | 'pola_shift'
+  | 'waktu_kerja'
+  | 'kalender_libur'
+  | 'durasi_paid_leave'
+  | 'durasi_sp'
+  | 'jenis_phk'
+  | 'jenis_resign';
+
+const validTabs: OrgTabType[] = [
+  'company',
+  'site',
+  'department',
+  'section',
+  'position',
+  'level',
+  'grade',
+  'master_jenjang',
+  'jenjang',
+  'hubungan_kerja',
+  'poh',
+  'work_area',
+  'roster_kerja',
+  'pola_shift',
+  'waktu_kerja',
+  'kalender_libur',
+  'durasi_paid_leave',
+  'durasi_sp',
+  'jenis_phk',
+  'jenis_resign',
+];
 
 function OrganizationReferencesContent() {
   const searchParams = useSearchParams();
@@ -47,9 +105,7 @@ function OrganizationReferencesContent() {
 
   const tabParam = searchParams.get('tab') as OrgTabType | null;
   const [activeTab, setActiveTab] = useState<OrgTabType>(
-    tabParam && ['company', 'site', 'department', 'section', 'position', 'level', 'grade', 'master_jenjang', 'jenjang', 'hubungan_kerja', 'status_menikah', 'plafon_pengobatan', 'plafon_kacamata', 'plafon_persalinan', 'poh', 'work_area'].includes(tabParam)
-      ? tabParam
-      : 'company'
+    tabParam && validTabs.includes(tabParam) ? tabParam : 'company'
   );
 
   // Cascading Filter States
@@ -80,6 +136,14 @@ function OrganizationReferencesContent() {
     plafond_persalinan: number;
     poh: number;
     work_area: number;
+    roster_kerja: number;
+    pola_shift: number;
+    waktu_kerja: number;
+    kalender_libur: number;
+    durasi_paid_leave: number;
+    durasi_sp: number;
+    jenis_phk: number;
+    jenis_resign: number;
   }>({
     companies: 0,
     sites: 0,
@@ -97,6 +161,14 @@ function OrganizationReferencesContent() {
     plafond_persalinan: 0,
     poh: 0,
     work_area: 0,
+    roster_kerja: 0,
+    pola_shift: 0,
+    waktu_kerja: 0,
+    kalender_libur: 0,
+    durasi_paid_leave: 0,
+    durasi_sp: 0,
+    jenis_phk: 0,
+    jenis_resign: 0,
   });
 
   // Sync tab change to URL without full refresh
@@ -108,7 +180,7 @@ function OrganizationReferencesContent() {
     router.replace(`/admin/organization/references?${params.toString()}`, { scroll: false });
   };
 
-  // 1. Lightweight single-request badge counts (takes ~20ms instead of 7 heavy requests)
+  // 1. Lightweight single-request badge counts
   const loadCounts = useCallback(async () => {
     try {
       const res = await companyService.getOverviewCounts({
@@ -125,6 +197,14 @@ function OrganizationReferencesContent() {
           plafond_pengobatan: res.data.plafond_pengobatan ?? 0,
           plafond_kacamata: res.data.plafond_kacamata ?? 0,
           plafond_persalinan: res.data.plafond_persalinan ?? 0,
+          roster_kerja: res.data.roster_kerja ?? 0,
+          pola_shift: res.data.pola_shift ?? 0,
+          waktu_kerja: res.data.waktu_kerja ?? 0,
+          kalender_libur: res.data.kalender_libur ?? 0,
+          durasi_paid_leave: res.data.durasi_paid_leave ?? 0,
+          durasi_sp: res.data.durasi_sp ?? 0,
+          jenis_phk: res.data.jenis_phk ?? 0,
+          jenis_resign: res.data.jenis_resign ?? 0,
         });
       }
     } catch (err) {
@@ -247,13 +327,6 @@ function OrganizationReferencesContent() {
     router.replace(`/admin/organization/references?${params.toString()}`, { scroll: false });
   };
 
-  const departments = allUnits.filter((u) =>
-    ['DEPARTMENT', 'DIVISION', 'BUSINESS_UNIT'].includes(u.type)
-  );
-  const sections = allUnits.filter((u) =>
-    ['SECTION', 'SUB_SECTION', 'OTHER'].includes(u.type)
-  );
-
   const tabsConfig = [
     {
       id: 'company' as OrgTabType,
@@ -339,6 +412,62 @@ function OrganizationReferencesContent() {
       count: counts.work_area,
       badgeColor: 'bg-orange-100 text-orange-800',
     },
+    {
+      id: 'roster_kerja' as OrgTabType,
+      label: 'Roster Kerja',
+      icon: <CalendarDays className="h-4 w-4 shrink-0" />,
+      count: counts.roster_kerja,
+      badgeColor: 'bg-blue-100 text-blue-800',
+    },
+    {
+      id: 'pola_shift' as OrgTabType,
+      label: 'Pola Shift Kerja',
+      icon: <Clock className="h-4 w-4 shrink-0" />,
+      count: counts.pola_shift,
+      badgeColor: 'bg-cyan-100 text-cyan-800',
+    },
+    {
+      id: 'waktu_kerja' as OrgTabType,
+      label: 'Waktu Kerja',
+      icon: <Clock className="h-4 w-4 shrink-0" />,
+      count: counts.waktu_kerja,
+      badgeColor: 'bg-indigo-100 text-indigo-800',
+    },
+    {
+      id: 'kalender_libur' as OrgTabType,
+      label: 'Kalender Libur',
+      icon: <CalendarCheck className="h-4 w-4 shrink-0" />,
+      count: counts.kalender_libur,
+      badgeColor: 'bg-rose-100 text-rose-800',
+    },
+    {
+      id: 'durasi_paid_leave' as OrgTabType,
+      label: 'Durasi Paid Leave',
+      icon: <Palmtree className="h-4 w-4 shrink-0" />,
+      count: counts.durasi_paid_leave,
+      badgeColor: 'bg-emerald-100 text-emerald-800',
+    },
+    {
+      id: 'durasi_sp' as OrgTabType,
+      label: 'Durasi SP',
+      icon: <AlertTriangle className="h-4 w-4 shrink-0" />,
+      count: counts.durasi_sp,
+      badgeColor: 'bg-amber-100 text-amber-800',
+    },
+    {
+      id: 'jenis_phk' as OrgTabType,
+      label: 'Jenis PHK',
+      icon: <UserX className="h-4 w-4 shrink-0" />,
+      count: counts.jenis_phk,
+      badgeColor: 'bg-red-100 text-red-800',
+    },
+    {
+      id: 'jenis_resign' as OrgTabType,
+      label: 'Jenis Resign',
+      icon: <LogOut className="h-4 w-4 shrink-0" />,
+      count: counts.jenis_resign,
+      badgeColor: 'bg-purple-100 text-purple-800',
+    },
   ];
 
   const [createTriggers, setCreateTriggers] = useState<Record<string, number>>({});
@@ -364,6 +493,14 @@ function OrganizationReferencesContent() {
       case 'hubungan_kerja': return 'Tambah Hubungan Kerja';
       case 'poh': return 'Tambah POH';
       case 'work_area': return 'Tambah Work Area';
+      case 'roster_kerja': return 'Tambah Roster Kerja';
+      case 'pola_shift': return 'Tambah Shift Kerja';
+      case 'waktu_kerja': return 'Tambah Waktu Kerja';
+      case 'kalender_libur': return 'Tambah Hari Libur';
+      case 'durasi_paid_leave': return 'Tambah Paid Leave';
+      case 'durasi_sp': return 'Tambah Tingkat SP';
+      case 'jenis_phk': return 'Tambah Jenis PHK';
+      case 'jenis_resign': return 'Tambah Jenis Resign';
       default: return 'Tambah Data';
     }
   };
@@ -372,7 +509,7 @@ function OrganizationReferencesContent() {
     <div className="space-y-5">
       <PageHeader
         title="Referensi Organisasi"
-        subtitle="Kelola Master Referensi Perusahaan"
+        subtitle="Kelola Master Referensi Perusahaan & Standar Operasional SDM"
         breadcrumbs={[
           { label: 'Beranda', href: '/' },
           { label: 'Data Master HCMS', href: '/admin/master-data' },
@@ -390,7 +527,7 @@ function OrganizationReferencesContent() {
       />
 
       {/* 2. Tab Menu: Modern Navigation Tabs with Animated Sliding Underline */}
-      <div className="border border-slate-200/90 bg-white rounded-xl p-1.5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div className="border border-slate-200/90 bg-white rounded-xl p-1.5 shadow-xs dark:border-slate-800 dark:bg-slate-900 overflow-x-auto">
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
@@ -490,6 +627,70 @@ function OrganizationReferencesContent() {
 
         {activeTab === 'work_area' && (
           <WorkAreaTab key="work-area-tab" onRefreshAll={loadCounts} createTrigger={createTriggers['work_area'] || 0} />
+        )}
+
+        {activeTab === 'roster_kerja' && (
+          <RosterKerjaTab
+            key="roster-kerja-tab"
+            onRefreshAll={loadCounts}
+            createTrigger={createTriggers['roster_kerja'] || 0}
+          />
+        )}
+
+        {activeTab === 'pola_shift' && (
+          <PolaShiftTab
+            key="pola-shift-tab"
+            onRefreshAll={loadCounts}
+            createTrigger={createTriggers['pola_shift'] || 0}
+          />
+        )}
+
+        {activeTab === 'waktu_kerja' && (
+          <WaktuKerjaTab
+            key="waktu-kerja-tab"
+            onRefreshAll={loadCounts}
+            createTrigger={createTriggers['waktu_kerja'] || 0}
+          />
+        )}
+
+        {activeTab === 'kalender_libur' && (
+          <KalenderLiburTab
+            key="kalender-libur-tab"
+            onRefreshAll={loadCounts}
+            createTrigger={createTriggers['kalender_libur'] || 0}
+          />
+        )}
+
+        {activeTab === 'durasi_paid_leave' && (
+          <DurasiPaidLeaveTab
+            key="durasi-paid-leave-tab"
+            onRefreshAll={loadCounts}
+            createTrigger={createTriggers['durasi_paid_leave'] || 0}
+          />
+        )}
+
+        {activeTab === 'durasi_sp' && (
+          <DurasiSpTab
+            key="durasi-sp-tab"
+            onRefreshAll={loadCounts}
+            createTrigger={createTriggers['durasi_sp'] || 0}
+          />
+        )}
+
+        {activeTab === 'jenis_phk' && (
+          <JenisPhkTab
+            key="jenis-phk-tab"
+            onRefreshAll={loadCounts}
+            createTrigger={createTriggers['jenis_phk'] || 0}
+          />
+        )}
+
+        {activeTab === 'jenis_resign' && (
+          <JenisResignTab
+            key="jenis-resign-tab"
+            onRefreshAll={loadCounts}
+            createTrigger={createTriggers['jenis_resign'] || 0}
+          />
         )}
       </div>
     </div>
