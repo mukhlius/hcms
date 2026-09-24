@@ -50,6 +50,11 @@ export const MobileBottomNav: React.FC = () => {
   const activeWorkspaceId = getActiveWorkspaceId(pathname);
   const isEss = activeWorkspaceId === 'ess';
 
+  // Hilangkan bottom button / bottom navigation pada halaman administrator
+  if (!isEss) {
+    return null;
+  }
+
   const essNavItems = [
     {
       id: 'ess-home',
