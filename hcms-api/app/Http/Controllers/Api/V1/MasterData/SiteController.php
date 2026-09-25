@@ -39,7 +39,12 @@ class SiteController extends BaseApiController
             });
         }
 
-        $perPage = min((int)$request->query('per_page', 15), 100);
+        if ($request->boolean('all')) {
+            $sites = $query->orderBy('name')->get();
+            return $this->successResponse($sites, 'Daftar site berhasil diambil.');
+        }
+
+        $perPage = min((int)$request->query('per_page', 15), 500);
         $sites = $query->latest()->paginate($perPage);
 
         return $this->successResponse($sites, 'Daftar site berhasil diambil.');

@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\SystemSettingController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\RecycleBinController;
 use App\Http\Controllers\Api\V1\DatabaseBackupController;
+use App\Http\Controllers\Api\V1\EmployeeController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -58,6 +59,18 @@ Route::prefix('v1')->group(function () {
                 Route::post('/{user}/unlock', [UserController::class, 'unlock'])->middleware('permission:users.update');
                 Route::post('/{user}/reset-password', [UserController::class, 'resetUserPassword'])->middleware('permission:users.update');
                 Route::post('/{user}/revoke-sessions', [UserController::class, 'revokeSessions'])->middleware('permission:sessions.revoke');
+            });
+
+            // Employees Management
+            Route::prefix('employees')->group(function () {
+                Route::get('/', [EmployeeController::class, 'index']);
+                Route::post('/', [EmployeeController::class, 'store']);
+                Route::get('/{id}', [EmployeeController::class, 'show']);
+                Route::put('/{id}', [EmployeeController::class, 'update']);
+                Route::delete('/{id}', [EmployeeController::class, 'destroy']);
+                Route::post('/{id}/movements', [EmployeeController::class, 'recordMovement']);
+                Route::post('/{id}/toggle-status', [EmployeeController::class, 'toggleStatus']);
+                Route::post('/{id}/reset-password', [EmployeeController::class, 'resetPassword']);
             });
 
             // Roles Management

@@ -285,7 +285,7 @@ export interface PositionItem {
   organization_unit?: OrganizationUnitNode;
   job?: { id: number; code: string; name: string };
   job_family?: { id: number; code: string; name: string };
-  grade?: { id: number; code: string; name: string; level: number };
+  grade?: { id: number; code: string; name: string; level: number; pangkat?: string };
   reports_to?: { id: number; code: string; title: string };
   reportsTo?: { id: number; code: string; title: string };
   work_location?: { id: number; code: string; name: string };
@@ -555,4 +555,6 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+
+export * from './employee';
 

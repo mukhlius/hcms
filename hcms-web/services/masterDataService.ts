@@ -61,8 +61,8 @@ export const companyService = {
     }>>('/admin/master-data/overview-counts', { params });
     return res.data;
   },
-  getCompanies: async (params?: { search?: string; status?: string; page?: number; per_page?: number }) => {
-    const res = await apiClient.get<ApiResponse<{ data: MasterCompany[]; total: number }>>('/admin/master-data/companies', { params });
+  getCompanies: async (params?: { search?: string; status?: string; page?: number; per_page?: number; all?: boolean }) => {
+    const res = await apiClient.get<ApiResponse<any>>('/admin/master-data/companies', { params });
     return res.data;
   },
   getCompany: async (id: number) => {
@@ -92,8 +92,8 @@ export const companyService = {
 };
 
 export const siteService = {
-  getSites: async (params?: { company_id?: number; site_type?: string; search?: string; status?: string; per_page?: number }) => {
-    const res = await apiClient.get<ApiResponse<{ data: MasterSite[]; total: number }>>('/admin/master-data/sites', { params });
+  getSites: async (params?: { company_id?: number; site_type?: string; search?: string; status?: string; per_page?: number; all?: boolean }) => {
+    const res = await apiClient.get<ApiResponse<any>>('/admin/master-data/sites', { params });
     return res.data;
   },
   getSite: async (id: number) => {
@@ -123,8 +123,8 @@ export const siteService = {
 };
 
 export const departmentService = {
-  getDepartments: async (params?: { company_id?: number; site_id?: number; search?: string; status?: string; per_page?: number; page?: number }) => {
-    const res = await apiClient.get<ApiResponse<{ data: MasterDepartment[]; total: number }>>('/admin/master-data/departments', { params });
+  getDepartments: async (params?: { company_id?: number; site_id?: number; search?: string; status?: string; per_page?: number; page?: number; all?: boolean }) => {
+    const res = await apiClient.get<ApiResponse<any>>('/admin/master-data/departments', { params });
     return res.data;
   },
   getDepartment: async (id: number) => {
@@ -154,8 +154,8 @@ export const departmentService = {
 };
 
 export const sectionService = {
-  getSections: async (params?: { department_id?: number; company_id?: number; site_id?: number; search?: string; status?: string; per_page?: number; page?: number }) => {
-    const res = await apiClient.get<ApiResponse<{ data: MasterSection[]; total: number }>>('/admin/master-data/sections', { params });
+  getSections: async (params?: { department_id?: number; company_id?: number; site_id?: number; search?: string; status?: string; per_page?: number; page?: number; all?: boolean }) => {
+    const res = await apiClient.get<ApiResponse<any>>('/admin/master-data/sections', { params });
     return res.data;
   },
   getSection: async (id: number) => {
@@ -224,8 +224,8 @@ export const organizationUnitService = {
 };
 
 export const positionService = {
-  getPositions: async (params?: { company_id?: number; site_id?: number; department_id?: number; section_id?: number; organization_unit_id?: number; grade_id?: number; is_frozen?: boolean; search?: string; status?: string; per_page?: number }) => {
-    const res = await apiClient.get<ApiResponse<{ data: PositionItem[]; total: number }>>('/admin/master-data/positions', { params });
+  getPositions: async (params?: { company_id?: number; site_id?: number; department_id?: number; section_id?: number; organization_unit_id?: number; grade_id?: number; is_frozen?: boolean; search?: string; status?: string; per_page?: number; all?: boolean }) => {
+    const res = await apiClient.get<ApiResponse<any>>('/admin/master-data/positions', { params });
     return res.data;
   },
   getSummary: async (params?: { organization_unit_id?: number }) => {

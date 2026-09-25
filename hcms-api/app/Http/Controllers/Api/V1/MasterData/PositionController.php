@@ -27,7 +27,7 @@ class PositionController extends BaseApiController
             'organizationUnit:id,code,name,type',
             'job:id,code,name',
             'jobFamily:id,code,name',
-            'grade:id,code,name,level',
+            'grade:id,code,name,level,pangkat',
             'reportsTo:id,code,title',
             'workLocation:id,code,name',
             'costCenter:id,code,name',

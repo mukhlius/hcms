@@ -1,0 +1,324 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Api\BaseApiController;
+use App\Models\Employee;
+use App\Services\EmployeeService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+
+class EmployeeController extends BaseApiController
+{
+    public function __construct(
+        protected EmployeeService $employeeService
+    ) {}
+
+    /**
+     * Tampilkan daftar karyawan berpaginasi dengan filter
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $filters = $request->only([
+            'search',
+            'department_id',
+            'site_id',
+            'position_id',
+            'grade_id',
+            'employment_status',
+            'employment_type_id',
+            'gender',
+        ]);
+
+        $perPage = (int) $request->input('per_page', 15);
+        $paginated = $this->employeeService->listEmployees($filters, $perPage);
+
+        return $this->successResponse($paginated->items(), 'Daftar karyawan berhasil dimuat', [
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'per_page' => $paginated->perPage(),
+            'total' => $paginated->total(),
+        ]);
+    }
+
+    /**
+     * Tampilkan detail lengkap profil karyawan
+     */
+    public function show(int $id): JsonResponse
+    {
+        try {
+            $employee = $this->employeeService->getEmployeeDetail($id);
+            return $this->successResponse($employee, 'Detail karyawan berhasil dimuat');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Karyawan tidak ditemukan', 'NOT_FOUND', null, 404);
+        }
+    }
+
+    /**
+     * Registrasi karyawan baru
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'nrp' => 'required|string|max:30|unique:employees,nrp',
+            'name' => 'required|string|max:255',
+            'nickname' => 'nullable|string|max:50',
+            'gender' => ['required', Rule::in(['MALE', 'FEMALE'])],
+            'birth_place' => 'nullable|string|max:100',
+            'birth_date' => 'required|date',
+            'religion' => 'nullable|string|max:30',
+            'marital_status' => 'nullable|string|max:30',
+            'marriage_date' => 'nullable|date',
+            'id_card_number' => 'nullable|string|max:25',
+            'tax_number' => 'nullable|string|max:30',
+            'tax_status' => 'nullable|string|max:10',
+            'bpjs_ketenagakerjaan' => 'nullable|string|max:30',
+            'bpjs_kesehatan' => 'nullable|string|max:30',
+            'insurance_admedika' => 'nullable|string|max:50',
+            'email_company' => 'nullable|email|max:100',
+            'email_personal' => 'nullable|email|max:100',
+            'phone_mobile' => 'nullable|string|max:30',
+            'phone_home' => 'nullable|string|max:30',
+            'ktp_address' => 'nullable|string',
+            'ktp_city' => 'nullable|string|max:100',
+            'ktp_district' => 'nullable|string|max:100',
+            'ktp_province' => 'nullable|string|max:100',
+            'ktp_postal_code' => 'nullable|string|max:10',
+            'residential_address' => 'nullable|string',
+            'residential_city' => 'nullable|string|max:100',
+            'residential_district' => 'nullable|string|max:100',
+            'residential_province' => 'nullable|string|max:100',
+            'residential_postal_code' => 'nullable|string|max:10',
+            'mailing_address' => 'nullable|string',
+            'mailing_city' => 'nullable|string|max:100',
+            'mailing_district' => 'nullable|string|max:100',
+            'mailing_province' => 'nullable|string|max:100',
+            'mailing_postal_code' => 'nullable|string|max:10',
+            'company_id' => 'nullable|exists:organization_companies,id',
+            'site_id' => 'nullable|exists:organization_sites,id',
+            'department_id' => 'nullable|exists:organization_departments,id',
+            'section_id' => 'nullable|exists:organization_sections,id',
+            'position_id' => 'nullable|exists:positions,id',
+            'grade_id' => 'nullable|exists:grades,id',
+            'salary_grade_id' => 'nullable|exists:salary_grades,id',
+            'salary_grade_jenjang_id' => 'nullable|exists:salary_grade_jenjang,id',
+            'pangkat' => 'nullable|string|max:30',
+            'employment_type_id' => 'nullable|exists:employment_types,id',
+            'poh' => 'nullable|string|max:100',
+            'work_area' => 'nullable|string|max:100',
+            'hire_date' => 'required|date',
+            'probation_end_date' => 'nullable|date',
+            'contract_end_date' => 'nullable|date',
+            'employment_status' => 'nullable|string|max:30',
+            'photo_url' => 'nullable|string',
+            'notes' => 'nullable|string',
+
+            // Data Relasional Opsional
+            'families' => 'nullable|array',
+            'families.*.relation_type' => 'required|string|in:SPOUSE,CHILD,FATHER,MOTHER,FATHER_IN_LAW,MOTHER_IN_LAW,OTHER',
+            'families.*.name' => 'required|string|max:255',
+            'families.*.id_card_number' => 'required|string|max:25',
+            'families.*.birth_place' => 'required|string|max:100',
+            'families.*.birth_date' => 'required|date',
+            'families.*.gender' => 'nullable|string|in:MALE,FEMALE',
+            'families.*.child_order' => 'nullable|integer',
+            'families.*.health_provider_no' => 'nullable|string|max:50',
+            'families.*.is_covered_insurance' => 'nullable|boolean',
+            'families.*.is_alive' => 'nullable|boolean',
+            
+            'educations' => 'nullable|array',
+            'educations.*.level' => 'required|string',
+            'educations.*.institution_name' => 'required|string',
+            'educations.*.graduation_year' => 'nullable|integer',
+
+            'emergency_contacts' => 'nullable|array',
+            'emergency_contacts.*.name' => 'required|string',
+            'emergency_contacts.*.relationship' => 'required|string',
+            'emergency_contacts.*.phone_number' => 'required|string',
+
+            'health_safety' => 'nullable|array',
+            'bank_accounts' => 'nullable|array',
+        ]);
+
+        try {
+            $employee = $this->employeeService->createEmployee($validated, $request->user()?->id);
+            return $this->successResponse($employee, 'Data karyawan berhasil didaftarkan beserta akun pengguna', [], 201);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Gagal mendaftarkan karyawan: ' . $e->getMessage(), 'CREATE_FAILED', null, 500);
+        }
+    }
+
+    /**
+     * Perbarui data profil karyawan
+     */
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $employee = Employee::findOrFail($id);
+
+        $validated = $request->validate([
+            'nrp' => ['sometimes', 'required', 'string', 'max:30', Rule::unique('employees')->ignore($employee->id)],
+            'name' => 'sometimes|required|string|max:255',
+            'nickname' => 'nullable|string|max:50',
+            'gender' => ['sometimes', 'required', Rule::in(['MALE', 'FEMALE'])],
+            'birth_place' => 'nullable|string|max:100',
+            'birth_date' => 'sometimes|required|date',
+            'religion' => 'nullable|string|max:30',
+            'marital_status' => 'nullable|string|max:30',
+            'marriage_date' => 'nullable|date',
+            'id_card_number' => 'nullable|string|max:25',
+            'tax_number' => 'nullable|string|max:30',
+            'tax_status' => 'nullable|string|max:10',
+            'bpjs_ketenagakerjaan' => 'nullable|string|max:30',
+            'bpjs_kesehatan' => 'nullable|string|max:30',
+            'insurance_admedika' => 'nullable|string|max:50',
+            'email_company' => 'nullable|email|max:100',
+            'email_personal' => 'nullable|email|max:100',
+            'phone_mobile' => 'nullable|string|max:30',
+            'phone_home' => 'nullable|string|max:30',
+            'ktp_address' => 'nullable|string',
+            'ktp_city' => 'nullable|string|max:100',
+            'ktp_district' => 'nullable|string|max:100',
+            'ktp_province' => 'nullable|string|max:100',
+            'ktp_postal_code' => 'nullable|string|max:10',
+            'residential_address' => 'nullable|string',
+            'residential_city' => 'nullable|string|max:100',
+            'residential_district' => 'nullable|string|max:100',
+            'residential_province' => 'nullable|string|max:100',
+            'residential_postal_code' => 'nullable|string|max:10',
+            'mailing_address' => 'nullable|string',
+            'mailing_city' => 'nullable|string|max:100',
+            'mailing_district' => 'nullable|string|max:100',
+            'mailing_province' => 'nullable|string|max:100',
+            'mailing_postal_code' => 'nullable|string|max:10',
+            'company_id' => 'nullable|exists:organization_companies,id',
+            'site_id' => 'nullable|exists:organization_sites,id',
+            'department_id' => 'nullable|exists:organization_departments,id',
+            'section_id' => 'nullable|exists:organization_sections,id',
+            'position_id' => 'nullable|exists:positions,id',
+            'grade_id' => 'nullable|exists:grades,id',
+            'salary_grade_id' => 'nullable|exists:salary_grades,id',
+            'salary_grade_jenjang_id' => 'nullable|exists:salary_grade_jenjang,id',
+            'pangkat' => 'nullable|string|max:30',
+            'employment_type_id' => 'nullable|exists:employment_types,id',
+            'poh' => 'nullable|string|max:100',
+            'work_area' => 'nullable|string|max:100',
+            'hire_date' => 'sometimes|required|date',
+            'probation_end_date' => 'nullable|date',
+            'contract_end_date' => 'nullable|date',
+            'employment_status' => 'nullable|string|max:30',
+            'photo_url' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'health_safety' => 'nullable|array',
+            'families' => 'nullable|array',
+            'families.*.id' => 'nullable|integer',
+            'families.*.relation_type' => 'required|string|in:SPOUSE,CHILD,FATHER,MOTHER,FATHER_IN_LAW,MOTHER_IN_LAW,OTHER',
+            'families.*.name' => 'required|string|max:255',
+            'families.*.id_card_number' => 'required|string|max:25',
+            'families.*.birth_place' => 'required|string|max:100',
+            'families.*.birth_date' => 'required|date',
+            'families.*.gender' => 'nullable|string|in:MALE,FEMALE',
+            'families.*.child_order' => 'nullable|integer',
+            'families.*.health_provider_no' => 'nullable|string|max:50',
+            'families.*.is_covered_insurance' => 'nullable|boolean',
+            'families.*.is_alive' => 'nullable|boolean',
+            'educations' => 'nullable|array',
+            'emergency_contacts' => 'nullable|array',
+            'bank_accounts' => 'nullable|array',
+        ]);
+
+        try {
+            $updatedEmployee = $this->employeeService->updateEmployee($employee->id, $validated);
+            return $this->successResponse($updatedEmployee, 'Data karyawan berhasil diperbarui');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Gagal memperbarui karyawan: ' . $e->getMessage(), 'UPDATE_FAILED', null, 500);
+        }
+    }
+
+    /**
+     * Hapus karyawan (soft delete)
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        $employee = Employee::findOrFail($id);
+        $employee->delete();
+
+        // Nonaktifkan user terkait jika ada
+        if ($employee->user) {
+            $employee->user->update(['status' => 'INACTIVE']);
+            $employee->user->tokens()->delete();
+        }
+
+        return $this->successResponse(null, 'Karyawan berhasil dinonaktifkan / dipindahkan ke tempat sampah');
+    }
+
+    /**
+     * Mutasi / Promosi / Rotasi Karir dengan Snapshot Baku
+     */
+    public function recordMovement(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'movement_type' => 'required|string|max:30', // PROMOTION, ROTATION, MUTATION_SITE, DEMOTION, STATUS_CHANGE, TERMINATION
+            'letter_number' => 'nullable|string|max:100',
+            'letter_date' => 'nullable|date',
+            'effective_date' => 'required|date',
+            'company_id' => 'nullable|exists:organization_companies,id',
+            'site_id' => 'nullable|exists:organization_sites,id',
+            'department_id' => 'nullable|exists:organization_departments,id',
+            'section_id' => 'nullable|exists:organization_sections,id',
+            'position_id' => 'nullable|exists:positions,id',
+            'grade_id' => 'nullable|exists:grades,id',
+            'salary_grade_id' => 'nullable|exists:salary_grades,id',
+            'salary_grade_jenjang_id' => 'nullable|exists:salary_grade_jenjang,id',
+            'pangkat' => 'nullable|string|max:30',
+            'employment_type_id' => 'nullable|exists:employment_types,id',
+            'poh' => 'nullable|string|max:100',
+            'work_area' => 'nullable|string|max:100',
+            'reason' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'sk_file_url' => 'nullable|string',
+        ]);
+
+        try {
+            $careerHistory = $this->employeeService->recordCareerMovement($id, $validated, $request->user()?->id);
+            return $this->successResponse($careerHistory, 'Perubahan karir / mutasi jabatan berhasil direkam');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Gagal mencatat mutasi karir: ' . $e->getMessage(), 'MOVEMENT_FAILED', null, 500);
+        }
+    }
+
+    /**
+     * Toggle status aktif / nonaktif karyawan & putus sesi instan
+     */
+    public function toggleStatus(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'RESIGNED', 'TERMINATED'])],
+            'reason' => 'nullable|string',
+        ]);
+
+        try {
+            $employee = $this->employeeService->toggleEmployeeStatus($id, $validated['status'], $validated['reason'] ?? null);
+            return $this->successResponse($employee, 'Status kepegawaian berhasil diubah');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Gagal mengubah status: ' . $e->getMessage(), 'STATUS_FAILED', null, 500);
+        }
+    }
+
+    /**
+     * Reset password karyawan oleh Admin HR
+     */
+    public function resetPassword(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        try {
+            $res = $this->employeeService->resetEmployeePassword($id, $validated['password'] ?? null);
+            return $this->successResponse($res, 'Password karyawan berhasil di-reset');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Gagal me-reset password: ' . $e->getMessage(), 'RESET_FAILED', null, 400);
+        }
+    }
+}

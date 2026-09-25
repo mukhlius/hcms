@@ -43,7 +43,12 @@ class CompanyController extends BaseApiController
             $query->where('status', $request->query('status'));
         }
 
-        $perPage = min((int)$request->query('per_page', 15), 100);
+        if ($request->boolean('all')) {
+            $companies = $query->orderBy('name')->get();
+            return $this->successResponse($companies, 'Daftar perusahaan berhasil diambil.');
+        }
+
+        $perPage = min((int)$request->query('per_page', 15), 500);
         $companies = $query->latest()->paginate($perPage);
 
         return $this->successResponse($companies, 'Daftar perusahaan berhasil diambil.');

@@ -126,4 +126,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(PasswordHistory::class);
     }
+
+    public function employee(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Employee::class, 'user_id');
+    }
 }

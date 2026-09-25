@@ -166,6 +166,12 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
         icon: <LayoutDashboard className="h-4.5 w-4.5 shrink-0" />,
       },
       {
+        label: 'Data Karyawan',
+        href: '/admin/employees',
+        icon: <Users className="h-4.5 w-4.5 shrink-0" />,
+        permission: 'users.view',
+      },
+      {
         label: 'Struktur Organisasi',
         href: '/admin/organization',
         icon: <Building2 className="h-4.5 w-4.5 shrink-0" />,
