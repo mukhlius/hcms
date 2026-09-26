@@ -13,14 +13,16 @@ class RoleController extends BaseApiController
 {
     public function index(): JsonResponse
     {
-        $roles = Role::withCount(['permissions', 'users'])->get();
+        $roles = Role::withCount(['permissions', 'users'])
+            ->with(['grades:id,code,name,level,pangkat,default_role_id'])
+            ->get();
 
         return $this->successResponse($roles, 'Data peran berhasil dimuat');
     }
 
     public function show(Role $role): JsonResponse
     {
-        $role->load('permissions');
+        $role->load(['permissions', 'grades:id,code,name,level,pangkat,default_role_id']);
 
         return $this->successResponse($role, 'Rincian peran berhasil dimuat');
     }
@@ -34,6 +36,8 @@ class RoleController extends BaseApiController
             'data_scope' => ['required', Rule::enum(DataScope::class)],
             'permission_ids' => 'nullable|array',
             'permission_ids.*' => 'exists:permissions,id',
+            'grade_ids' => 'nullable|array',
+            'grade_ids.*' => 'exists:grades,id',
         ]);
 
         $role = Role::create([
@@ -48,7 +52,16 @@ class RoleController extends BaseApiController
             $role->permissions()->sync($validated['permission_ids']);
         }
 
-        return $this->successResponse($role->load('permissions'), 'Peran baru berhasil dibuat', [], 201);
+        if (isset($validated['grade_ids'])) {
+            \App\Models\Grade::whereIn('id', $validated['grade_ids'])->update(['default_role_id' => $role->id]);
+        }
+
+        return $this->successResponse(
+            $role->load(['permissions', 'grades:id,code,name,level,pangkat,default_role_id']),
+            'Peran baru berhasil dibuat',
+            [],
+            201
+        );
     }
 
     public function update(Request $request, Role $role): JsonResponse
@@ -59,6 +72,8 @@ class RoleController extends BaseApiController
             'data_scope' => ['sometimes', 'required', Rule::enum(DataScope::class)],
             'permission_ids' => 'nullable|array',
             'permission_ids.*' => 'exists:permissions,id',
+            'grade_ids' => 'nullable|array',
+            'grade_ids.*' => 'exists:grades,id',
         ]);
 
         $role->update([
@@ -71,21 +86,49 @@ class RoleController extends BaseApiController
             $role->permissions()->sync($validated['permission_ids']);
         }
 
-        return $this->successResponse($role->load('permissions'), 'Peran berhasil diperbarui');
+        if (isset($validated['grade_ids'])) {
+            // Lepas grade yang sebelumnya terhubung ke role ini tetapi tidak dipilih lagi
+            \App\Models\Grade::where('default_role_id', $role->id)
+                ->whereNotIn('id', $validated['grade_ids'])
+                ->update(['default_role_id' => null]);
+
+            // Hubungkan grade yang dipilih ke role ini
+            if (!empty($validated['grade_ids'])) {
+                \App\Models\Grade::whereIn('id', $validated['grade_ids'])->update(['default_role_id' => $role->id]);
+            }
+        }
+
+        return $this->successResponse(
+            $role->load(['permissions', 'grades:id,code,name,level,pangkat,default_role_id']),
+            'Peran berhasil diperbarui'
+        );
     }
 
     public function destroy(Role $role): JsonResponse
     {
-        if ($role->is_system) {
-            return $this->errorResponse('Peran sistem bawaan tidak dapat dihapus.', 'SYSTEM_ROLE_PROTECTED', null, 403);
+        if (strtoupper($role->name) === 'SUPER_ADMIN' || $role->id === 1) {
+            return $this->errorResponse('Peran Super Administrator adalah peran sistem utama dan tidak dapat dihapus.', 'SYSTEM_ROLE_PROTECTED', null, 403);
         }
 
-        if ($role->users()->count() > 0) {
-            return $this->errorResponse('Tidak dapat menghapus peran yang masih memiliki pengguna aktif.', 'ROLE_IN_USE', null, 422);
-        }
+        // Lepaskan grade yang terhubung
+        \App\Models\Grade::where('default_role_id', $role->id)->update(['default_role_id' => null]);
+
+        // Detach related permissions and users
+        $role->permissions()->detach();
+        $role->users()->detach();
 
         $role->delete();
 
         return $this->successResponse(null, 'Peran berhasil dihapus');
+    }
+
+    public function syncEmployees(\App\Services\RoleAssignmentService $roleAssignmentService): JsonResponse
+    {
+        $result = $roleAssignmentService->syncAllEmployeesRoles();
+
+        return $this->successResponse(
+            $result,
+            "Sinkronisasi peran berhasil dilakukan untuk {$result['synced_count']} pengguna karyawan."
+        );
     }
 }

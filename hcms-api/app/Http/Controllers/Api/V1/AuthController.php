@@ -184,6 +184,11 @@ class AuthController extends BaseApiController
             actorId: $user->id
         );
 
+        // Load relasi yang dibutuhkan untuk response & deteksi MSS
+        $user->load(['roles', 'position.subordinates', 'employee.position.subordinates']);
+        $effectivePosition = $user->position ?? $user->employee?->position;
+        $hasSubordinates = $effectivePosition ? $effectivePosition->subordinates->isNotEmpty() : false;
+
         return $this->successResponse([
             'token' => $token,
             'session_id' => $sessionId,
@@ -196,6 +201,9 @@ class AuthController extends BaseApiController
                 'status' => $user->status,
                 'force_password_change' => $user->force_password_change,
                 'data_scope' => $user->getDataScope(),
+                'position_id' => $effectivePosition?->id,
+                'position_title' => $effectivePosition?->title,
+                'has_subordinates' => $hasSubordinates,
                 'roles' => $user->roles->map(fn($r) => [
                     'id' => $r->id,
                     'name' => $r->name,
@@ -209,7 +217,9 @@ class AuthController extends BaseApiController
 
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user()->load(['roles', 'company', 'site', 'department']);
+        $user = $request->user()->load(['roles', 'company', 'site', 'department', 'position.subordinates', 'employee.position.subordinates']);
+        $effectivePosition = $user->position ?? $user->employee?->position;
+        $hasSubordinates = $effectivePosition ? $effectivePosition->subordinates->isNotEmpty() : false;
 
         return $this->successResponse([
             'id' => $user->id,
@@ -223,6 +233,9 @@ class AuthController extends BaseApiController
             'company' => $user->company?->name,
             'site' => $user->site?->name,
             'department' => $user->department?->name,
+            'position_id' => $effectivePosition?->id,
+            'position_title' => $effectivePosition?->title,
+            'has_subordinates' => $hasSubordinates,
             'roles' => $user->roles->map(fn($r) => [
                 'id' => $r->id,
                 'name' => $r->name,

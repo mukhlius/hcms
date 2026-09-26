@@ -40,16 +40,19 @@ class Employee extends Model
         'ktp_address',
         'ktp_city',
         'ktp_district',
+        'ktp_village',
         'ktp_province',
         'ktp_postal_code',
         'residential_address',
         'residential_city',
         'residential_district',
+        'residential_village',
         'residential_province',
         'residential_postal_code',
         'mailing_address',
         'mailing_city',
         'mailing_district',
+        'mailing_village',
         'mailing_province',
         'mailing_postal_code',
         'company_id',
@@ -182,5 +185,10 @@ class Employee extends Model
     public function currentCareerHistory(): HasOne
     {
         return $this->hasOne(EmployeeCareerHistory::class, 'employee_id')->where('is_current', true);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(EmployeeDocument::class, 'employee_id');
     }
 }

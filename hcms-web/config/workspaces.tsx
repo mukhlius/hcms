@@ -89,31 +89,37 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
         label: 'Presensi & Kehadiran',
         href: '/ess/attendance',
         icon: <Clock className="h-4.5 w-4.5 shrink-0" />,
+        permission: 'ess.attendance',
       },
       {
         label: 'Pengajuan Cuti & Izin',
         href: '/ess/leave',
         icon: <CalendarDays className="h-4.5 w-4.5 shrink-0" />,
+        permission: 'ess.leave',
       },
       {
         label: 'Surat Perintah Lembur',
         href: '/ess/overtime',
         icon: <Briefcase className="h-4.5 w-4.5 shrink-0" />,
+        permission: 'ess.overtime',
       },
       {
         label: 'Klaim & Manfaat',
         href: '/ess/claims',
         icon: <CreditCard className="h-4.5 w-4.5 shrink-0" />,
+        permission: 'ess.claims',
       },
       {
         label: 'Slip Gaji Digital',
         href: '/ess/payslip',
         icon: <FileSpreadsheet className="h-4.5 w-4.5 shrink-0" />,
+        permission: 'ess.payslip',
       },
       {
         label: 'Dokumen & Regulasi',
         href: '/ess/documents',
         icon: <FileText className="h-4.5 w-4.5 shrink-0" />,
+        permission: 'ess.documents',
       },
       // --- KELOMPOK MANAJEMEN TIM (MSS - HANYA UNTUK ATASAN YANG MEMILIKI BAWAHAN) ---
       {
@@ -122,6 +128,7 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
         icon: <CheckCircle2 className="h-4.5 w-4.5 shrink-0 text-amber-500" />,
         section: 'MANAJEMEN TIM (ATASAN)',
         managerOnly: true,
+        permission: 'approvals.view',
         badge: '3',
       },
       {
@@ -129,24 +136,28 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
         href: '/mss/team',
         icon: <Users className="h-4.5 w-4.5 shrink-0" />,
         managerOnly: true,
+        permission: 'mss.team',
       },
       {
         label: 'Presensi & Kehadiran Tim',
         href: '/mss/attendance',
         icon: <UserCheck2 className="h-4.5 w-4.5 shrink-0" />,
         managerOnly: true,
+        permission: 'mss.attendance',
       },
       {
         label: 'Jadwal Roster & Shift',
         href: '/mss/roster',
         icon: <CalendarRange className="h-4.5 w-4.5 shrink-0" />,
         managerOnly: true,
+        permission: 'mss.roster',
       },
       {
         label: 'Evaluasi & Kinerja Tim',
         href: '/mss/performance',
         icon: <Award className="h-4.5 w-4.5 shrink-0" />,
         managerOnly: true,
+        permission: 'mss.performance',
       },
     ],
   },
@@ -169,32 +180,32 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
         label: 'Data Karyawan',
         href: '/admin/employees',
         icon: <Users className="h-4.5 w-4.5 shrink-0" />,
-        permission: 'users.view',
+        permission: 'employees.view',
       },
       {
         label: 'Struktur Organisasi',
         href: '/admin/organization',
         icon: <Building2 className="h-4.5 w-4.5 shrink-0" />,
-        permission: 'organizations.view',
+        permission: 'organization.view',
       },
       {
         label: 'Data Master HCMS',
         href: '/admin/master-data',
         icon: <Database className="h-4.5 w-4.5 shrink-0" />,
-        permission: 'organizations.view',
+        permission: 'master-data.view|organization.view',
         children: [
-          { label: 'Referensi Organisasi', href: '/admin/organization/references', icon: <Layers className="h-4 w-4" />, permission: 'organizations.view' },
-          { label: 'Referensi Standar', href: '/admin/master-data/references', icon: <Database className="h-4 w-4" />, permission: 'organizations.view' },
-          { label: 'Referensi Benefit', href: '/admin/master-data/benefits', icon: <HeartHandshake className="h-4 w-4" />, permission: 'organizations.view' },
-          { label: 'Dokumen Perusahaan', href: '/admin/company-documents', icon: <FileText className="h-4 w-4" />, permission: 'organizations.view' },
-          { label: 'Impor & Ekspor Data', href: '/admin/master-data/import-export', icon: <UploadCloud className="h-4 w-4" />, permission: 'organizations.view' },
+          { label: 'Referensi Organisasi', href: '/admin/organization/references', icon: <Layers className="h-4 w-4" />, permission: 'organization.view' },
+          { label: 'Referensi Standar', href: '/admin/master-data/references', icon: <Database className="h-4 w-4" />, permission: 'master-data.view' },
+          { label: 'Referensi Benefit', href: '/admin/master-data/benefits', icon: <HeartHandshake className="h-4 w-4" />, permission: 'master-data.view' },
+          { label: 'Dokumen Perusahaan', href: '/admin/company-documents', icon: <FileText className="h-4 w-4" />, permission: 'company-documents.view' },
+          { label: 'Impor & Ekspor Data', href: '/admin/master-data/import-export', icon: <UploadCloud className="h-4 w-4" />, permission: 'master-data.import' },
         ],
       },
       {
         label: 'Konfigurasi Sistem',
         href: '/admin',
         icon: <Shield className="h-4.5 w-4.5 shrink-0" />,
-        permission: 'users.view',
+        permission: 'admin.access',
         children: [
           { label: 'Pengguna & Personel', href: '/admin/users', icon: <Users className="h-4 w-4" />, permission: 'users.view' },
           { label: 'Peran & Akses', href: '/admin/roles', icon: <Shield className="h-4 w-4" />, permission: 'roles.view' },
@@ -204,7 +215,7 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
           { label: 'Audit Trail', href: '/admin/audit-logs', icon: <FileText className="h-4 w-4" />, permission: 'audit.view' },
           { label: 'Pengaturan Sistem', href: '/admin/settings', icon: <Settings className="h-4 w-4" />, permission: 'settings.view' },
           { label: 'Backup Database', href: '/admin/database-backup', icon: <HardDriveDownload className="h-4 w-4 text-emerald-500" />, permission: 'settings.view' },
-          { label: 'Tempat Sampah', href: '/admin/recycle-bin', icon: <Trash2 className="h-4 w-4 text-rose-500" />, permission: 'users.view' },
+          { label: 'Tempat Sampah', href: '/admin/recycle-bin', icon: <Trash2 className="h-4 w-4 text-rose-500" />, permission: 'recycle-bin.view' },
         ],
       },
     ],
@@ -225,6 +236,8 @@ const getRoleName = (r: any): string => {
  */
 export const hasSubordinates = (user: User | null): boolean => {
   if (!user) return false;
+  // Prioritas tertinggi: flag dari posisi di struktur org (dihitung oleh backend)
+  if (user.has_subordinates === true) return true;
   // Super admin dan Global Scope dianggap memiliki wewenang atasan
   if (user.roles?.some((r) => getRoleName(r) === 'SUPER_ADMIN') || user.data_scope === 'GLOBAL') return true;
   // Jika data_scope bukan SELF, berarti membawahi subordinate/department/site/company
@@ -232,7 +245,10 @@ export const hasSubordinates = (user: User | null): boolean => {
 
   const isManagerRole = user.roles?.some((r) => {
     const roleName = getRoleName(r);
-    return roleName ? ['MANAGER', 'SUPERVISOR', 'LEAD', 'FOREMAN', 'SUPERINTENDENT', 'DIRECTOR', 'DEPT_HEAD', 'HC_MANAGER'].includes(roleName.toUpperCase()) : false;
+    return roleName ? [
+      'MANAGER', 'SUPERVISOR', 'LEAD', 'FOREMAN', 'SUPERINTENDENT', 'DIRECTOR',
+      'DEPT_HEAD', 'HC_MANAGER', 'SITE_MANAGEMENT', 'DEPARTMENT_HEAD', 'SECTION_HEAD', 'GROUP_LEADER'
+    ].includes(roleName.toUpperCase()) : false;
   });
   if (isManagerRole) return true;
 

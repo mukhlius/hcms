@@ -13,6 +13,7 @@ import {
   UserCheck,
   Filter,
   Download,
+  Shield,
 } from 'lucide-react';
 import { GradeItem } from '@/types';
 import { jobGradeService, importExportService } from '@/services/masterDataService';

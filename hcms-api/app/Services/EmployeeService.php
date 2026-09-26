@@ -145,6 +145,7 @@ class EmployeeService
             'healthSafety',
             'bankAccounts' => fn($q) => $q->orderByDesc('is_payroll_primary'),
             'careerHistories' => fn($q) => $q->orderByDesc('effective_date'),
+            'documents.documentType',
         ])->findOrFail($id);
     }
 
@@ -227,12 +228,23 @@ class EmployeeService
 
             // 4. Simpan Relasi Pendukung jika disediakan
             if (!empty($data['families']) && is_array($data['families'])) {
+                $isStaff = strtolower($employee->pangkat ?? '') === 'staff';
                 foreach ($data['families'] as $fam) {
                     $fam['employee_id'] = $employee->id;
                     // BPJS kesehatan & Asuransi hanya berlaku untuk Istri/Suami dan Anak
                     if (!in_array($fam['relation_type'] ?? '', ['SPOUSE', 'CHILD'])) {
                         $fam['is_covered_insurance'] = false;
+                        $fam['bpjs_kesehatan_no'] = null;
+                        $fam['insurance_no'] = null;
                         $fam['health_provider_no'] = null;
+                    } else {
+                        $bpjs = $fam['bpjs_kesehatan_no'] ?? $fam['health_provider_no'] ?? null;
+                        $fam['bpjs_kesehatan_no'] = $bpjs;
+                        $fam['health_provider_no'] = $bpjs;
+                        // Nomor asuransi hanya dialokasikan jika pangkat karyawan adalah Staff
+                        if (!$isStaff) {
+                            $fam['insurance_no'] = null;
+                        }
                     }
                     EmployeeFamily::create($fam);
                 }
@@ -265,6 +277,13 @@ class EmployeeService
                 }
             }
 
+            // Otomatis sinkronisasi peran pengguna berdasarkan level jabatan
+            try {
+                app(\App\Services\RoleAssignmentService::class)->syncEmployeeRole($employee);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Failed auto-assign role on create employee: ' . $e->getMessage());
+            }
+
             return $employee->load([
                 'position', 'department', 'site', 'grade', 'salaryGradeJenjang', 'employmentType', 'user'
             ]);
@@ -280,9 +299,16 @@ class EmployeeService
             $employee = Employee::findOrFail($id);
             $employee->update($data);
 
-            // Sinkronkan nama dan email kantor ke tabel users jika ada akun
+            // Sinkronkan data ke tabel users jika ada akun
             if ($employee->user) {
-                $userUpdates = ['name' => $employee->name];
+                $userUpdates = [
+                    'name' => $employee->name,
+                    'position_id' => $employee->position_id,
+                    'company_id' => $employee->company_id,
+                    'site_id' => $employee->site_id,
+                    'department_id' => $employee->department_id,
+                    'section_id' => $employee->section_id,
+                ];
                 if (!empty($data['email_company'])) {
                     $userUpdates['email'] = trim($data['email_company']);
                 }
@@ -299,12 +325,23 @@ class EmployeeService
 
             // Update atau sinkronkan data keluarga jika dikirim
             if (isset($data['families']) && is_array($data['families'])) {
+                $isStaff = strtolower($employee->pangkat ?? '') === 'staff';
                 $familyIds = [];
                 foreach ($data['families'] as $fam) {
                     // BPJS kesehatan & Asuransi hanya berlaku untuk Istri/Suami dan Anak
                     if (!in_array($fam['relation_type'] ?? '', ['SPOUSE', 'CHILD'])) {
                         $fam['is_covered_insurance'] = false;
+                        $fam['bpjs_kesehatan_no'] = null;
+                        $fam['insurance_no'] = null;
                         $fam['health_provider_no'] = null;
+                    } else {
+                        $bpjs = $fam['bpjs_kesehatan_no'] ?? $fam['health_provider_no'] ?? null;
+                        $fam['bpjs_kesehatan_no'] = $bpjs;
+                        $fam['health_provider_no'] = $bpjs;
+                        // Nomor asuransi hanya dialokasikan jika pangkat karyawan adalah Staff
+                        if (!$isStaff) {
+                            $fam['insurance_no'] = null;
+                        }
                     }
                     if (!empty($fam['id'])) {
                         $existing = EmployeeFamily::where('employee_id', $employee->id)->where('id', $fam['id'])->first();
@@ -376,6 +413,15 @@ class EmployeeService
                     $bankIds[] = $newBank->id;
                 }
                 EmployeeBankAccount::where('employee_id', $employee->id)->whereNotIn('id', $bankIds)->delete();
+            }
+
+            // Jika posisi atau level jabatan berubah, sinkronkan peran pengguna
+            if (array_key_exists('grade_id', $data) || array_key_exists('position_id', $data)) {
+                try {
+                    app(\App\Services\RoleAssignmentService::class)->syncEmployeeRole($employee);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Failed auto-sync role on update employee: ' . $e->getMessage());
+                }
             }
 
             return $this->getEmployeeDetail($employee->id);
@@ -465,6 +511,13 @@ class EmployeeService
                 'poh'                       => $data['poh'] ?? $employee->poh,
                 'work_area'                 => $data['work_area'] ?? $employee->work_area,
             ]);
+
+            // Sinkronkan peran pengguna setelah mutasi/promosi karir
+            try {
+                app(\App\Services\RoleAssignmentService::class)->syncEmployeeRole($employee->fresh());
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Failed auto-sync role on career movement: ' . $e->getMessage());
+            }
 
             return $careerHistory;
         });

@@ -74,7 +74,7 @@ class JobAndGradeController extends BaseApiController
     // ================= GRADES =================
     public function grades(Request $request): JsonResponse
     {
-        $query = Grade::orderBy('level');
+        $query = Grade::with('defaultRole:id,name,display_name,data_scope')->orderBy('level');
         if ($request->filled('pangkat')) {
             $query->where('pangkat', $request->query('pangkat'));
         }
@@ -99,6 +99,7 @@ class JobAndGradeController extends BaseApiController
             'name' => ['required', 'string', 'max:255'],
             'level' => ['required', 'integer', 'min:1'],
             'pangkat' => ['nullable', 'string', 'in:Staff,Non Staff,STAFF,NON_STAFF'],
+            'default_role_id' => ['nullable', 'exists:roles,id'],
             'min_salary' => ['nullable', 'numeric', 'min:0'],
             'max_salary' => ['nullable', 'numeric', 'gte:min_salary'],
             'field_duty_duration_days' => ['nullable', 'integer', 'min:0'],
@@ -120,7 +121,7 @@ class JobAndGradeController extends BaseApiController
         $item = Grade::create($validated);
         AuditService::log('CREATE', 'GRADE', Grade::class, (string)$item->id, newValues: $item->toArray());
 
-        return $this->createdResponse($item, 'Level jabatan berhasil dibuat.');
+        return $this->createdResponse($item->load('defaultRole:id,name,display_name,data_scope'), 'Level jabatan berhasil dibuat.');
     }
 
     public function updateGrade(Request $request, Grade $grade): JsonResponse
@@ -130,6 +131,7 @@ class JobAndGradeController extends BaseApiController
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'level' => ['sometimes', 'required', 'integer', 'min:1'],
             'pangkat' => ['nullable', 'string', 'in:Staff,Non Staff,STAFF,NON_STAFF'],
+            'default_role_id' => ['nullable', 'exists:roles,id'],
             'min_salary' => ['nullable', 'numeric', 'min:0'],
             'max_salary' => ['nullable', 'numeric', 'gte:min_salary'],
             'field_duty_duration_days' => ['nullable', 'integer', 'min:0'],
@@ -148,7 +150,7 @@ class JobAndGradeController extends BaseApiController
         $grade->update($validated);
         AuditService::log('UPDATE', 'GRADE', Grade::class, (string)$grade->id, oldValues: $old, newValues: $grade->fresh()->toArray());
 
-        return $this->successResponse($grade, 'Level jabatan berhasil diperbarui.');
+        return $this->successResponse($grade->load('defaultRole:id,name,display_name,data_scope'), 'Level jabatan berhasil diperbarui.');
     }
 
     public function destroyGrade(Grade $grade): JsonResponse

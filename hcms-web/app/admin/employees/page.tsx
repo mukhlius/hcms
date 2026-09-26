@@ -13,6 +13,7 @@ import {
   Trash2,
   Key,
   ShieldAlert,
+  ShieldCheck,
   ArrowRightLeft,
   Building2,
   MapPin,
@@ -46,6 +47,7 @@ import {
 import { Employee, EmployeeFilterParams, ReferenceItem, MasterCompany, MasterSite, MasterDepartment, MasterSection, PositionItem, GradeItem, SalaryGradeItem, SalaryGradeJenjangItem, EmploymentTypeItem } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
@@ -96,15 +98,15 @@ export default function EmployeesPage() {
     nrp: '',
     name: '',
     nickname: '',
-    gender: 'MALE',
+    gender: '',
     birth_place: '',
     birth_date: '',
-    religion: 'ISLAM',
-    marital_status: 'SINGLE',
+    religion: '',
+    marital_status: '',
     marriage_date: '',
     id_card_number: '',
     tax_number: '',
-    tax_status: 'TK/0',
+    tax_status: '',
     bpjs_ketenagakerjaan: '',
     bpjs_kesehatan: '',
     insurance_admedika: '',
@@ -127,23 +129,23 @@ export default function EmployeesPage() {
     department_id: '',
     section_id: '',
     position_id: '',
-    pangkat: 'Staff',
+    pangkat: '',
     grade_id: '',
     salary_grade_id: '',
     salary_grade_jenjang_id: '',
     employment_type_id: '',
     poh: '',
     work_area: '',
-    hire_date: new Date().toISOString().split('T')[0],
-    employment_status: 'ACTIVE',
+    hire_date: '',
+    employment_status: '',
     health_safety: {
-      blood_type: 'O',
-      rhesus: '+',
+      blood_type: '',
+      rhesus: '',
       height_cm: '',
       weight_kg: '',
-      shirt_size: 'L',
-      pants_size: '32',
-      safety_shoe_size: '42',
+      shirt_size: '',
+      pants_size: '',
+      safety_shoe_size: '',
       medical_notes: '',
     },
     families: [] as any[],
@@ -708,6 +710,8 @@ export default function EmployeesPage() {
           birth_place: 'Balikpapan',
           birth_date: '1995-07-21',
           id_card_number: '6471026107950002',
+          bpjs_kesehatan_no: '0001849204919',
+          insurance_no: 'ADM-9920194',
           health_provider_no: '0001849204919',
           is_covered_insurance: true,
           is_alive: true,
@@ -720,6 +724,8 @@ export default function EmployeesPage() {
           birth_place: 'Samarinda',
           birth_date: '2021-11-04',
           id_card_number: '6472010411210001',
+          bpjs_kesehatan_no: '0001849204920',
+          insurance_no: 'ADM-9920195',
           health_provider_no: '0001849204920',
           is_covered_insurance: true,
           is_alive: true,
@@ -731,6 +737,8 @@ export default function EmployeesPage() {
           birth_place: 'Solo',
           birth_date: '1965-03-12',
           id_card_number: '6472011203650003',
+          bpjs_kesehatan_no: '',
+          insurance_no: '',
           health_provider_no: '',
           is_covered_insurance: false,
           is_alive: true,
@@ -858,15 +866,15 @@ export default function EmployeesPage() {
       nrp: '',
       name: '',
       nickname: '',
-      gender: 'MALE',
+      gender: '',
       birth_place: '',
       birth_date: '',
-      religion: 'ISLAM',
-      marital_status: 'SINGLE',
+      religion: '',
+      marital_status: '',
       marriage_date: '',
       id_card_number: '',
       tax_number: '',
-      tax_status: 'TK/0',
+      tax_status: '',
       bpjs_ketenagakerjaan: '',
       bpjs_kesehatan: '',
       insurance_admedika: '',
@@ -889,23 +897,23 @@ export default function EmployeesPage() {
       department_id: '',
       section_id: '',
       position_id: '',
-      pangkat: 'Staff',
+      pangkat: '',
       grade_id: '',
       salary_grade_id: '',
       salary_grade_jenjang_id: '',
       employment_type_id: '',
       poh: '',
       work_area: '',
-      hire_date: new Date().toISOString().split('T')[0],
-      employment_status: 'ACTIVE',
+      hire_date: '',
+      employment_status: '',
       health_safety: {
-        blood_type: 'O',
-        rhesus: '+',
+        blood_type: '',
+        rhesus: '',
         height_cm: '',
         weight_kg: '',
-        shirt_size: 'L',
-        pants_size: '32',
-        safety_shoe_size: '42',
+        shirt_size: '',
+        pants_size: '',
+        safety_shoe_size: '',
         medical_notes: '',
       },
       families: [],
@@ -978,7 +986,11 @@ export default function EmployeesPage() {
         safety_shoe_size: emp.health_safety?.safety_shoe_size || '42',
         medical_notes: emp.health_safety?.medical_notes || '',
       },
-      families: emp.families || [],
+      families: (emp.families || []).map((fam: any) => ({
+        ...fam,
+        bpjs_kesehatan_no: fam.bpjs_kesehatan_no || fam.health_provider_no || '',
+        insurance_no: fam.insurance_no || '',
+      })),
       educations: emp.educations || [],
       emergency_contacts: emp.emergency_contacts || [],
       bank_accounts: emp.bank_accounts || [],
@@ -1076,12 +1088,17 @@ export default function EmployeesPage() {
       }
     }
 
-    // Bersihkan BPJS/Asuransi jika bukan pasangan atau anak
+    // Bersihkan BPJS/Asuransi jika bukan pasangan atau anak, dan asuransi hanya untuk Staff
+    const isStaffEmployee = (formData.pangkat || 'Staff').toLowerCase() === 'staff';
     const sanitizedFamilies = (formData.families || []).map((fam: any) => {
       const isEligible = fam.relation_type === 'SPOUSE' || fam.relation_type === 'CHILD';
+      const bpjsNo = isEligible ? (fam.bpjs_kesehatan_no || fam.health_provider_no || null) : null;
+      const insNo = (isEligible && isStaffEmployee) ? (fam.insurance_no || null) : null;
       return {
         ...fam,
-        health_provider_no: isEligible ? fam.health_provider_no : null,
+        bpjs_kesehatan_no: bpjsNo,
+        health_provider_no: bpjsNo,
+        insurance_no: insNo,
         is_covered_insurance: isEligible ? (fam.is_covered_insurance ?? true) : false,
       };
     });
@@ -1122,13 +1139,14 @@ export default function EmployeesPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            onClick={handleOpenCreate}
-            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow-sm shadow-blue-500/20"
-          >
-            <Plus className="h-4 w-4" />
-            Tambah Karyawan
-          </Button>
+          <Link href="/admin/employees/create">
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow-sm shadow-blue-500/20"
+            >
+              <Plus className="h-4 w-4" />
+              Tambah Karyawan
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -1574,14 +1592,13 @@ export default function EmployeesPage() {
                           </button>
 
                           {/* Edit Profil */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(emp)}
-                            className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-                            title="Edit Data Karyawan"
+                          <Link
+                            href={`/admin/employees/${emp.id}/edit`}
+                            className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center"
+                            title="Edit Data Karyawan (Halaman Lengkap)"
                           >
                             <Edit className="h-4 w-4" />
-                          </button>
+                          </Link>
 
                           {/* Toggle Aktif / Nonaktif */}
                           <button
@@ -1909,9 +1926,10 @@ export default function EmployeesPage() {
                     )}
                   </label>
                   <Select
-                    value={formData.pangkat || 'Staff'}
+                    value={formData.pangkat}
                     onChange={(e) => setFormData({ ...formData, pangkat: e.target.value })}
                   >
+                    <option value="">-- Pilih Pangkat --</option>
                     <option value="Staff">Staff</option>
                     <option value="Non Staff">Non Staff</option>
                   </Select>
@@ -2072,11 +2090,11 @@ export default function EmployeesPage() {
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Tanggal Masuk Kerja (Hire Date) <span className="text-rose-500">*</span>
                   </label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     required
                     value={formData.hire_date}
-                    onChange={(e) => setFormData({ ...formData, hire_date: e.target.value })}
+                    onChange={(val) => setFormData({ ...formData, hire_date: val })}
+                    placeholder="Pilih Tanggal Masuk"
                   />
                 </div>
 
@@ -2109,6 +2127,7 @@ export default function EmployeesPage() {
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                   >
+                    <option value="">-- Pilih Jenis Kelamin --</option>
                     <option value="MALE">Laki-Laki</option>
                     <option value="FEMALE">Perempuan</option>
                   </Select>
@@ -2129,11 +2148,11 @@ export default function EmployeesPage() {
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Tanggal Lahir <span className="text-rose-500">*</span>
                   </label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     required
                     value={formData.birth_date}
-                    onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                    onChange={(val) => setFormData({ ...formData, birth_date: val })}
+                    placeholder="Pilih Tanggal Lahir"
                   />
                   <span className="text-[10px] text-slate-400">Digunakan untuk password default (HCMS#DDMMYYYY)</span>
                 </div>
@@ -2147,6 +2166,7 @@ export default function EmployeesPage() {
                     value={formData.religion}
                     onChange={(e) => setFormData({ ...formData, religion: e.target.value })}
                   >
+                    <option value="">-- Pilih Agama --</option>
                     {religions.map((r) => (
                       <option key={r.code} value={r.code}>
                         {r.name}
@@ -2198,6 +2218,7 @@ export default function EmployeesPage() {
                       });
                     }}
                   >
+                    <option value="">-- Pilih Status Pernikahan --</option>
                     {maritalStatuses.map((m) => (
                       <option key={m.code} value={m.code}>
                         {m.name}
@@ -2214,6 +2235,7 @@ export default function EmployeesPage() {
                     value={formData.tax_status}
                     onChange={(e) => setFormData({ ...formData, tax_status: e.target.value })}
                   >
+                    <option value="">-- Pilih Status Pajak PTKP --</option>
                     {defaultTaxStatuses.map((t) => (
                       <option key={t.code} value={t.code}>
                         {t.name}
@@ -2227,10 +2249,10 @@ export default function EmployeesPage() {
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                       Tanggal Pernikahan
                     </label>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={formData.marriage_date}
-                      onChange={(e) => setFormData({ ...formData, marriage_date: e.target.value })}
+                      onChange={(val) => setFormData({ ...formData, marriage_date: val })}
+                      placeholder="Pilih Tanggal Pernikahan"
                     />
                   </div>
                 )}
@@ -2865,6 +2887,8 @@ export default function EmployeesPage() {
                             birth_place: '',
                             birth_date: '',
                             id_card_number: '',
+                            bpjs_kesehatan_no: '',
+                            insurance_no: '',
                             health_provider_no: '',
                             is_covered_insurance: true,
                             is_alive: true,
@@ -2889,6 +2913,7 @@ export default function EmployeesPage() {
                   <div className="space-y-4">
                     {formData.families.map((fam: any, idx: number) => {
                       const isEligibleForInsurance = fam.relation_type === 'SPOUSE' || fam.relation_type === 'CHILD';
+                      const isStaff = (formData.pangkat || 'Staff').toLowerCase() === 'staff';
 
                       return (
                         <div
@@ -2945,6 +2970,8 @@ export default function EmployeesPage() {
                                   updated[idx].relation_type = newRel;
                                   // Jika bukan pasangan atau anak, reset BPJS & Asuransi
                                   if (newRel !== 'SPOUSE' && newRel !== 'CHILD') {
+                                    updated[idx].bpjs_kesehatan_no = '';
+                                    updated[idx].insurance_no = '';
                                     updated[idx].health_provider_no = '';
                                     updated[idx].is_covered_insurance = false;
                                   } else {
@@ -3056,39 +3083,79 @@ export default function EmployeesPage() {
                               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                                 Tanggal Lahir <span className="text-rose-500">*</span>
                               </label>
-                              <Input
+                              <DatePicker
                                 required
-                                type="date"
                                 value={fam.birth_date ? fam.birth_date.split('T')[0] : ''}
-                                onChange={(e) => {
+                                onChange={(val) => {
                                   const updated = [...formData.families];
-                                  updated[idx].birth_date = e.target.value;
+                                  updated[idx].birth_date = val;
                                   setFormData({ ...formData, families: updated });
                                 }}
+                                placeholder="Pilih Tanggal Lahir"
                               />
                             </div>
                           </div>
 
                           {/* BPJS Kesehatan & Asuransi (HANYA UNTUK ISTRI/SUAMI DAN ANAK) */}
                           {isEligibleForInsurance ? (
-                            <div className="p-3 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-800/40 grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-                              <div>
-                                <label className="block text-xs font-medium text-emerald-900 dark:text-emerald-300 mb-1">
-                                  No. BPJS Kesehatan / Asuransi
-                                </label>
-                                <Input
-                                  value={fam.health_provider_no || ''}
-                                  onChange={(e) => {
-                                    const updated = [...formData.families];
-                                    updated[idx].health_provider_no = e.target.value;
-                                    setFormData({ ...formData, families: updated });
-                                  }}
-                                  placeholder="No. Kartu BPJS / Admedika"
-                                  className="bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-800"
-                                />
+                            <div className="p-3.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-800/40 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-900 dark:text-emerald-300">
+                                  <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                  <span>Fasilitas Jaminan Kesehatan &amp; Asuransi</span>
+                                </div>
+                                {isStaff ? (
+                                  <span className="text-[10px] font-medium bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full">
+                                    Pangkat: Staff (BPJS + Asuransi)
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                                    Pangkat: Non Staff (BPJS Kesehatan)
+                                  </span>
+                                )}
                               </div>
 
-                              <div className="flex items-center gap-2.5 pt-4 sm:pt-4">
+                              <div className={`grid grid-cols-1 ${isStaff ? 'sm:grid-cols-2' : 'sm:grid-cols-1'} gap-3`}>
+                                <div>
+                                  <label className="block text-xs font-medium text-emerald-900 dark:text-emerald-300 mb-1">
+                                    Nomor BPJS Kesehatan
+                                  </label>
+                                  <Input
+                                    value={fam.bpjs_kesehatan_no ?? fam.health_provider_no ?? ''}
+                                    onChange={(e) => {
+                                      const updated = [...formData.families];
+                                      updated[idx].bpjs_kesehatan_no = e.target.value;
+                                      updated[idx].health_provider_no = e.target.value;
+                                      setFormData({ ...formData, families: updated });
+                                    }}
+                                    placeholder="Contoh: 0001849204919 (13 digit)"
+                                    className="bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-800"
+                                  />
+                                </div>
+
+                                {isStaff && (
+                                  <div>
+                                    <label className="block text-xs font-medium text-emerald-900 dark:text-emerald-300 mb-1 flex items-center justify-between">
+                                      <span>Nomor Asuransi</span>
+                                      <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-normal">
+                                        Asuransi Rawat / Komersial
+                                      </span>
+                                    </label>
+                                    <Input
+                                      value={fam.insurance_no || ''}
+                                      onChange={(e) => {
+                                        const updated = [...formData.families];
+                                        updated[idx].insurance_no = e.target.value;
+                                        setFormData({ ...formData, families: updated });
+                                      }}
+                                      placeholder="Contoh: ADM-9928174 / No. Polis"
+                                      className="bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-800"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2.5 pt-1 border-t border-emerald-200/50 dark:border-emerald-800/40">
                                 <input
                                   type="checkbox"
                                   id={`covered-${idx}`}
@@ -3104,7 +3171,7 @@ export default function EmployeesPage() {
                                   htmlFor={`covered-${idx}`}
                                   className="text-xs font-medium text-emerald-900 dark:text-emerald-300 cursor-pointer select-none"
                                 >
-                                  Ditanggung Asuransi &amp; Faskes Perusahaan
+                                  Ditanggung Fasilitas Kesehatan &amp; Asuransi Perusahaan
                                 </label>
                               </div>
                             </div>
@@ -3459,11 +3526,11 @@ export default function EmployeesPage() {
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Tanggal Efektif (TMT) <span className="text-rose-500">*</span>
               </label>
-              <Input
-                type="date"
+              <DatePicker
                 required
                 value={movementForm.effective_date}
-                onChange={(e) => setMovementForm({ ...movementForm, effective_date: e.target.value })}
+                onChange={(val) => setMovementForm({ ...movementForm, effective_date: val })}
+                placeholder="Pilih Tanggal Efektif"
               />
             </div>
 
@@ -3482,10 +3549,10 @@ export default function EmployeesPage() {
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Tanggal Terbit SK
               </label>
-              <Input
-                type="date"
+              <DatePicker
                 value={movementForm.letter_date}
-                onChange={(e) => setMovementForm({ ...movementForm, letter_date: e.target.value })}
+                onChange={(val) => setMovementForm({ ...movementForm, letter_date: val })}
+                placeholder="Pilih Tanggal SK"
               />
             </div>
 

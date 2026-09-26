@@ -9,16 +9,26 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckPermission
 {
-    public function handle(Request $request, Closure $next, string $permission): Response
+    public function handle(Request $request, Closure $next, string ...$permissions): Response
     {
         $user = $request->user();
 
-        if (!$user || !$user->hasPermission($permission)) {
+        $allPermissions = [];
+        foreach ($permissions as $perm) {
+            foreach (explode('|', $perm) as $single) {
+                $trimmed = trim($single);
+                if ($trimmed !== '') {
+                    $allPermissions[] = $trimmed;
+                }
+            }
+        }
+
+        if (!$user || !$user->hasAnyPermission($allPermissions)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses ditolak: Anda tidak memiliki izin wewenang yang diperlukan.',
                 'code' => 'FORBIDDEN',
-                'required_permission' => $permission,
+                'required_permission' => implode(' | ', $allPermissions),
                 'request_id' => RequestContext::getRequestId(),
             ], 403);
         }

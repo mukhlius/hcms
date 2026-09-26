@@ -43,17 +43,36 @@ class ReferenceDataController extends BaseApiController
     public function standard(Request $request): JsonResponse
     {
         $category = $request->query('category');
-        $cacheKey = "std_ref_{$category}";
+        $status = $request->query('status'); // 'ACTIVE', 'INACTIVE', or null for all
+        $cacheKey = "std_ref_{$category}_{$status}";
 
-        $data = Cache::remember($cacheKey, 3600, function () use ($category) {
-            $query = StandardReference::where('status', 'ACTIVE');
-            if ($category) {
+        $data = Cache::remember($cacheKey, 3600, function () use ($category, $status) {
+            $query = StandardReference::query();
+            if (!empty($status)) {
+                $query->where('status', $status);
+            }
+            if (!empty($category)) {
                 $query->where('category', $category);
             }
             return $query->orderBy('name')->get()->toArray();
         });
 
         return $this->successResponse($data, 'Data referensi standar berhasil diambil.');
+    }
+
+    public static function clearStandardCache(?string $category = null): void
+    {
+        $statuses = ['', 'ACTIVE', 'INACTIVE'];
+        $categories = $category ? [$category] : ['RELIGION', 'EDUCATION', 'MARITAL_STATUS', 'BLOOD_TYPE', 'BANK', 'UNIFORM_SIZE', 'PANTS_SIZE', 'SHOE_SIZE', 'POH', 'WORK_AREA', ''];
+
+        foreach ($categories as $cat) {
+            foreach ($statuses as $st) {
+                Cache::forget("std_ref_{$cat}_{$st}");
+                Cache::forget("std_ref_{$cat}");
+                Cache::forget("std_ref__{$st}");
+            }
+        }
+        Cache::forget("std_ref_");
     }
 
     public function storeStandard(Request $request): JsonResponse
@@ -67,8 +86,7 @@ class ReferenceDataController extends BaseApiController
         ]);
 
         $item = StandardReference::create($validated);
-        Cache::forget("std_ref_{$item->category}");
-        Cache::forget("std_ref_");
+        self::clearStandardCache($item->category);
 
         AuditService::log('CREATE', 'STANDARD_REFERENCE', StandardReference::class, (string)$item->id, newValues: $item->toArray());
 
@@ -87,8 +105,7 @@ class ReferenceDataController extends BaseApiController
         $old = $standard->toArray();
         $standard->update($validated);
 
-        Cache::forget("std_ref_{$standard->category}");
-        Cache::forget("std_ref_");
+        self::clearStandardCache($standard->category);
 
         AuditService::log('UPDATE', 'STANDARD_REFERENCE', StandardReference::class, (string)$standard->id, oldValues: $old, newValues: $standard->toArray());
 
@@ -101,8 +118,7 @@ class ReferenceDataController extends BaseApiController
         $category = $standard->category;
         $standard->delete();
 
-        Cache::forget("std_ref_{$category}");
-        Cache::forget("std_ref_");
+        self::clearStandardCache($category);
 
         AuditService::log('DELETE', 'STANDARD_REFERENCE', StandardReference::class, (string)$standard->id, oldValues: $old);
 

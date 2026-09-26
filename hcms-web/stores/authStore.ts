@@ -7,6 +7,7 @@ interface AuthStore {
   isAuthenticated: boolean;
   isLoading: boolean;
   setAuth: (token: string, user: User) => void;
+  setUser: (user: User) => void;
   clearAuth: () => void;
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
@@ -25,6 +26,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ token, user, isAuthenticated: true, isLoading: false });
   },
 
+  setUser: (user: User) => {
+    localStorage.setItem('hcms_user', JSON.stringify(user));
+    set({ user });
+  },
+
   clearAuth: () => {
     localStorage.removeItem('hcms_auth_token');
     localStorage.removeItem('hcms_user');
@@ -38,7 +44,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (user.roles?.some(r => (typeof r === 'string' ? r : r?.name) === 'SUPER_ADMIN') || user.data_scope === 'GLOBAL') {
       return true;
     }
-    return Boolean(user.permissions?.includes(permission));
+    const perms = permission.split('|').map(p => p.trim());
+    return perms.some(p => {
+      if (user.permissions?.includes(p)) return true;
+      if (p === 'organization.view' && user.permissions?.includes('organizations.view')) return true;
+      if (p === 'organizations.view' && user.permissions?.includes('organization.view')) return true;
+      return false;
+    });
   },
 
   hasRole: (roleName: string) => {

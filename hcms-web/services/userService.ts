@@ -7,6 +7,8 @@ export interface UserFilterParams {
   role?: string;
   site_id?: number | string;
   department_id?: number | string;
+  /** '1' = hanya yg terhubung karyawan, '0' = hanya yg tidak terhubung, '' = semua */
+  linked_to_employee?: '1' | '0' | '';
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
   page?: number;

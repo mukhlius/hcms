@@ -441,8 +441,8 @@ export const referenceDataService = {
     const res = await apiClient.get<ApiResponse<ReferenceItem[]>>('/admin/master-data/geographic', { params });
     return res.data;
   },
-  getStandard: async (category?: string) => {
-    const res = await apiClient.get<ApiResponse<ReferenceItem[]>>('/admin/master-data/standard', { params: { category } });
+  getStandard: async (category?: string, status?: string) => {
+    const res = await apiClient.get<ApiResponse<ReferenceItem[]>>('/admin/master-data/standard', { params: { category, status } });
     return res.data;
   },
   createStandard: async (payload: any) => {

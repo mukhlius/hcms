@@ -11,6 +11,8 @@ export interface EmployeeFamily {
   birth_date?: string | null;
   age?: number | null;
   id_card_number?: string | null;
+  bpjs_kesehatan_no?: string | null;
+  insurance_no?: string | null;
   health_provider_no?: string | null;
   is_covered_insurance?: boolean;
   is_alive?: boolean;
@@ -118,18 +120,21 @@ export interface Employee {
   ktp_address?: string | null;
   ktp_city?: string | null;
   ktp_district?: string | null;
+  ktp_village?: string | null;
   ktp_province?: string | null;
   ktp_postal_code?: string | null;
   
   residential_address?: string | null;
   residential_city?: string | null;
   residential_district?: string | null;
+  residential_village?: string | null;
   residential_province?: string | null;
   residential_postal_code?: string | null;
   
   mailing_address?: string | null;
   mailing_city?: string | null;
   mailing_district?: string | null;
+  mailing_village?: string | null;
   mailing_province?: string | null;
   mailing_postal_code?: string | null;
   
@@ -171,9 +176,41 @@ export interface Employee {
   health_safety?: EmployeeHealthSafety | null;
   bank_accounts?: EmployeeBankAccount[];
   career_histories?: EmployeeCareerHistory[];
+  documents?: EmployeeDocument[];
   
   created_at: string;
   updated_at: string;
+}
+
+export interface DocumentType {
+  id: number;
+  code: string;
+  name: string;
+  category?: string;
+  required?: boolean;
+  expiry_required?: boolean;
+  employee_required?: boolean;
+  verification_required?: boolean;
+  status?: string;
+}
+
+export interface EmployeeDocument {
+  id: number;
+  employee_id: number;
+  document_type_id: number;
+  document_number?: string | null;
+  file_path: string;
+  file_name: string;
+  file_size?: number | null;
+  mime_type?: string | null;
+  expiry_date?: string | null;
+  status: string;
+  notes?: string | null;
+  file_url?: string | null;
+  formatted_file_size?: string | null;
+  document_type?: DocumentType;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface EmployeeFilterParams {

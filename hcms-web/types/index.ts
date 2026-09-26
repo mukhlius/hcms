@@ -36,12 +36,17 @@ export interface User {
   company_id?: number | null;
   site_id?: number | null;
   department_id?: number | null;
+  position_id?: number | null;
   company?: { id: number; name: string } | null;
   site?: { id: number; name: string } | null;
   department?: { id: number; name: string } | null;
   roles?: Role[];
   permissions?: string[];
   data_scope?: DataScope;
+  /** Judul jabatan posisi user saat ini */
+  position_title?: string | null;
+  /** true jika posisi user memiliki posisi bawahan dalam struktur org */
+  has_subordinates?: boolean;
   created_at: string;
 }
 
@@ -55,6 +60,8 @@ export interface Role {
   permissions_count?: number;
   users_count?: number;
   permissions?: Permission[];
+  grades?: GradeItem[];
+  grade_ids?: number[];
   created_at?: string;
 }
 
@@ -339,6 +346,8 @@ export interface GradeItem {
   field_allowance?: number | null;
   leave_lumpsum_allowance?: number | null;
   business_trip_allowance_daily?: number | null;
+  default_role_id?: number | null;
+  default_role?: Role | null;
   status: 'ACTIVE' | 'INACTIVE';
   created_at?: string;
   updated_at?: string;

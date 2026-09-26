@@ -27,7 +27,7 @@ class UserController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $currentUser = $request->user();
-        $query = User::query()->with(['roles', 'site', 'department', 'company']);
+        $query = User::query()->with(['roles', 'site', 'department', 'company'])->withCount('employee');
 
         // Enforce organizational data scope
         ScopeResolverService::applyUserScope($query, $currentUser);
@@ -59,6 +59,14 @@ class UserController extends BaseApiController
             $query->where('department_id', $departmentId);
         }
 
+        // Filter berdasarkan keterhubungan dengan karyawan
+        $linkedToEmployee = $request->input('linked_to_employee');
+        if ($linkedToEmployee === '1' || $linkedToEmployee === 'true') {
+            $query->whereHas('employee');
+        } elseif ($linkedToEmployee === '0' || $linkedToEmployee === 'false') {
+            $query->whereDoesntHave('employee');
+        }
+
         // Sorting
         $sortBy = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
@@ -81,6 +89,7 @@ class UserController extends BaseApiController
                 'failed_login_attempts' => $user->failed_login_attempts,
                 'locked_until' => $user->locked_until?->toIso8601String(),
                 'force_password_change' => $user->force_password_change,
+                'has_employee' => $user->employee_count > 0,
                 'roles' => $user->roles->map(fn($r) => ['id' => $r->id, 'name' => $r->name, 'display_name' => $r->display_name]),
                 'company' => $user->company ? ['id' => $user->company->id, 'name' => $user->company->name] : null,
                 'site' => $user->site ? ['id' => $user->site->id, 'name' => $user->site->name] : null,

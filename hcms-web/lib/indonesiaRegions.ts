@@ -946,3 +946,121 @@ export const getDistrictsByCity = (cityName: string): string[] => {
   return [];
 };
 
+/**
+ * Master Data Desa / Kelurahan per Kecamatan
+ * Terhubung (inline cascading) dengan Kecamatan yang dipilih.
+ */
+export const INDONESIA_VILLAGES: Record<string, string[]> = {
+  // KOTA BALIKPAPAN
+  'Balikpapan Kota': ['Klandasan Ilir', 'Klandasan Ulu', 'Prapatan', 'Telaga Sari', 'Damai'],
+  'Balikpapan Selatan': ['Sepinggan', 'Sepinggan Raya', 'Sepinggan Baru', 'Gunung Bahagia', 'Damai Baru', 'Damai Bahagia', 'Sungai Nangka'],
+  'Balikpapan Utara': ['Gunung Samarinda', 'Gunung Samarinda Baru', 'Muara Rapak', 'Batu Ampar', 'Karang Joang', 'Graha Indah'],
+  'Balikpapan Tengah': ['Gunung Sari Ilir', 'Gunung Sari Ulu', 'Karang Rejo', 'Karang Jati', 'Sumber Rejo', 'Mekar Sari'],
+  'Balikpapan Barat': ['Baru Ilir', 'Baru Tengah', 'Baru Ulu', 'Margomulyo', 'Margo Mulyo', 'Kariangau'],
+  'Balikpapan Timur': ['Manggar', 'Manggar Baru', 'Lamaru', 'Teritip'],
+
+  // KOTA SAMARINDA
+  'Samarinda Kota': ['Pasar Pagi', 'Pelabuhan', 'Karang Mumus', 'Sungai Pinang Luar', 'Bugis'],
+  'Samarinda Ulu': ['Air Putih', 'Air Hitam', 'Dadi Mulya', 'Gunung Kelua', 'Jawa', 'Sidodadi', 'Teluk Lerong Ilir', 'Bukit Pinang'],
+  'Samarinda Ilir': ['Selili', 'Sungai Dama', 'Sidomulyo', 'Sidodamai'],
+  'Samarinda Seberang': ['Baqa', 'Gunung Panjang', 'Mangkupalas', 'Mesjid', 'Sungai Keledang'],
+  'Sungai Kunjang': ['Loa Bakung', 'Loa Buah', 'Loa Bahu', 'Karang Asam Ilir', 'Karang Asam Ulu', 'Karang Anyar', 'Teluk Lerong Ulu'],
+  'Palaran': ['Bukuan', 'Handil Bakti', 'Rawa Makmur', 'Bantuas', 'Simpang Pasir'],
+  'Samarinda Utara': ['Sempaja Barat', 'Sempaja Timur', 'Sempaja Selatan', 'Sempaja Utara', 'Lempake', 'Sungai Siring', 'Budaya Pampang', 'Tanah Merah'],
+  'Sungai Pinang': ['Bandara', 'Gunung Lingai', 'Mugirejo', 'Sungai Pinang Dalam', 'Temindung Permai'],
+  'Sambutan': ['Sambutan', 'Sungai Kapih', 'Pulau Atas', 'Sindang Sari', 'Makroman'],
+  'Loa Janan Ilir': ['Simpang Tiga', 'Tani Aman', 'Harapan Baru', 'Rapak Dalam', 'Sengkotek'],
+
+  // KUTAI KARTANEGARA (KUKAR)
+  'Tenggarong': ['Melayu', 'Panji', 'Sukirno', 'Timbau', 'Loa Ipuh', 'Loa Ipuh Darat', 'Loa Tebu', 'Mangkurawang', 'Maluhu', 'Bukit Biru', 'Jahab', 'Rapak Lambur', 'Bendang Raya'],
+  'Tenggarong Seberang': ['Manunggal Jaya', 'Bangun Rejo', 'Buan Jaya', 'Karang Tunggal', 'Kerta Buana', 'Mulawarman', 'Perjiwa', 'Separi', 'Teluk Dalam'],
+  'Loa Janan': ['Loa Duri Ilir', 'Loa Duri Ulu', 'Batuah', 'Purwajaya', 'Tani Bhakti', 'Bakungan', 'Tani Harapan'],
+  'Loa Kulu': ['Loh Sumber', 'Ponoragan', 'Rempanga', 'Sepakat', 'Sumber Sari', 'Jembayan', 'Jembayan Tengah', 'Jembayan Dalam'],
+  'Samboja': ['Kuala Samboja', 'Kampung Lama', 'Sanipah', 'Handil Baru', 'Tanjung Harapan', 'Teluk Pemedas', 'Ambarawang Darat', 'Ambarawang Laut', 'Salok Api Darat'],
+  'Samboja Barat': ['Saloburo', 'Sungai Merdeka', 'Tani Bakti', 'Karya Merdeka', 'Bukit Raya'],
+  'Muara Jawa': ['Muara Jawa Pesisir', 'Muara Jawa Ilir', 'Muara Jawa Ulu', 'Muara Jawa Tengah', 'Dondang', 'Teluk Dalam', 'Tama Pole'],
+  'Anggana': ['Sungai Meriam', 'Anggana', 'Sidomulyo', 'Kutai Lama', 'Handil Terusan'],
+  'Sangasanga': ['Jawa', 'Pendingin', 'Sangasanga Dalam', 'Sangasanga Muara', 'Sarijaya'],
+  'Sebulu': ['Sebulu Modern', 'Sebulu Ilir', 'Sebulu Ulu', 'Beloro', 'Giri Agung', 'Manunggal Daya'],
+  'Kota Bangun': ['Kota Bangun Ulu', 'Kota Bangun Ilir', 'Kota Bangun Seberang', 'Kedang Murung', 'Loleng', 'Liang'],
+  'Muara Badak': ['Batu-Batu', 'Gas Alam Badak I', 'Muara Badak Ilir', 'Muara Badak Ulu', 'Saliki', 'Tanjung Limau'],
+  'Marangkayu': ['Sebuntal', 'Batu Menyan', 'Makarti', 'Bunga Putih', 'Santan Tengah', 'Santan Ilir', 'Santan Ulu'],
+  'Kembang Janggut': ['Kembang Janggut', 'Bukit Layang', 'Gentil', 'Loa Sakoh', 'Perdana', 'Pulau Pinang'],
+  'Kenohan': ['Kahala', 'Tuana Tuha', 'Teluk Bingkai', 'Tubuhan'],
+  'Tabang': ['Bila Talang', 'Gunung Sari', 'Kampung Baru', 'Ritan Baru', 'Tabang Lama'],
+
+  // PENAJAM PASER UTARA (PPU / IKN NUSANTARA)
+  'Penajam': ['Penajam', 'Nipah-Nipah', 'Gunung Seteleng', 'Sungai Parit', 'Nenang', 'Petung', 'Girimulyo', 'Salo Cella', 'Lawe-Lawe', 'Girimukti', 'Sotek', 'Sepapan'],
+  'Sepaku': ['Sepaku', 'Maridan', 'Mentawir', 'Binuang', 'Semoi Dua', 'Sukamaju', 'Tengin Baru', 'Argo Mulyo', 'Bukit Raya', 'Pemaluan', 'Bumi Harapan'],
+  'Waru': ['Waru', 'Sesulu', 'Api-Api', 'Bangun Mulya'],
+  'Babulu': ['Babulu Darat', 'Babulu Laut', 'Gunung Mulia', 'Labangka', 'Rintik', 'Rawa Mulia', 'Sebakung Jaya'],
+
+  // KUTAI TIMUR (KUTIM)
+  'Sangatta Utara': ['Teluk Lingga', 'Singa Geweh', 'Swarga Bara', 'Sangatta Utara'],
+  'Sangatta Selatan': ['Sangatta Selatan', 'Sangkima', 'Singa Gembara'],
+  'Bengalun': ['Sepaso', 'Sepaso Barat', 'Sepaso Timur', 'Sepaso Selatan'],
+  'Kaliorang': ['Bangun Jaya', 'Bukit Makmur', 'Bumi Sejahtera', 'Kaliorang', 'Selangkau'],
+  'Muara Wahau': ['Muara Wahau', 'Nehas Liah Bing', 'Wasantah', 'Karya Bakti', 'Wahau Baru'],
+  'Kongbeng': ['Miau Baru', 'Makmur Jaya', 'Sri Pantun', 'Sidomulyo'],
+  'Rantau Pulung': ['Kebon Agung', 'Pulung Sari', 'Rantau Makmur', 'Tepian Makmur'],
+  'Kaubun': ['Bumi Etam', 'Bumi Jaya', 'Bumi Rapak', 'Cipta Graha', 'Kadungan Jaya'],
+
+  // KOTA BONTANG
+  'Bontang Utara': ['Bontang Baru', 'Bontang Kuala', 'Guntung', 'Gunung Elai', 'Loktuan', 'Api-Api'],
+  'Bontang Selatan': ['Berbas Pantai', 'Berbas Tengah', 'Bontang Lestari', 'Satimpo', 'Tanjung Laut', 'Tanjung Laut Indah'],
+  'Bontang Barat': ['Belimbing', 'Kanaan', 'Gunung Telihan'],
+
+  // KABUPATEN BERAU
+  'Tanjung Redeb': ['Bugis', 'Gayam', 'Gunung Panjang', 'Karang Ambun', 'Sungai Bedungun', 'Tanjung Redeb'],
+  'Sambaliung': ['Sambaliung', 'Batu-Batu', 'Pegat Bukur', 'Sei Bebanir Bangun', 'Rantau Panjang', 'Suaran', 'Tanjung Perangat'],
+  'Gunung Tabur': ['Gunung Tabur', 'Maluang', 'Merancang Ilir', 'Merancang Ulu', 'Tasuk', 'Birang'],
+  'Teluk Bayur': ['Teluk Bayur', 'Rinding', 'Tumbit Melayu', 'Labanan Jaya', 'Labanan Makmur'],
+
+  // KABUPATEN PASER
+  'Tanah Grogot': ['Tanah Grogot', 'Janju', 'Padang Pengrapat', 'Rantau Panjang', 'Sempalang', 'Tepian Batang', 'Senaken', 'Jone'],
+  'Kuaro': ['Kuaro', 'Kendarom', 'Lolo', 'Modang', 'Padang Jaya', 'Pasir Mayang', 'Kerta Bumi'],
+  'Batu Sopang': ['Songka', 'Batu Kajang', 'Kasungai', 'Rantau Buta', 'Rantau Layung', 'Sungai Terik'],
+
+  // KOTA BANJARMASIN (KALSEL)
+  'Banjarmasin Tengah': ['Antasan Besar', 'Gadang', 'Kertak Baru Ilir', 'Kertak Baru Ulu', 'Mawar', 'Melayu', 'Pasar Lama', 'Pekapuran Laut', 'Seberang Mesjid', 'Sungai Baru', 'Teluk Dalam'],
+  'Banjarmasin Selatan': ['Basirih Selatan', 'Kelayan Barat', 'Kelayan Dalam', 'Kelayan Timur', 'Kelayan Tengah', 'Mantuil', 'Murung Raya', 'Pekauman', 'Pemurus Baru', 'Pemurus Dalam', 'Tanjung Pagar'],
+  'Banjarmasin Timur': ['Benua Anyar', 'Karang Mekar', 'Kebun Bunga', 'Kuripan', 'Pekapuran Raya', 'Pengambangan', 'Sungai Bilu', 'Sungai Melayu'],
+  'Banjarmasin Barat': ['Belitung Selatan', 'Belitung Utara', 'Kuin Cerucuk', 'Kuin Selatan', 'Pelambuan', 'Telaga Biru', 'Teluk Tiram'],
+  'Banjarmasin Utara': ['Alalak Selatan', 'Alalak Tengah', 'Alalak Utara', 'Antasan Kecil Timur', 'Kuin Utara', 'Pangeran', 'Sungai Andai', 'Sungai Jingah', 'Sungai Miai'],
+
+  // DKI JAKARTA
+  'Gambir': ['Gambir', 'Kebon Kelapa', 'Petojo Utara', 'Duri Pulo', 'Cideng', 'Petojo Selatan'],
+  'Tanah Abang': ['Bendungan Hilir', 'Karet Tengsin', 'Kebon Melati', 'Kebon Kacang', 'Kampung Bali', 'Petamburan', 'Gelora'],
+  'Menteng': ['Menteng', 'Pegangsaan', 'Cikini', 'Gondangdia', 'Kebon Sirih'],
+  'Setiabudi': ['Setiabudi', 'Karet', 'Karet Semanggi', 'Karet Kuningan', 'Kuningan Timur', 'Menteng Atas', 'Pasar Manggis', 'Guntur'],
+  'Tebet': ['Tebet Barat', 'Tebet Timur', 'Kebon Baru', 'Bukit Duri', 'Manggarai', 'Manggarai Selatan', 'Menteng Dalam'],
+  'Cilandak': ['Cilandak Barat', 'Cipete Selatan', 'Gandaria Selatan', 'Lebak Bulus', 'Pondok Labu'],
+  'Kebayoran Baru': ['Selong', 'Gunung', 'Kramat Pela', 'Gandaria Utara', 'Cipete Utara', 'Pulo', 'Melawai', 'Petogogan', 'Rawa Barat', 'Senayan'],
+  'Kebon Jeruk': ['Kebon Jeruk', 'Sukabumi Utara', 'Sukabumi Selatan', 'Kelapa Dua', 'Duri Kepa', 'Kedoya Selatan', 'Kedoya Utara'],
+  'Kelapa Gading': ['Kelapa Gading Barat', 'Kelapa Gading Timur', 'Pegangsaan Dua'],
+
+  // KOTA SURABAYA
+  'Tegalsari': ['Tegalsari', 'Wonorejo', 'Dr. Soetomo', 'Kedungdoro', 'Keputran'],
+  'Genteng': ['Genteng', 'Embong Kaliasin', 'Ketabang', 'Kapasari', 'Peneleh'],
+  'Gubeng': ['Gubeng', 'Mojo', 'Airlangga', 'Baratajaya', 'Kertajaya', 'Pucangsewu'],
+  'Wonokromo': ['Wonokromo', 'Darmo', 'Jagir', 'Ngagel', 'Ngagelrejo', 'Sawunggaling'],
+  'Rungkut': ['Rungkut Kidul', 'Rungkut Menanggal', 'Kali Rungkut', 'Kedung Baruk', 'Medokan Ayu', 'Penjaringan Sari'],
+};
+
+export const getVillagesByDistrict = (districtName: string): string[] => {
+  if (!districtName) return [];
+  const cleanDistrict = districtName.trim().toLowerCase();
+
+  for (const [key, villages] of Object.entries(INDONESIA_VILLAGES)) {
+    const cleanKey = key.trim().toLowerCase();
+    if (
+      cleanKey === cleanDistrict ||
+      cleanKey.replace(/^kecamatan\s+/i, '') === cleanDistrict.replace(/^kecamatan\s+/i, '')
+    ) {
+      return villages;
+    }
+  }
+  return [];
+};
+
+

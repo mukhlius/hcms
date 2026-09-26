@@ -551,6 +551,27 @@ export default function ImportExportCenterPage() {
         setCurrentStep(7);
         toast.success(`Berhasil mengimpor ${res.data.imported_count} baris data ke database.`, 'Impor Berhasil');
         queryClient.invalidateQueries({ queryKey: ['import-export-history'] });
+        queryClient.invalidateQueries({ queryKey: ['ref-standard-marital'] });
+        queryClient.invalidateQueries({ queryKey: ['ref-standard-poh'] });
+        queryClient.invalidateQueries({ queryKey: ['ref-standard-work-area'] });
+        queryClient.invalidateQueries({ queryKey: ['ref-standard-religion'] });
+        queryClient.invalidateQueries({ queryKey: ['ref-standard-education'] });
+        queryClient.invalidateQueries({ queryKey: ['ref-standard-blood'] });
+        queryClient.invalidateQueries({ queryKey: ['ref-standard-bank'] });
+        queryClient.invalidateQueries({ queryKey: ['ref-standard-uniform'] });
+        queryClient.invalidateQueries({ queryKey: ['ref-standard-pants'] });
+        queryClient.invalidateQueries({ queryKey: ['ref-standard-shoe'] });
+        queryClient.invalidateQueries({ queryKey: ['standard-references'] });
+        queryClient.invalidateQueries({ queryKey: ['reference-data'] });
+        queryClient.invalidateQueries({ queryKey: ['companies'] });
+        queryClient.invalidateQueries({ queryKey: ['sites'] });
+        queryClient.invalidateQueries({ queryKey: ['departments'] });
+        queryClient.invalidateQueries({ queryKey: ['sections'] });
+        queryClient.invalidateQueries({ queryKey: ['positions'] });
+        queryClient.invalidateQueries({ queryKey: ['salary-grades'] });
+        queryClient.invalidateQueries({ queryKey: ['grades'] });
+        queryClient.invalidateQueries({ queryKey: ['employment-types'] });
+        queryClient.invalidateQueries({ queryKey: ['employees'] });
       }
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Gagal mengeksekusi impor ke database.');

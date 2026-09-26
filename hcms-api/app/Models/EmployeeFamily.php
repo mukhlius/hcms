@@ -23,6 +23,8 @@ class EmployeeFamily extends Model
         'birth_place',
         'birth_date',
         'id_card_number',
+        'bpjs_kesehatan_no',
+        'insurance_no',
         'health_provider_no',
         'is_covered_insurance',
         'is_alive',

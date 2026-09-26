@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Search,
   Plus,
@@ -11,7 +13,8 @@ import {
   CheckCircle2,
   UserX,
   Power,
-  Download
+  Download,
+  UploadCloud
 } from 'lucide-react';
 import { ReferenceItem } from '@/types';
 import { referenceDataService, importExportService } from '@/services/masterDataService';
@@ -32,6 +35,8 @@ interface StatusMenikahTabProps {
 }
 
 export const StatusMenikahTab: React.FC<StatusMenikahTabProps> = ({ onRefreshAll, createTrigger }) => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [items, setItems] = useState<ReferenceItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
@@ -62,6 +67,7 @@ export const StatusMenikahTab: React.FC<StatusMenikahTabProps> = ({ onRefreshAll
       const res = await referenceDataService.getStandard('MARITAL_STATUS');
       if (res.success && res.data) {
         setItems(res.data);
+        queryClient.invalidateQueries({ queryKey: ['ref-standard-marital'] });
       }
     } catch (err) {
       console.error('Failed to load Marital Status references:', err);
@@ -69,7 +75,7 @@ export const StatusMenikahTab: React.FC<StatusMenikahTabProps> = ({ onRefreshAll
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     loadData();
@@ -304,18 +310,19 @@ export const StatusMenikahTab: React.FC<StatusMenikahTabProps> = ({ onRefreshAll
             <Button
               variant="outline"
               size="sm"
+              leftIcon={<UploadCloud className="h-4 w-4" />}
+              onClick={() => router.push('/admin/master-data/import-export?entity=marital-statuses')}
+            >
+              Impor CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               leftIcon={<RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
               onClick={loadData}
               isLoading={loading}
             >
               Segarkan
-            </Button>
-            <Button
-              size="sm"
-              leftIcon={<Plus className="h-4 w-4" />}
-              onClick={handleOpenCreate}
-            >
-              Tambah Status Menikah
             </Button>
           </div>
         </div>

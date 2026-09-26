@@ -63,19 +63,27 @@ Route::prefix('v1')->group(function () {
 
             // Employees Management
             Route::prefix('employees')->group(function () {
-                Route::get('/', [EmployeeController::class, 'index']);
-                Route::post('/', [EmployeeController::class, 'store']);
-                Route::get('/{id}', [EmployeeController::class, 'show']);
-                Route::put('/{id}', [EmployeeController::class, 'update']);
-                Route::delete('/{id}', [EmployeeController::class, 'destroy']);
-                Route::post('/{id}/movements', [EmployeeController::class, 'recordMovement']);
-                Route::post('/{id}/toggle-status', [EmployeeController::class, 'toggleStatus']);
-                Route::post('/{id}/reset-password', [EmployeeController::class, 'resetPassword']);
+                Route::get('/', [EmployeeController::class, 'index'])->middleware('permission:employees.view');
+                Route::post('/', [EmployeeController::class, 'store'])->middleware('permission:employees.create');
+                Route::get('/{id}', [EmployeeController::class, 'show'])->middleware('permission:employees.view');
+                Route::put('/{id}', [EmployeeController::class, 'update'])->middleware('permission:employees.update');
+                Route::delete('/{id}', [EmployeeController::class, 'destroy'])->middleware('permission:employees.delete');
+                Route::post('/{id}/movements', [EmployeeController::class, 'recordMovement'])->middleware('permission:employees.update');
+                Route::post('/{id}/toggle-status', [EmployeeController::class, 'toggleStatus'])->middleware('permission:employees.approve');
+                Route::post('/{id}/reset-password', [EmployeeController::class, 'resetPassword'])->middleware('permission:users.update');
+
+                // Employee Documents
+                Route::get('/{id}/documents', [EmployeeController::class, 'getDocuments'])->middleware('permission:employees.view');
+                Route::post('/{id}/documents', [EmployeeController::class, 'uploadDocument'])->middleware('permission:employees.update');
+                Route::delete('/{id}/documents/{documentId}', [EmployeeController::class, 'deleteDocument'])->middleware('permission:employees.delete');
+                Route::get('/{id}/documents/{documentId}/preview', [EmployeeController::class, 'previewDocument'])->middleware('permission:employees.view');
+                Route::get('/{id}/documents/{documentId}/download', [EmployeeController::class, 'downloadDocument'])->middleware('permission:employees.view');
             });
 
             // Roles Management
             Route::prefix('roles')->group(function () {
                 Route::get('/', [RoleController::class, 'index'])->middleware('permission:roles.view');
+                Route::post('/sync-employees', [RoleController::class, 'syncEmployees'])->middleware('permission:roles.update');
                 Route::post('/', [RoleController::class, 'store'])->middleware('permission:roles.create');
                 Route::get('/{role}', [RoleController::class, 'show'])->middleware('permission:roles.view');
                 Route::put('/{role}', [RoleController::class, 'update'])->middleware('permission:roles.update');
@@ -123,12 +131,12 @@ Route::prefix('v1')->group(function () {
 
             // Recycle Bin (Tempat Sampah & Pemulihan Data)
             Route::prefix('recycle-bin')->group(function () {
-                Route::get('/summary', [RecycleBinController::class, 'summary']);
-                Route::post('/{entity}/bulk-restore', [RecycleBinController::class, 'bulkRestore']);
-                Route::post('/{entity}/bulk-force-delete', [RecycleBinController::class, 'bulkForceDelete']);
-                Route::get('/{entity}', [RecycleBinController::class, 'index']);
-                Route::post('/{entity}/{id}/restore', [RecycleBinController::class, 'restore']);
-                Route::delete('/{entity}/{id}/force', [RecycleBinController::class, 'forceDelete']);
+                Route::get('/summary', [RecycleBinController::class, 'summary'])->middleware('permission:recycle-bin.view');
+                Route::post('/{entity}/bulk-restore', [RecycleBinController::class, 'bulkRestore'])->middleware('permission:recycle-bin.restore');
+                Route::post('/{entity}/bulk-force-delete', [RecycleBinController::class, 'bulkForceDelete'])->middleware('permission:recycle-bin.force-delete');
+                Route::get('/{entity}', [RecycleBinController::class, 'index'])->middleware('permission:recycle-bin.view');
+                Route::post('/{entity}/{id}/restore', [RecycleBinController::class, 'restore'])->middleware('permission:recycle-bin.restore');
+                Route::delete('/{entity}/{id}/force', [RecycleBinController::class, 'forceDelete'])->middleware('permission:recycle-bin.force-delete');
             });
 
             // ================= PHASE 2: MASTER DATA & ORGANIZATION =================
@@ -371,7 +379,7 @@ Route::prefix('v1')->group(function () {
 
         // ESS (Employee Self-Service) Portal Endpoints
         Route::prefix('ess')->group(function () {
-            Route::prefix('documents')->group(function () {
+            Route::prefix('documents')->middleware('permission:ess.documents')->group(function () {
                 Route::get('/', [\App\Http\Controllers\Api\V1\Ess\EssDocumentController::class, 'index']);
                 Route::get('/{id}', [\App\Http\Controllers\Api\V1\Ess\EssDocumentController::class, 'show']);
                 Route::get('/{id}/preview', [\App\Http\Controllers\Api\V1\Ess\EssDocumentController::class, 'preview']);

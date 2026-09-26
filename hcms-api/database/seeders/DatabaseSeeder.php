@@ -127,7 +127,7 @@ class DatabaseSeeder extends Seeder
             $allPermissionModels[$perm['name']] = Permission::create($perm);
         }
 
-        // 3. Default Enterprise Roles
+        // 3. Default Enterprise Roles (Only Super Administrator)
         $superAdminRole = Role::create([
             'name' => 'SUPER_ADMIN',
             'display_name' => 'Super Administrator',
@@ -136,72 +136,6 @@ class DatabaseSeeder extends Seeder
             'is_system' => true,
         ]);
         $superAdminRole->permissions()->sync(array_values(array_map(fn($p) => $p->id, $allPermissionModels)));
-
-        $hcAdminRole = Role::create([
-            'name' => 'HC_ADMIN',
-            'display_name' => 'Human Capital Administrator',
-            'description' => 'Corporate Human Capital management and administration',
-            'data_scope' => 'COMPANY',
-            'is_system' => true,
-        ]);
-        $hcAdminRole->permissions()->sync(
-            Permission::whereIn('group', ['users', 'roles', 'permissions', 'sessions', 'audit', 'settings', 'security', 'workflow'])->pluck('id')
-        );
-
-        $hcManagerRole = Role::create([
-            'name' => 'HC_MANAGER',
-            'display_name' => 'HC Site Manager',
-            'description' => 'HC Site leadership and operational approvals',
-            'data_scope' => 'SITE',
-            'is_system' => true,
-        ]);
-        $hcManagerRole->permissions()->sync(
-            Permission::whereIn('name', ['users.view', 'users.create', 'users.update', 'users.approve', 'audit.view', 'workflow.view', 'workflow.execute'])->pluck('id')
-        );
-
-        $hcOfficerRole = Role::create([
-            'name' => 'HC_OFFICER',
-            'display_name' => 'HC Operations Officer',
-            'description' => 'Operational HC personnel administration',
-            'data_scope' => 'SITE',
-            'is_system' => true,
-        ]);
-        $hcOfficerRole->permissions()->sync(
-            Permission::whereIn('name', ['users.view', 'users.create', 'users.update', 'workflow.view'])->pluck('id')
-        );
-
-        $managerRole = Role::create([
-            'name' => 'MANAGER',
-            'display_name' => 'Department Manager',
-            'description' => 'Department-level management and workflow approvals',
-            'data_scope' => 'DEPARTMENT',
-            'is_system' => true,
-        ]);
-        $managerRole->permissions()->sync(
-            Permission::whereIn('name', ['users.view', 'workflow.view', 'workflow.execute'])->pluck('id')
-        );
-
-        $supervisorRole = Role::create([
-            'name' => 'SUPERVISOR',
-            'display_name' => 'Shift Supervisor',
-            'description' => 'Subordinate-level oversight for field shifts and pit operations',
-            'data_scope' => 'SUBORDINATES',
-            'is_system' => true,
-        ]);
-        $supervisorRole->permissions()->sync(
-            Permission::whereIn('name', ['users.view', 'workflow.view', 'workflow.execute'])->pluck('id')
-        );
-
-        $employeeRole = Role::create([
-            'name' => 'EMPLOYEE',
-            'display_name' => 'Mining Employee',
-            'description' => 'Standard self-service profile and operational ESS user',
-            'data_scope' => 'SELF',
-            'is_system' => true,
-        ]);
-        $employeeRole->permissions()->sync(
-            Permission::whereIn('name', ['users.view', 'workflow.view'])->pluck('id')
-        );
 
         // 4. Default System Settings
         $settings = [
@@ -294,7 +228,6 @@ class DatabaseSeeder extends Seeder
             'force_password_change' => false,
             'password_changed_at' => now(),
         ]);
-        $hcAdmin->roles()->attach($hcAdminRole->id);
         PasswordHistory::create(['user_id' => $hcAdmin->id, 'password_hash' => $defaultPassword]);
 
         // HC Manager Sangatta
@@ -311,7 +244,6 @@ class DatabaseSeeder extends Seeder
             'force_password_change' => false,
             'password_changed_at' => now(),
         ]);
-        $hcManager->roles()->attach($hcManagerRole->id);
         PasswordHistory::create(['user_id' => $hcManager->id, 'password_hash' => $defaultPassword]);
 
         // Mining Operations Supervisor
@@ -328,7 +260,6 @@ class DatabaseSeeder extends Seeder
             'force_password_change' => false,
             'password_changed_at' => now(),
         ]);
-        $spvOps->roles()->attach($supervisorRole->id);
         PasswordHistory::create(['user_id' => $spvOps->id, 'password_hash' => $defaultPassword]);
 
         // Employee Demo
@@ -345,7 +276,6 @@ class DatabaseSeeder extends Seeder
             'force_password_change' => false,
             'password_changed_at' => now(),
         ]);
-        $employee->roles()->attach($employeeRole->id);
         PasswordHistory::create(['user_id' => $employee->id, 'password_hash' => $defaultPassword]);
     }
 }

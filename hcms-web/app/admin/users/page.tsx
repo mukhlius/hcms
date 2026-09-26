@@ -13,7 +13,10 @@ import {
   Trash2,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  UserCheck,
+  UserX,
+  Link2,
 } from 'lucide-react';
 import { userService, UserFilterParams } from '@/services/userService';
 import { organizationService, roleService } from '@/services/adminService';
@@ -45,9 +48,22 @@ export default function UsersPage() {
     role: '',
     site_id: '',
     department_id: '',
+    linked_to_employee: '',
     sort_by: 'created_at',
     sort_order: 'desc',
   });
+
+  // Tab aktif: 'all' | 'linked' | 'standalone'
+  const [activeTab, setActiveTab] = useState<'all' | 'linked' | 'standalone'>('all');
+
+  const handleTabChange = (tab: 'all' | 'linked' | 'standalone') => {
+    setActiveTab(tab);
+    setParams((prev) => ({
+      ...prev,
+      page: 1,
+      linked_to_employee: tab === 'linked' ? '1' : tab === 'standalone' ? '0' : '',
+    }));
+  };
 
   // Toggle sort handler
   const handleSort = (column: string) => {
@@ -316,13 +332,67 @@ export default function UsersPage() {
         }
       />
 
+      {/* Tab Kategori Pengguna */}
+      <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl w-fit">
+        <button
+          type="button"
+          onClick={() => handleTabChange('all')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            activeTab === 'all'
+              ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+          }`}
+        >
+          <Users className="h-3.5 w-3.5" />
+          Semua Pengguna
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange('linked')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            activeTab === 'linked'
+              ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-400 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+          }`}
+        >
+          <UserCheck className="h-3.5 w-3.5" />
+          Personel Karyawan
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange('standalone')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            activeTab === 'standalone'
+              ? 'bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-400 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+          }`}
+        >
+          <UserX className="h-3.5 w-3.5" />
+          Pengguna Sistem
+        </button>
+      </div>
+
+      {/* Info konteks tab */}
+      {activeTab === 'linked' && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 text-xs text-emerald-700 dark:text-emerald-400">
+          <UserCheck className="h-4 w-4 mt-0.5 shrink-0" />
+          <p><span className="font-bold">Personel Karyawan</span> — Akun yang terhubung langsung dengan data karyawan (employee record). Perubahan identitas karyawan otomatis berdampak pada akun ini.</p>
+        </div>
+      )}
+      {activeTab === 'standalone' && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-xs text-amber-700 dark:text-amber-400">
+          <UserX className="h-4 w-4 mt-0.5 shrink-0" />
+          <p><span className="font-bold">Pengguna Sistem</span> — Akun yang <em>tidak</em> terhubung dengan data karyawan. Biasanya digunakan untuk akun admin sistem, integrasi layanan, atau akun teknis.</p>
+        </div>
+      )}
+
       {/* Bar Filter */}
       <Card className="p-4 space-y-3">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {/* Pencarian */}
           <div className="lg:col-span-2">
             <Input
-              placeholder="Cari berdasarkan nama, username, email..."
+              placeholder={activeTab === 'linked' ? 'Cari personel karyawan...' : activeTab === 'standalone' ? 'Cari pengguna sistem...' : 'Cari berdasarkan nama, username, email...'}
               value={params.search || ''}
               onChange={(e) => setParams({ ...params, search: e.target.value, page: 1 })}
               leftIcon={<Search className="h-4 w-4" />}
@@ -380,7 +450,7 @@ export default function UsersPage() {
             title="Tidak ada data pengguna"
             description="Tidak ada akun personel yang cocok dengan kriteria filter yang Anda tentukan."
             actionLabel="Reset Filter"
-            onAction={() => setParams({ page: 1, per_page: 10, search: '', status: '', role: '', site_id: '', department_id: '' })}
+            onAction={() => setParams({ page: 1, per_page: 10, search: '', status: '', role: '', site_id: '', department_id: '', linked_to_employee: activeTab === 'linked' ? '1' : activeTab === 'standalone' ? '0' : '' })}
           />
         ) : (
           <div className="overflow-x-auto">
@@ -431,11 +501,26 @@ export default function UsersPage() {
                   <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-700 font-semibold text-xs border border-blue-200">
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-full font-semibold text-xs border ${
+                          (u as any).has_employee
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-slate-100 text-slate-500 border-slate-200'
+                        }`}>
                           {u.name.slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-900">{u.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-semibold text-slate-900">{u.name}</p>
+                            {(u as any).has_employee ? (
+                              <span title="Terhubung dengan data karyawan" className="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                                <Link2 className="h-2.5 w-2.5" /> Karyawan
+                              </span>
+                            ) : (
+                              <span title="Pengguna sistem tanpa data karyawan" className="inline-flex items-center gap-0.5 rounded-full bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600">
+                                <UserX className="h-2.5 w-2.5" /> Sistem
+                              </span>
+                            )}
+                          </div>
                           <p className="text-[11px] text-slate-400">@{u.username} • {u.email}</p>
                         </div>
                       </div>

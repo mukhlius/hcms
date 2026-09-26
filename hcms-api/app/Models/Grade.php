@@ -23,6 +23,7 @@ class Grade extends Model
         'leave_lumpsum_allowance',
         'business_trip_allowance_daily',
         'status',
+        'default_role_id',
     ];
 
     protected $casts = [
@@ -35,7 +36,13 @@ class Grade extends Model
         'field_allowance' => 'float',
         'leave_lumpsum_allowance' => 'float',
         'business_trip_allowance_daily' => 'float',
+        'default_role_id' => 'integer',
     ];
+
+    public function defaultRole(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'default_role_id');
+    }
 
     public function positions(): HasMany
     {

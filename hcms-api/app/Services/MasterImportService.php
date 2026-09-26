@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AuditLog;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -866,6 +867,11 @@ class MasterImportService
                     $item
                 );
                 $importedCount++;
+            }
+
+            // Otomatis bersihkan cache referensi standar agar data hasil impor langsung muncul terkini
+            if ($modelClass === \App\Models\StandardReference::class) {
+                \App\Http\Controllers\Api\V1\MasterData\ReferenceDataController::clearStandardCache();
             }
 
             AuditService::log(

@@ -10,6 +10,7 @@ import {
   Building2,
   MapPin,
   Briefcase,
+  Edit,
   Layers,
   CalendarDays,
   ShieldCheck,
@@ -30,7 +31,11 @@ import {
   UserX,
   Mail,
   Phone,
-  Home
+  Home,
+  Eye,
+  Download,
+  UploadCloud,
+  FileCheck
 } from 'lucide-react';
 import { employeeService } from '@/services/employeeService';
 import { Employee, EmployeeCareerHistory } from '@/types';
@@ -48,7 +53,7 @@ export default function EmployeeDetailPage() {
   const queryClient = useQueryClient();
   const employeeId = Number(params.id);
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'career' | 'family' | 'health' | 'education' | 'emergency' | 'account'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'career' | 'family' | 'health' | 'education' | 'emergency' | 'documents' | 'account'>('overview');
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [resetResult, setResetResult] = useState<{ username: string; temporary_password: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -175,6 +180,17 @@ export default function EmployeeDetailPage() {
 
           {/* Quick Action Buttons */}
           <div className="flex items-center gap-2 flex-wrap">
+            <Link href={`/admin/employees/${employee.id}/edit`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1.5 bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60"
+              >
+                <Edit className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                Edit Data Karyawan
+              </Button>
+            </Link>
+
             <Button
               variant="outline"
               size="sm"
@@ -230,6 +246,7 @@ export default function EmployeeDetailPage() {
           { id: 'health', label: 'Data Fisik & APD Tambang', icon: HardHat },
           { id: 'education', label: 'Pendidikan', icon: GraduationCap, badge: employee.educations?.length },
           { id: 'emergency', label: 'Kontak Darurat', icon: PhoneCall, badge: employee.emergency_contacts?.length },
+          { id: 'documents', label: 'Dokumen Karyawan', icon: FileText, badge: employee.documents?.length },
           { id: 'account', label: 'Akun Login & Keamanan', icon: Key },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -267,54 +284,54 @@ export default function EmployeeDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Kolom Kiri: Data Pribadi & Kontak */}
           <div className="lg:col-span-2 space-y-6">
-            <Card className="p-5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <Users className="h-4 w-4 text-blue-600" />
+            <Card className="p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-5 flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
                 Data Pribadi & Identitas Legal
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Nama Lengkap</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">{employee.name}</span>
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Nama Lengkap</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{employee.name}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Jenis Kelamin</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Jenis Kelamin</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.gender === 'MALE' ? 'Laki-Laki' : 'Perempuan'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Tempat & Tanggal Lahir</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Tempat & Tanggal Lahir</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.birth_place || '-'}, {formatDate(employee.birth_date)}{' '}
-                    {employee.age !== null && <span className="text-slate-400">({employee.age} tahun)</span>}
+                    {employee.age !== null && <span className="text-slate-400 font-normal">({employee.age} tahun)</span>}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Agama</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">{employee.religion || '-'}</span>
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Agama</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{employee.religion || '-'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Nomor KTP (NIK)</span>
-                  <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Nomor KTP (NIK)</span>
+                  <span className="font-mono text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.id_card_number || '-'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Nomor NPWP</span>
-                  <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Nomor NPWP</span>
+                  <span className="font-mono text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.tax_number || '-'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Status Pernikahan & PTKP</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Status Pernikahan & PTKP</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.marital_status || 'SINGLE'} • Status Pajak: {employee.tax_status || 'TK/0'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Tanggal Pernikahan</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Tanggal Pernikahan</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.marriage_date ? formatDate(employee.marriage_date) : '-'}
                   </span>
                 </div>
@@ -322,26 +339,32 @@ export default function EmployeeDetailPage() {
             </Card>
 
             {/* Alamat KTP & Domisili */}
-            <Card className="p-5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <Home className="h-4 w-4 text-blue-600" />
+            <Card className="p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-5 flex items-center gap-2">
+                <Home className="h-5 w-5 text-blue-600" />
                 Alamat Tempat Tinggal
               </h3>
-              <div className="space-y-4 text-xs">
+              <div className="space-y-4">
                 <div>
-                  <span className="text-slate-400 block mb-1">Alamat Sesuai KTP (Legal)</span>
-                  <p className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl font-medium text-slate-700 dark:text-slate-300">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Alamat Sesuai KTP (Legal)</span>
+                  <p className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300">
                     {employee.ktp_address || 'Belum diisi'}
+                    {employee.ktp_village && `, Desa/Kel. ${employee.ktp_village}`}
+                    {employee.ktp_district && `, Kec. ${employee.ktp_district}`}
                     {employee.ktp_city && `, ${employee.ktp_city}`}
                     {employee.ktp_province && `, ${employee.ktp_province}`}
                     {employee.ktp_postal_code && ` (${employee.ktp_postal_code})`}
                   </p>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-1">Alamat Tinggal Saat Ini (Domisili / Mess Site)</span>
-                  <p className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl font-medium text-slate-700 dark:text-slate-300">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Alamat Tinggal Saat Ini (Domisili / Mess Site)</span>
+                  <p className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300">
                     {employee.residential_address || 'Sama dengan KTP'}
+                    {employee.residential_village && `, Desa/Kel. ${employee.residential_village}`}
+                    {employee.residential_district && `, Kec. ${employee.residential_district}`}
                     {employee.residential_city && `, ${employee.residential_city}`}
+                    {employee.residential_province && `, ${employee.residential_province}`}
+                    {employee.residential_postal_code && ` (${employee.residential_postal_code})`}
                   </p>
                 </div>
               </div>
@@ -351,63 +374,63 @@ export default function EmployeeDetailPage() {
           {/* Kolom Kanan: Kontak & Kepegawaian */}
           <div className="space-y-6">
             {/* Status Kepegawaian */}
-            <Card className="p-5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <Briefcase className="h-4 w-4 text-blue-600" />
+            <Card className="p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-5 flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-blue-600" />
                 Penempatan & Status Kerja
               </h3>
-              <div className="space-y-3 text-xs">
+              <div className="space-y-4">
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Perusahaan (PT)</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Perusahaan (PT)</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.company?.name || employee.company?.code || '-'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Departemen & Section</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Departemen & Section</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.department?.name || '-'} {employee.section ? `• ${employee.section.name}` : ''}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Site & Area Kerja Tambang</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Site & Area Kerja Tambang</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.site?.name || 'HO'} {employee.work_area ? `• Area ${employee.work_area}` : ''}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Pangkat</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Pangkat</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.pangkat || employee.grade?.pangkat || 'Staff'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Level Jabatan (Grade)</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Level Jabatan (Grade)</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.grade?.name || '-'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Golongan & Jenjang</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Golongan & Jenjang</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.salary_grade?.name ? `Golongan ${employee.salary_grade.name}` : '-'} {employee.salary_grade_jenjang?.name ? `• ${employee.salary_grade_jenjang.name}` : ''}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Hubungan Kerja</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Hubungan Kerja</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.employment_type?.name || 'PKWTT'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Point of Hire (POH)</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Point of Hire (POH)</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.poh || 'Lokal Site'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Tanggal Masuk (Hire Date)</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Tanggal Masuk (Hire Date)</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {formatDate(employee.hire_date)}
                   </span>
                 </div>
@@ -415,27 +438,27 @@ export default function EmployeeDetailPage() {
             </Card>
 
             {/* Kontak Karyawan */}
-            <Card className="p-5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <Phone className="h-4 w-4 text-blue-600" />
+            <Card className="p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-5 flex items-center gap-2">
+                <Phone className="h-5 w-5 text-blue-600" />
                 Kontak & Komunikasi
               </h3>
-              <div className="space-y-3 text-xs">
+              <div className="space-y-4">
                 <div>
-                  <span className="text-slate-400 block mb-0.5">No. Handphone / WA</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">No. Handphone / WA</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.phone_mobile || '-'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Email Kantor</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Email Kantor</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.email_company || '-'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Email Pribadi</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-0.5">Email Pribadi</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     {employee.email_personal || '-'}
                   </span>
                 </div>
@@ -443,17 +466,17 @@ export default function EmployeeDetailPage() {
             </Card>
 
             {/* Rekening Payroll */}
-            <Card className="p-5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-blue-600" />
+            <Card className="p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-5 flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-blue-600" />
                 Rekening Gaji (Payroll)
               </h3>
               {employee.bank_accounts && employee.bank_accounts.length > 0 ? (
                 employee.bank_accounts.map((b, i) => (
-                  <div key={i} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-xs space-y-1">
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{b.bank_name}</span>
-                    <div className="font-mono text-sm text-blue-600 dark:text-blue-400 font-bold">{b.account_number}</div>
-                    <div className="text-[11px] text-slate-500">A/N: {b.account_holder}</div>
+                  <div key={i} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-1">
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{b.bank_name}</span>
+                    <div className="font-mono text-base text-blue-600 dark:text-blue-400 font-bold">{b.account_number}</div>
+                    <div className="text-xs text-slate-500">A/N: {b.account_holder}</div>
                   </div>
                 ))
               ) : (
@@ -582,73 +605,89 @@ export default function EmployeeDetailPage() {
           </h3>
 
           {employee.families && employee.families.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-800/80 text-[11px] font-bold text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
-                  <tr>
-                    <th className="px-4 py-3">Hubungan</th>
-                    <th className="px-4 py-3">Nama Lengkap</th>
-                    <th className="px-4 py-3">NIK / No. KTP</th>
-                    <th className="px-4 py-3">L/P</th>
-                    <th className="px-4 py-3">Tempat &amp; Tgl Lahir / Usia</th>
-                    <th className="px-4 py-3">No. BPJS / Asuransi</th>
-                    <th className="px-4 py-3 text-center">Tanggungan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {employee.families.map((fam, i) => {
-                    const isEligible = fam.relation_type === 'SPOUSE' || fam.relation_type === 'CHILD';
+            (() => {
+              const isStaff = (employee.pangkat || employee.grade?.pangkat || 'Staff').toLowerCase() === 'staff';
 
-                    return (
-                      <tr key={fam.id || i} className="hover:bg-slate-50/50">
-                        <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">
-                          {fam.relation_type === 'SPOUSE'
-                            ? 'Pasangan (Istri/Suami)'
-                            : fam.relation_type === 'CHILD'
-                            ? `Anak ke-${fam.child_order || '-'}`
-                            : fam.relation_type === 'FATHER'
-                            ? 'Ayah Kandung'
-                            : fam.relation_type === 'MOTHER'
-                            ? 'Ibu Kandung'
-                            : fam.relation_type === 'FATHER_IN_LAW'
-                            ? 'Ayah Mertua'
-                            : fam.relation_type === 'MOTHER_IN_LAW'
-                            ? 'Ibu Mertua'
-                            : fam.relation_type}
-                        </td>
-                        <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">{fam.name}</td>
-                        <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-400">
-                          {fam.id_card_number || '-'}
-                        </td>
-                        <td className="px-4 py-3">{fam.gender === 'MALE' ? 'L' : 'P'}</td>
-                        <td className="px-4 py-3">
-                          <span>{fam.birth_place ? `${fam.birth_place}, ` : ''}{fam.birth_date ? formatDate(fam.birth_date) : '-'}</span>
-                          {fam.age !== null && <span className="text-slate-400"> ({fam.age} thn)</span>}
-                        </td>
-                        <td className="px-4 py-3 font-mono">
-                          {isEligible ? (
-                            fam.health_provider_no || '-'
-                          ) : (
-                            <span className="text-[11px] text-slate-400 italic">Bukan Tanggungan</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          {isEligible ? (
-                            <Badge variant={fam.is_covered_insurance ? 'success' : 'neutral'} className="text-[10px]">
-                              {fam.is_covered_insurance ? 'Ditanggung' : 'Mandiri'}
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px] text-slate-400 border-slate-200 dark:border-slate-800">
-                              Non-Fasilitas
-                            </Badge>
-                          )}
-                        </td>
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-50 dark:bg-slate-800/80 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                      <tr>
+                        <th className="px-4 py-3">Hubungan</th>
+                        <th className="px-4 py-3">Nama Lengkap</th>
+                        <th className="px-4 py-3">NIK / No. KTP</th>
+                        <th className="px-4 py-3">L/P</th>
+                        <th className="px-4 py-3">Tempat &amp; Tgl Lahir / Usia</th>
+                        <th className="px-4 py-3">No. BPJS Kesehatan</th>
+                        {isStaff && <th className="px-4 py-3">No. Asuransi</th>}
+                        <th className="px-4 py-3 text-center">Tanggungan</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                      {employee.families.map((fam, i) => {
+                        const isEligible = fam.relation_type === 'SPOUSE' || fam.relation_type === 'CHILD';
+
+                        return (
+                          <tr key={fam.id || i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">
+                              {fam.relation_type === 'SPOUSE'
+                                ? 'Pasangan (Istri/Suami)'
+                                : fam.relation_type === 'CHILD'
+                                ? `Anak ke-${fam.child_order || '-'}`
+                                : fam.relation_type === 'FATHER'
+                                ? 'Ayah Kandung'
+                                : fam.relation_type === 'MOTHER'
+                                ? 'Ibu Kandung'
+                                : fam.relation_type === 'FATHER_IN_LAW'
+                                ? 'Ayah Mertua'
+                                : fam.relation_type === 'MOTHER_IN_LAW'
+                                ? 'Ibu Mertua'
+                                : fam.relation_type}
+                            </td>
+                            <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">{fam.name}</td>
+                            <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-400">
+                              {fam.id_card_number || '-'}
+                            </td>
+                            <td className="px-4 py-3">{fam.gender === 'MALE' ? 'L' : 'P'}</td>
+                            <td className="px-4 py-3">
+                              <span>{fam.birth_place ? `${fam.birth_place}, ` : ''}{fam.birth_date ? formatDate(fam.birth_date) : '-'}</span>
+                              {fam.age !== null && <span className="text-slate-400 font-normal"> ({fam.age} thn)</span>}
+                            </td>
+                            <td className="px-4 py-3 font-mono">
+                              {isEligible ? (
+                                fam.bpjs_kesehatan_no || fam.health_provider_no || '-'
+                              ) : (
+                                <span className="text-xs text-slate-400 italic">Bukan Tanggungan</span>
+                              )}
+                            </td>
+                            {isStaff && (
+                              <td className="px-4 py-3 font-mono">
+                                {isEligible ? (
+                                  fam.insurance_no || '-'
+                                ) : (
+                                  <span className="text-xs text-slate-400 italic">-</span>
+                                )}
+                              </td>
+                            )}
+                            <td className="px-4 py-3 text-center">
+                              {isEligible ? (
+                                <Badge variant={fam.is_covered_insurance ? 'success' : 'neutral'} className="text-xs">
+                                  {fam.is_covered_insurance ? 'Ditanggung' : 'Mandiri'}
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs text-slate-400 border-slate-200 dark:border-slate-800">
+                                  Non-Fasilitas
+                                </Badge>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()
           ) : (
             <p className="text-xs text-slate-400 text-center py-8">Belum ada data keluarga yang tercatat.</p>
           )}
@@ -659,52 +698,52 @@ export default function EmployeeDetailPage() {
       {activeTab === 'health' && (
         <div className="space-y-6">
           <Card className="p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-5 flex items-center gap-2">
               <HardHat className="h-5 w-5 text-amber-500" />
               Alat Pelindung Diri (APD Lapangan Tambang)
             </h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
-                <span className="text-[11px] text-slate-500 block mb-1">Sepatu Safety</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Sepatu Safety</span>
                 <span className="text-2xl font-black text-amber-600 dark:text-amber-400">
                   {employee.health_safety?.safety_shoe_size || '-'}
                 </span>
-                <span className="text-[10px] text-slate-400 block mt-1">Ukuran Standar</span>
+                <span className="text-xs text-slate-400 block mt-1">Ukuran Standar</span>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
-                <span className="text-[11px] text-slate-500 block mb-1">Baju / Wearpack</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Baju / Wearpack</span>
                 <span className="text-2xl font-black text-blue-600 dark:text-blue-400">
                   {employee.health_safety?.shirt_size || '-'}
                 </span>
-                <span className="text-[10px] text-slate-400 block mt-1">Seragam Pit Tambang</span>
+                <span className="text-xs text-slate-400 block mt-1">Seragam Pit Tambang</span>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
-                <span className="text-[11px] text-slate-500 block mb-1">Celana Kerja</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Celana Kerja</span>
                 <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
                   {employee.health_safety?.pants_size || '-'}
                 </span>
-                <span className="text-[10px] text-slate-400 block mt-1">Ukuran Pinggang</span>
+                <span className="text-xs text-slate-400 block mt-1">Ukuran Pinggang</span>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
-                <span className="text-[11px] text-slate-500 block mb-1">Golongan Darah</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Golongan Darah</span>
                 <span className="text-2xl font-black text-rose-600 dark:text-rose-400">
                   {employee.health_safety?.blood_type || '-'}
                   {employee.health_safety?.rhesus && (
                     <span className="text-sm font-normal">({employee.health_safety.rhesus})</span>
                   )}
                 </span>
-                <span className="text-[10px] text-slate-400 block mt-1">First Aid Emergency</span>
+                <span className="text-xs text-slate-400 block mt-1">First Aid Emergency</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
               <div>
-                <span className="text-slate-400 block mb-1">Tinggi & Berat Badan</span>
-                <p className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Tinggi & Berat Badan</span>
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                   {employee.health_safety?.height_cm ? `${employee.health_safety.height_cm} cm` : '-'} •{' '}
                   {employee.health_safety?.weight_kg ? `${employee.health_safety.weight_kg} kg` : '-'}
                 </p>
@@ -737,14 +776,14 @@ export default function EmployeeDetailPage() {
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-xs">
                         {edu.level}
                       </Badge>
                       <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                         {edu.institution_name}
                       </h4>
                     </div>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Jurusan: {edu.major || '-'} {edu.gpa && `• IPK/Nilai: ${edu.gpa}`}
                     </p>
                   </div>
@@ -764,7 +803,7 @@ export default function EmployeeDetailPage() {
       {/* TAB CONTENT 6: KONTAK DARURAT */}
       {activeTab === 'emergency' && (
         <Card className="p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white mb-5 flex items-center gap-2">
             <PhoneCall className="h-5 w-5 text-emerald-600" />
             Kontak Darurat (Emergency Contacts)
           </h3>
@@ -774,24 +813,138 @@ export default function EmployeeDetailPage() {
               {employee.emergency_contacts.map((em, idx) => (
                 <div
                   key={em.id || idx}
-                  className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2 text-xs"
+                  className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2"
                 >
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-slate-900 dark:text-white text-sm">{em.name}</h4>
-                    <Badge variant="outline" className="text-[10px]">
+                    <Badge variant="outline" className="text-xs">
                       {em.relationship}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold font-mono">
+                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold font-mono text-sm">
                     <Phone className="h-3.5 w-3.5" />
                     <span>{em.phone_number}</span>
                   </div>
-                  {em.address && <p className="text-slate-500 text-[11px]">{em.address}</p>}
+                  {em.address && <p className="text-slate-500 dark:text-slate-400 text-xs">{em.address}</p>}
                 </div>
               ))}
             </div>
           ) : (
             <p className="text-xs text-slate-400 text-center py-8">Belum ada kontak darurat yang didaftarkan.</p>
+          )}
+        </Card>
+      )}
+
+      {/* TAB CONTENT: DOKUMEN KARYAWAN */}
+      {activeTab === 'documents' && (
+        <Card className="p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <FileText className="h-5 w-5 text-indigo-500" />
+                Berkas & Dokumen Legalitas Karyawan
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Daftar arsip dokumen identitas, pajak, BPJS, KIMPER, dan sertifikat kesehatan (Fit to Work).
+              </p>
+            </div>
+
+            <Link href={`/admin/employees/${employee.id}/edit#section-dokumen`}>
+              <Button size="sm" variant="outline" className="text-xs font-semibold flex items-center gap-1.5">
+                <UploadCloud className="h-3.5 w-3.5 text-blue-600" />
+                Kelola & Unggah Dokumen
+              </Button>
+            </Link>
+          </div>
+
+          {employee.documents && employee.documents.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {employee.documents.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                        <FileCheck className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                          {doc.document_type?.name || 'Dokumen Karyawan'}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] font-mono text-slate-400">
+                            {doc.document_type?.code || 'DOC'}
+                          </span>
+                          {doc.document_type?.category && (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0">
+                              {doc.document_type.category}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <Badge variant="success" className="text-[10px]">
+                      {doc.status}
+                    </Badge>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-xs space-y-1">
+                    <div className="flex justify-between text-slate-500">
+                      <span>Nama Berkas:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[200px]">
+                        {doc.file_name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-500">
+                      <span>Ukuran:</span>
+                      <span className="font-mono">{doc.formatted_file_size || `${Math.round((doc.file_size || 0) / 1024)} KB`}</span>
+                    </div>
+                    {doc.expiry_date && (
+                      <div className="flex justify-between text-slate-500">
+                        <span>Kedaluwarsa:</span>
+                        <span className="font-semibold text-amber-600 dark:text-amber-400">
+                          {formatDate(doc.expiry_date)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-1">
+                    <a
+                      href={`/api/v1/admin/employees/${employee.id}/documents/${doc.id}/preview`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Pratinjau
+                    </a>
+                    <a
+                      href={`/api/v1/admin/employees/${employee.id}/documents/${doc.id}/download`}
+                      download
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-800 text-xs font-semibold flex items-center gap-1"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Unduh Berkas
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
+              <FileText className="h-10 w-10 text-slate-300 dark:text-slate-700 mx-auto" />
+              <p className="text-xs text-slate-500">Belum ada dokumen standar yang diunggah untuk karyawan ini.</p>
+              <Link href={`/admin/employees/${employee.id}/edit#section-dokumen`}>
+                <Button size="sm" variant="outline" className="text-xs font-semibold">
+                  <UploadCloud className="h-3.5 w-3.5 mr-1 text-blue-600" />
+                  Mulai Unggah Dokumen Standar
+                </Button>
+              </Link>
+            </div>
           )}
         </Card>
       )}

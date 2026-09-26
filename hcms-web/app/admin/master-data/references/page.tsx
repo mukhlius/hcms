@@ -55,6 +55,7 @@ function ReferencesContent() {
   const [items, setItems] = useState<ReferenceItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
+  const [maritalCreateTrigger, setMaritalCreateTrigger] = useState<number>(0);
 
   // Modals & Submitting state
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -295,7 +296,15 @@ function ReferencesContent() {
           { label: 'Referensi Standar' },
         ]}
         actions={
-          selectedCategory !== 'MARITAL_STATUS' ? (
+          selectedCategory === 'MARITAL_STATUS' ? (
+            <Button
+              size="sm"
+              leftIcon={<Plus className="h-4 w-4" />}
+              onClick={() => setMaritalCreateTrigger((prev) => prev + 1)}
+            >
+              Tambah Status Menikah
+            </Button>
+          ) : (
             <Button
               size="sm"
               leftIcon={<Plus className="h-4 w-4" />}
@@ -303,7 +312,7 @@ function ReferencesContent() {
             >
               {selectedCategory === 'DOCUMENTS' ? 'Tambah Jenis Dokumen' : `Tambah Entri ${activeCategoryLabel}`}
             </Button>
-          ) : null
+          )
         }
       />
 
@@ -346,7 +355,7 @@ function ReferencesContent() {
 
       {/* VIEW 1: STATUS MENIKAH (MARITAL STATUS) */}
       {selectedCategory === 'MARITAL_STATUS' && (
-        <StatusMenikahTab onRefreshAll={loadData} />
+        <StatusMenikahTab onRefreshAll={loadData} createTrigger={maritalCreateTrigger} />
       )}
 
       {/* VIEW 2: STANDARD REFERENCES & DOCUMENTS */}

@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api';
-import { ApiResponse, Employee, EmployeeCareerHistory, EmployeeFilterParams } from '@/types';
+import { ApiResponse, Employee, EmployeeCareerHistory, EmployeeFilterParams, EmployeeDocument } from '@/types';
 
 export const employeeService = {
   /**
@@ -68,6 +68,40 @@ export const employeeService = {
     const response = await apiClient.post<ApiResponse<{ username: string; temporary_password: string; force_password_change: boolean }>>(
       `/admin/employees/${id}/reset-password`,
       { password }
+    );
+    return response.data;
+  },
+
+  /**
+   * Ambil daftar dokumen karyawan
+   */
+  getDocuments: async (employeeId: number) => {
+    const response = await apiClient.get<ApiResponse<EmployeeDocument[]>>(`/admin/employees/${employeeId}/documents`);
+    return response.data;
+  },
+
+  /**
+   * Unggah dokumen karyawan (multipart/form-data)
+   */
+  uploadDocument: async (employeeId: number, formData: FormData) => {
+    const response = await apiClient.post<ApiResponse<EmployeeDocument>>(
+      `/admin/employees/${employeeId}/documents`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Hapus dokumen karyawan
+   */
+  deleteDocument: async (employeeId: number, documentId: number) => {
+    const response = await apiClient.delete<ApiResponse<null>>(
+      `/admin/employees/${employeeId}/documents/${documentId}`
     );
     return response.data;
   },

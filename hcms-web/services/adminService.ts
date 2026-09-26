@@ -31,6 +31,10 @@ export const roleService = {
     const res = await apiClient.delete<ApiResponse<null>>(`/admin/roles/${id}`);
     return res.data;
   },
+  syncEmployeeRoles: async () => {
+    const res = await apiClient.post<ApiResponse<any>>('/admin/roles/sync-employees');
+    return res.data;
+  },
 };
 
 export const permissionService = {
