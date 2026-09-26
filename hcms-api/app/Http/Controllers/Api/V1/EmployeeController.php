@@ -469,4 +469,96 @@ class EmployeeController extends BaseApiController
 
         return response()->download($path, $doc->file_name);
     }
+
+    /**
+     * Cari record Employee untuk pengguna yang sedang login
+     */
+    private function resolveCurrentEmployee(Request $request): ?Employee
+    {
+        $user = $request->user();
+        $employee = Employee::where('user_id', $user->id)->first();
+        if (!$employee) {
+            $employee = Employee::where('nrp', $user->username)
+                ->orWhere('email_company', $user->email)
+                ->orWhere('email_personal', $user->email)
+                ->first();
+        }
+
+        // Jika super admin dan belum ada employee terhubung, gunakan karyawan pertama sebagai representasi
+        if (!$employee && $user->roles()->where('name', 'SUPER_ADMIN')->exists()) {
+            $employee = Employee::first();
+        }
+
+        if ($employee && !$employee->user_id && $employee->nrp === $user->username) {
+            $employee->update(['user_id' => $user->id]);
+        }
+
+        return $employee;
+    }
+
+    /**
+     * Tampilkan profil lengkap karyawan yang sedang login (ESS)
+     */
+    public function myProfile(Request $request): JsonResponse
+    {
+        $employee = $this->resolveCurrentEmployee($request);
+        if (!$employee) {
+            return $this->errorResponse('Data profil karyawan tidak ditemukan untuk akun ini.', 'NOT_FOUND', null, 404);
+        }
+
+        $detail = $this->employeeService->getEmployeeDetail($employee->id);
+        return $this->successResponse($detail, 'Profil karyawan berhasil dimuat');
+    }
+
+    /**
+     * Unggah dokumen oleh karyawan yang sedang login (ESS)
+     */
+    public function uploadMyDocument(Request $request): JsonResponse
+    {
+        $employee = $this->resolveCurrentEmployee($request);
+        if (!$employee) {
+            return $this->errorResponse('Data profil karyawan tidak ditemukan.', 'NOT_FOUND', null, 404);
+        }
+
+        return $this->uploadDocument($request, $employee->id);
+    }
+
+    /**
+     * Hapus dokumen oleh karyawan yang sedang login (ESS)
+     */
+    public function deleteMyDocument(Request $request, int $documentId): JsonResponse
+    {
+        $employee = $this->resolveCurrentEmployee($request);
+        if (!$employee) {
+            return $this->errorResponse('Data profil karyawan tidak ditemukan.', 'NOT_FOUND', null, 404);
+        }
+
+        return $this->deleteDocument($employee->id, $documentId);
+    }
+
+    /**
+     * Pratinjau dokumen karyawan yang sedang login (ESS)
+     */
+    public function previewMyDocument(Request $request, int $documentId): BinaryFileResponse
+    {
+        $employee = $this->resolveCurrentEmployee($request);
+        if (!$employee) {
+            abort(404, 'Data profil karyawan tidak ditemukan.');
+        }
+
+        return $this->previewDocument($employee->id, $documentId);
+    }
+
+    /**
+     * Unduh dokumen karyawan yang sedang login (ESS)
+     */
+    public function downloadMyDocument(Request $request, int $documentId): BinaryFileResponse
+    {
+        $employee = $this->resolveCurrentEmployee($request);
+        if (!$employee) {
+            abort(404, 'Data profil karyawan tidak ditemukan.');
+        }
+
+        return $this->downloadDocument($employee->id, $documentId);
+    }
 }

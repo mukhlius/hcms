@@ -818,3 +818,10 @@ export const resignationTypeService = {
   },
 };
 
+export const documentTypeService = {
+  getDocumentTypes: async () => {
+    const res = await apiClient.get<ApiResponse<any>>('/admin/master-data/document-types');
+    return res.data;
+  },
+};
+

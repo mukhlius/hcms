@@ -105,4 +105,38 @@ export const employeeService = {
     );
     return response.data;
   },
+
+  /**
+   * Ambil profil karyawan yang sedang login (ESS)
+   */
+  getMyProfile: async () => {
+    const response = await apiClient.get<ApiResponse<Employee>>('/ess/profile');
+    return response.data;
+  },
+
+  /**
+   * Unggah dokumen karyawan sendiri (ESS)
+   */
+  uploadMyDocument: async (formData: FormData) => {
+    const response = await apiClient.post<ApiResponse<EmployeeDocument>>(
+      '/ess/documents',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Hapus dokumen karyawan sendiri (ESS)
+   */
+  deleteMyDocument: async (documentId: number) => {
+    const response = await apiClient.delete<ApiResponse<null>>(
+      `/ess/documents/${documentId}`
+    );
+    return response.data;
+  },
 };

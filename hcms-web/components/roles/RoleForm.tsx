@@ -171,7 +171,7 @@ export default function RoleForm({ mode, roleId }: RoleFormProps) {
       (g) =>
         g.code.toLowerCase().includes(q) ||
         g.name.toLowerCase().includes(q) ||
-        g.pangkat.toLowerCase().includes(q) ||
+        (g.pangkat && g.pangkat.toLowerCase().includes(q)) ||
         `level ${g.level}`.includes(q)
     );
   }, [allGrades, gradeSearch]);

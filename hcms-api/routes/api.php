@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\RecycleBinController;
 use App\Http\Controllers\Api\V1\DatabaseBackupController;
 use App\Http\Controllers\Api\V1\EmployeeController;
+use App\Http\Controllers\Api\V1\EmployeeReregistrationController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -46,6 +47,23 @@ Route::prefix('v1')->group(function () {
             Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
         });
 
+        // ESS (Employee Self Service) Profile & Documents
+        Route::prefix('ess')->group(function () {
+            Route::get('/profile', [EmployeeController::class, 'myProfile']);
+            Route::post('/documents', [EmployeeController::class, 'uploadMyDocument']);
+            Route::delete('/documents/{documentId}', [EmployeeController::class, 'deleteMyDocument']);
+            Route::get('/documents/{documentId}/preview', [EmployeeController::class, 'previewMyDocument']);
+            Route::get('/documents/{documentId}/download', [EmployeeController::class, 'downloadMyDocument']);
+
+            // ESS Re-registration (Registrasi Ulang Mandiri Karyawan)
+            Route::prefix('re-registration')->group(function () {
+                Route::get('/current', [EmployeeReregistrationController::class, 'myCurrent']);
+                Route::get('/history', [EmployeeReregistrationController::class, 'myHistory']);
+                Route::post('/', [EmployeeReregistrationController::class, 'submit']);
+                Route::delete('/{id}/cancel', [EmployeeReregistrationController::class, 'cancel']);
+            });
+        });
+
         // Administration Area (Permission Enforced)
         Route::prefix('admin')->group(function () {
 
@@ -75,9 +93,21 @@ Route::prefix('v1')->group(function () {
                 // Employee Documents
                 Route::get('/{id}/documents', [EmployeeController::class, 'getDocuments'])->middleware('permission:employees.view');
                 Route::post('/{id}/documents', [EmployeeController::class, 'uploadDocument'])->middleware('permission:employees.update');
-                Route::delete('/{id}/documents/{documentId}', [EmployeeController::class, 'deleteDocument'])->middleware('permission:employees.delete');
-                Route::get('/{id}/documents/{documentId}/preview', [EmployeeController::class, 'previewDocument'])->middleware('permission:employees.view');
-                Route::get('/{id}/documents/{documentId}/download', [EmployeeController::class, 'downloadDocument'])->middleware('permission:employees.view');
+                Route::delete('/{id}/documents/{documentId}', [EmployeeController::class, 'deleteDocument'])
+                    ->middleware('permission:employees.delete');
+                Route::get('/{id}/documents/{documentId}/preview', [EmployeeController::class, 'previewDocument'])
+                    ->middleware('permission:employees.view');
+                Route::get('/{id}/documents/{documentId}/download', [EmployeeController::class, 'downloadDocument'])
+                    ->middleware('permission:employees.view');
+            });
+
+            // Employee Re-registration Verification & Approvals (Verifikasi Registrasi Ulang)
+            Route::prefix('employee-reregistrations')->group(function () {
+                Route::get('/', [EmployeeReregistrationController::class, 'index'])->middleware('permission:employees.view');
+                Route::get('/stats', [EmployeeReregistrationController::class, 'stats'])->middleware('permission:employees.view');
+                Route::get('/{id}', [EmployeeReregistrationController::class, 'show'])->middleware('permission:employees.view');
+                Route::post('/{id}/approve', [EmployeeReregistrationController::class, 'approve'])->middleware('permission:employees.approve|employees.update');
+                Route::post('/{id}/reject', [EmployeeReregistrationController::class, 'reject'])->middleware('permission:employees.approve|employees.update');
             });
 
             // Roles Management

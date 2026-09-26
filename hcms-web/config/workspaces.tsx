@@ -24,6 +24,7 @@ import {
   UserCheck2,
   HeartHandshake,
   HardDriveDownload,
+  ClipboardCheck,
   User as UserIcon
 } from 'lucide-react';
 import { User } from '@/types';
@@ -84,6 +85,11 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
         href: '/ess/profile',
         icon: <UserIcon className="h-4.5 w-4.5 shrink-0" />,
         section: 'PRIBADI SAYA',
+      },
+      {
+        label: 'Registrasi Ulang Mandiri',
+        href: '/ess/re-registration',
+        icon: <ClipboardCheck className="h-4.5 w-4.5 shrink-0" />,
       },
       {
         label: 'Presensi & Kehadiran',
@@ -180,6 +186,12 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
         label: 'Data Karyawan',
         href: '/admin/employees',
         icon: <Users className="h-4.5 w-4.5 shrink-0" />,
+        permission: 'employees.view',
+      },
+      {
+        label: 'Verifikasi Registrasi Ulang',
+        href: '/admin/employee-reregistrations',
+        icon: <ClipboardCheck className="h-4.5 w-4.5 shrink-0" />,
         permission: 'employees.view',
       },
       {
