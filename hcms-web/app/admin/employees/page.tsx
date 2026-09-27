@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -55,6 +55,7 @@ import { Modal } from '@/components/ui/Modal';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { SortableHeader } from '@/components/ui/SortableHeader';
 import { toast, confirmDialog } from '@/stores/alertStore';
 import { formatDate } from '@/lib/utils';
 import { INDONESIA_PROVINCES, getCitiesByProvince, getDistrictsByCity } from '@/lib/indonesiaRegions';
@@ -80,6 +81,19 @@ export default function EmployeesPage() {
     employment_status: '',
     gender: '',
   });
+
+  // Sorting State
+  const [sortField, setSortField] = useState<string | null>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
 
   const [sameAsKtp, setSameAsKtp] = useState(false);
 
@@ -782,6 +796,36 @@ export default function EmployeesPage() {
     : (Array.isArray(rawData?.data) ? rawData.data : []);
   const meta = employeeData?.meta?.total !== undefined ? employeeData.meta : rawData;
 
+  // Data Terurut Sesuai Header Aktif
+  const sortedEmployees = useMemo(() => {
+    if (!sortField) return employees;
+    return [...employees].sort((a: any, b: any) => {
+      const getNestedVal = (obj: any, path: string) => {
+        if (!obj) return undefined;
+        if (path === 'position.title') return obj.position?.title || '';
+        if (path === 'department.name') return obj.department?.name || obj.site?.name || '';
+        if (path === 'employment_type.name') return obj.employmentType?.name || obj.employment_type?.name || '';
+        return path.split('.').reduce((acc, part) => (acc ? acc[part] : undefined), obj);
+      };
+
+      const aVal = getNestedVal(a, sortField);
+      const bVal = getNestedVal(b, sortField);
+
+      if (aVal === bVal) return 0;
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+
+      const comparison =
+        typeof aVal === 'string'
+          ? String(aVal).localeCompare(String(bVal), undefined, { numeric: true, sensitivity: 'base' })
+          : aVal > bVal
+          ? 1
+          : -1;
+
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [employees, sortField, sortOrder]);
+
   // Mutasi & Actions
   const createMutation = useMutation({
     mutationFn: (payload: any) => employeeService.createEmployee(payload),
@@ -1408,17 +1452,63 @@ export default function EmployeesPage() {
       </Card>
 
       {/* Main Table */}
-      <Card className="overflow-hidden border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+      <Card className="overflow-hidden border-slate-200 shadow-xs dark:border-slate-800">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
-            <thead className="bg-slate-50 dark:bg-slate-800/80 text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+          <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+            <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400 select-none">
               <tr>
-                <th className="px-5 py-3.5">Karyawan</th>
-                <th className="px-4 py-3.5">Jabatan & Pangkat</th>
-                <th className="px-4 py-3.5">Unit Organisasi</th>
-                <th className="px-4 py-3.5">Hubungan Kerja</th>
-                <th className="px-4 py-3.5 text-center">Status</th>
-                <th className="px-5 py-3.5 text-right">Aksi</th>
+                <th className="px-5 py-3.5">
+                  <SortableHeader
+                    label="Karyawan"
+                    field="name"
+                    currentField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    className="dark:text-slate-300 dark:hover:text-blue-400"
+                  />
+                </th>
+                <th className="px-4 py-3.5">
+                  <SortableHeader
+                    label="Jabatan & Pangkat"
+                    field="position.title"
+                    currentField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    className="dark:text-slate-300 dark:hover:text-blue-400"
+                  />
+                </th>
+                <th className="px-4 py-3.5">
+                  <SortableHeader
+                    label="Unit Organisasi"
+                    field="department.name"
+                    currentField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    className="dark:text-slate-300 dark:hover:text-blue-400"
+                  />
+                </th>
+                <th className="px-4 py-3.5">
+                  <SortableHeader
+                    label="Hubungan Kerja"
+                    field="employment_type.name"
+                    currentField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    className="dark:text-slate-300 dark:hover:text-blue-400"
+                  />
+                </th>
+                <th className="px-4 py-3.5 text-center">
+                  <SortableHeader
+                    label="Status"
+                    field="employment_status"
+                    align="center"
+                    currentField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    className="dark:text-slate-300 dark:hover:text-blue-400"
+                  />
+                </th>
+                <th className="px-5 py-3.5 text-right font-semibold">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1446,7 +1536,7 @@ export default function EmployeesPage() {
                   </td>
                 </tr>
               ) : (
-                employees.map((emp) => {
+                sortedEmployees.map((emp) => {
                   const isActive = emp.employment_status === 'ACTIVE';
 
                   return (
