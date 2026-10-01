@@ -25,6 +25,7 @@ const ROUTE_PERMISSIONS: { path: string; permission?: string; managerOnly?: bool
   { path: '/admin/recycle-bin', permission: 'recycle-bin.view' },
   { path: '/admin/users', permission: 'users.view' },
   { path: '/admin/employees', permission: 'employees.view' },
+  { path: '/admin/employee-reregistrations', permission: 'employees.view' },
   { path: '/admin/sessions', permission: 'sessions.view' },
   { path: '/admin/security-events', permission: 'security.view' },
   { path: '/admin/audit-logs', permission: 'audit.view' },

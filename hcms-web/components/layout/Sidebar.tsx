@@ -42,8 +42,9 @@ export const Sidebar: React.FC = () => {
   const appName = useThemeStore((state) => state.appName) || 'HCMS ENTERPRISE';
   const companyName = useThemeStore((state) => state.companyName) || 'PT Coal Mining Nusantara';
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
-    'Konfigurasi Sistem': true,
+    'Personalia': true,
     'Data Master HCMS': true,
+    'Konfigurasi Sistem': true,
   });
 
   const toggleMenu = (label: string) => {
@@ -54,6 +55,19 @@ export const Sidebar: React.FC = () => {
   const activeWorkspaceId = getActiveWorkspaceId(pathname);
   const activeWorkspace = WORKSPACES[activeWorkspaceId];
   const navigation: NavItem[] = activeWorkspace.navigation;
+
+  React.useEffect(() => {
+    navigation.forEach((item) => {
+      if (item.children) {
+        const hasActiveChild = item.children.some(
+          (child) => pathname === child.href || (child.href !== '/admin' && child.href !== '/' && pathname.startsWith(child.href + '/'))
+        );
+        if (hasActiveChild) {
+          setOpenMenus((prev) => ({ ...prev, [item.label]: true }));
+        }
+      }
+    });
+  }, [pathname, navigation]);
 
   const renderNavContent = () => (
     <div className="flex h-full flex-col overflow-hidden">
@@ -131,7 +145,9 @@ export const Sidebar: React.FC = () => {
               );
               if (visibleChildren.length === 0) return null;
 
-              const isChildActive = visibleChildren.some((child) => pathname === child.href);
+              const isChildActive = visibleChildren.some(
+                (child) => pathname === child.href || (child.href !== '/admin' && child.href !== '/' && pathname.startsWith(child.href + '/'))
+              );
 
               return (
                 <React.Fragment key={item.label}>
@@ -162,7 +178,7 @@ export const Sidebar: React.FC = () => {
                     <AnimatedCollapse isOpen={Boolean(openMenus[item.label]) || sidebarCollapsed}>
                       <div className={cn('space-y-0.5', sidebarCollapsed ? '' : 'pl-6')}>
                         {visibleChildren.map((child) => {
-                          const active = pathname === child.href;
+                          const active = pathname === child.href || (child.href !== '/admin' && child.href !== '/' && pathname.startsWith(child.href + '/'));
                           return (
                             <Link
                               key={child.href}

@@ -183,16 +183,14 @@ export const WORKSPACES: Record<WorkspaceId, WorkspaceConfig> = {
         icon: <LayoutDashboard className="h-4.5 w-4.5 shrink-0" />,
       },
       {
-        label: 'Data Karyawan',
+        label: 'Personalia',
         href: '/admin/employees',
         icon: <Users className="h-4.5 w-4.5 shrink-0" />,
         permission: 'employees.view',
-      },
-      {
-        label: 'Verifikasi Registrasi Ulang',
-        href: '/admin/employee-reregistrations',
-        icon: <ClipboardCheck className="h-4.5 w-4.5 shrink-0" />,
-        permission: 'employees.view',
+        children: [
+          { label: 'Data Karyawan', href: '/admin/employees', icon: <Users className="h-4 w-4" />, permission: 'employees.view' },
+          { label: 'Verifikasi Registrasi Ulang', href: '/admin/employee-reregistrations', icon: <ClipboardCheck className="h-4 w-4" />, permission: 'employees.view' },
+        ],
       },
       {
         label: 'Struktur Organisasi',
